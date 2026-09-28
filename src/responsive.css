@@ -1,0 +1,732 @@
+@media (min-width: 1440px) {
+  .brain-layout,
+  .map-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+  .brain-canvas {
+    height: 505px;
+  }
+  .brain-corner {
+    top: 462px;
+  }
+  .scene-reset {
+    top: 456px;
+  }
+  .brain-sidebar {
+    padding: 25px;
+  }
+  .stimulus-photo {
+    height: 172px;
+  }
+  .intro h1 {
+    font-size: 49px;
+  }
+  .intro-stats {
+    padding-right: 48px;
+    gap: 45px;
+  }
+  .brain-groups button {
+    font-size: 9px;
+  }
+  .stage-top h2 {
+    font-size: 27px;
+  }
+  .signal-bars > div {
+    font-size: 9px;
+  }
+  .brain-source {
+    font-size: 8px;
+  }
+  .timeline-label b {
+    font-size: 10px;
+  }
+}
+@media (max-width: 1100px) {
+  .app-header {
+    margin: 0 28px;
+    height: 84px;
+  }
+  .app main {
+    padding: 0 28px;
+  }
+  .intro {
+    padding-top: 30px;
+  }
+  .intro h1 {
+    font-size: 35px;
+  }
+  .intro-stats {
+    gap: 17px;
+    padding: 0;
+  }
+  .intro-stats > div {
+    padding-left: 18px;
+  }
+  .intro-stats strong {
+    font-size: 25px;
+  }
+  .header-right {
+    gap: 16px;
+  }
+  .brain-layout,
+  .map-layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 15px;
+  }
+  .stage-top {
+    left: 21px;
+    right: 21px;
+  }
+  .stage-top h2 {
+    font-size: 20px;
+  }
+  .simulation-badge {
+    font-size: 7px;
+  }
+  .brain-sidebar {
+    padding: 20px 17px;
+  }
+  .brain-groups {
+    padding: 0 18px 13px;
+    gap: 4px;
+  }
+  .brain-groups button {
+    font-size: 7px;
+    padding: 6px;
+  }
+  .brain-canvas {
+    height: 417px;
+  }
+  .brain-corner {
+    top: 374px;
+    left: 20px;
+  }
+  .scene-reset {
+    top: 368px;
+    right: 20px;
+  }
+  .training-strip {
+    gap: 15px;
+    padding: 20px;
+  }
+  .training-progress {
+    min-width: 125px;
+    padding: 0;
+  }
+  .training-strip h3 {
+    font-size: 14px;
+  }
+  .training-strip p {
+    font-size: 9px;
+  }
+  .control-strip nav button {
+    padding: 10px 11px;
+    font-size: 10px;
+  }
+  .mode-switch button {
+    font-size: 9px;
+    padding: 7px 9px;
+  }
+  .listing-grid {
+    gap: 15px;
+  }
+  .amenities {
+    gap: 9px;
+    font-size: 8px;
+  }
+  .photo-wrap {
+    height: 174px;
+  }
+  .rating-buttons button {
+    flex-direction: column;
+    font-size: 7px;
+  }
+  .list-controls {
+    min-width: 160px;
+  }
+}
+@media (max-width: 850px) {
+  .header-right .github-link,
+  .location-chip {
+    display: none;
+  }
+  .brain-layout,
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+  .brain-canvas {
+    height: 450px;
+  }
+  .brain-corner {
+    top: 407px;
+  }
+  .scene-reset {
+    top: 401px;
+  }
+  .brain-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    padding: 24px;
+  }
+  .brain-sidebar .side-heading {
+    grid-column: 1/-1;
+  }
+  .brain-sidebar .select-label {
+    grid-column: 1/-1;
+    margin-top: 0;
+  }
+  .brain-sidebar .stimulus-photo {
+    grid-column: 1;
+    grid-row: 3/6;
+    height: 200px;
+    margin-top: 0;
+  }
+  .brain-sidebar .stimulus-address {
+    grid-column: 1;
+    grid-row: 6;
+  }
+  .brain-sidebar .signal-heading {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 5px 0 0;
+  }
+  .brain-sidebar .signal-bars,
+  .brain-sidebar .retina-grid {
+    grid-column: 2;
+    grid-row: 4;
+  }
+  .brain-sidebar .sensory-factors {
+    grid-column: 2;
+    grid-row: 5/7;
+    margin: 3px 0;
+  }
+  .brain-sidebar .fly-reaction {
+    grid-column: 1;
+    margin: 0;
+  }
+  .brain-sidebar .rating-buttons {
+    grid-column: 2;
+    margin: 0;
+    align-self: center;
+  }
+  .brain-sidebar .rating-buttons button {
+    flex-direction: row;
+  }
+  .brain-sidebar .empty-stimulus {
+    grid-column: 1/-1;
+  }
+  .brain-source {
+    font-size: 8px;
+  }
+  .map-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .map-sidebar .side-heading {
+    grid-column: 1/-1;
+  }
+  .map-sidebar .apartment-card {
+    margin-top: 0;
+  }
+  .map-selection-list {
+    max-height: 300px;
+    overflow: auto;
+  }
+  .intro-stats {
+    display: none;
+  }
+  .intro {
+    padding-bottom: 28px;
+  }
+  .intro h1 {
+    font-size: 39px;
+  }
+  .training-progress {
+    display: none;
+  }
+  .training-fly {
+    height: 51px;
+    width: 51px;
+  }
+  .training-fly .fly {
+    height: 43px;
+    width: 43px;
+  }
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .control-strip nav {
+    gap: 0;
+  }
+  .control-strip nav button {
+    padding: 10px 9px;
+    gap: 6px;
+  }
+  .control-strip nav button > span {
+    display: none;
+  }
+  .section-heading {
+    align-items: flex-start;
+  }
+  .section-heading h2 {
+    font-size: 24px;
+  }
+  footer > span:nth-child(2) {
+    display: none;
+  }
+  .city-map {
+    height: 500px;
+  }
+}
+@media (max-width: 600px) {
+  .app-header {
+    height: 77px;
+    margin: 0 19px;
+    gap: 10px;
+  }
+  .app main {
+    padding: 0 19px;
+  }
+  .brand > span {
+    font-size: 24px;
+  }
+  .brand img {
+    width: 35px;
+    height: 35px;
+  }
+  .brand small {
+    font-size: 5.5px;
+    letter-spacing: 0.8px;
+  }
+  .header-right {
+    gap: 9px;
+  }
+  .header-right > .primary {
+    padding: 10px;
+    font-size: 0;
+    gap: 0;
+    width: 36px;
+    height: 36px;
+  }
+  .header-right > .primary svg {
+    width: 18px;
+    height: 18px;
+  }
+  .icon-button {
+    height: 36px;
+    width: 36px;
+  }
+  .intro {
+    padding: 29px 0 25px;
+  }
+  .intro h1 {
+    font-size: 30px;
+    letter-spacing: -1.5px;
+    line-height: 1.2;
+  }
+  .intro .eyebrow {
+    font-size: 7px;
+    letter-spacing: 1.3px;
+    margin-bottom: 14px;
+  }
+  .intro p {
+    font-size: 11px;
+    line-height: 1.8;
+    margin-top: 13px;
+  }
+  .desktop-break {
+    display: none;
+  }
+  .control-strip {
+    display: block;
+    padding-bottom: 15px;
+  }
+  .control-strip nav {
+    justify-content: space-between;
+    gap: 2px;
+  }
+  .control-strip nav button {
+    font-size: 8px;
+    padding: 10px 6px;
+    gap: 5px;
+  }
+  .control-strip nav svg {
+    width: 13px;
+    height: 13px;
+  }
+  .control-strip nav button > span {
+    display: none;
+  }
+  .mode-switch {
+    margin-top: 13px;
+    width: fit-content;
+  }
+  .mode-switch button {
+    font-size: 9px;
+    padding: 6px 12px;
+  }
+  .brain-stage {
+    border-radius: 12px;
+  }
+  .stage-top {
+    top: 21px;
+    left: 19px;
+    right: 19px;
+    gap: 8px;
+  }
+  .stage-top h2 {
+    font-size: 18px;
+  }
+  .stage-top .eyebrow {
+    font-size: 6px;
+  }
+  .simulation-badge {
+    font-size: 0;
+    padding: 7px;
+    gap: 0;
+  }
+  .brain-canvas {
+    height: 340px;
+  }
+  .brain-corner {
+    top: 305px;
+    left: 19px;
+    gap: 4px;
+  }
+  .brain-corner span {
+    font-size: 5px;
+  }
+  .brain-corner small {
+    font-size: 7px;
+  }
+  .scene-reset {
+    right: 18px;
+    top: 299px;
+    padding: 7px;
+  }
+  .scene-reset svg {
+    height: 13px;
+    width: 13px;
+  }
+  .brain-groups {
+    padding: 3px 17px 13px;
+    gap: 5px;
+  }
+  .brain-groups button {
+    font-size: 7px;
+    padding: 6px;
+  }
+  .timeline {
+    margin: 0 17px;
+    gap: 6px;
+    padding: 13px 0 9px;
+  }
+  .timeline-label b {
+    font-size: 7px;
+  }
+  .timeline-label span {
+    font-size: 5px;
+  }
+  .timeline > svg {
+    width: 14px;
+  }
+  .timeline > button {
+    width: 20px;
+  }
+  .brain-source {
+    font-size: 6px;
+    padding: 6px 17px 13px;
+    gap: 5px;
+  }
+  .brain-source > svg {
+    width: 10px;
+    height: 10px;
+  }
+  .brain-source a {
+    margin-left: 0;
+  }
+  .brain-sidebar {
+    padding: 21px 18px;
+    display: block;
+  }
+  .brain-sidebar .select-label {
+    margin-top: 15px;
+  }
+  .brain-sidebar .stimulus-photo {
+    height: 190px;
+    margin-top: 13px;
+  }
+  .brain-sidebar .signal-heading {
+    margin-top: 20px;
+  }
+  .brain-sidebar .signal-bars {
+    margin-top: 13px;
+    gap: 10px;
+  }
+  .brain-sidebar .signal-bars > div {
+    font-size: 9px;
+  }
+  .brain-sidebar .signal-bars > div > span {
+    width: 139px;
+  }
+  .brain-sidebar .signal-bars > small {
+    font-size: 8px;
+  }
+  .brain-sidebar .stimulus-address {
+    font-size: 9px;
+  }
+  .brain-sidebar .sensory-factors {
+    margin: 17px 0;
+  }
+  .brain-sidebar .sensory-factors b {
+    font-size: 11px;
+  }
+  .brain-sidebar .sensory-factors small {
+    font-size: 9px;
+  }
+  .brain-sidebar .fly-reaction {
+    margin: 15px 0 17px;
+  }
+  .brain-sidebar .fly-reaction strong {
+    font-size: 12px;
+  }
+  .brain-sidebar .rating-buttons button {
+    font-size: 9px;
+    padding: 10px 4px;
+  }
+  .brain-sidebar .rating-buttons button svg {
+    width: 14px;
+  }
+  .training-strip {
+    margin-top: 18px;
+    padding: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .training-strip > div:nth-child(2) {
+    flex: 1;
+    min-width: 150px;
+  }
+  .training-strip .eyebrow {
+    font-size: 5px;
+    letter-spacing: 1px;
+  }
+  .training-strip h3 {
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 6px 0;
+  }
+  .training-strip p {
+    font-size: 8px;
+  }
+  .training-fly {
+    width: 42px;
+    height: 42px;
+  }
+  .training-fly .fly {
+    height: 36px;
+    width: 36px;
+  }
+  .training-strip > .text-button {
+    font-size: 9px;
+    margin-left: 54px;
+  }
+  footer {
+    padding: 22px 0;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 8px;
+  }
+  footer > span:first-child {
+    font-size: 11px;
+  }
+  footer small {
+    display: block;
+    font-size: 7px;
+    margin-top: 3px;
+  }
+  footer a {
+    font-size: 8px;
+  }
+  .section-heading {
+    display: block;
+    padding-top: 10px;
+  }
+  .section-heading h2 {
+    font-size: 22px;
+  }
+  .section-heading p {
+    font-size: 11px;
+  }
+  .list-controls {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 15px;
+    align-items: center;
+  }
+  .list-controls .checkbox-label {
+    font-size: 8px;
+  }
+  .list-controls select {
+    font-size: 8px;
+    padding: 8px;
+  }
+  .listing-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .photo-wrap {
+    height: 210px;
+  }
+  .rating-buttons button {
+    flex-direction: row;
+    font-size: 9px;
+  }
+  .card-content {
+    padding: 17px;
+  }
+  .amenities {
+    font-size: 10px;
+    gap: 16px;
+  }
+  .card-title {
+    font-size: 13px;
+  }
+  .decision {
+    font-size: 10px;
+  }
+  .photo-prev,
+  .photo-next {
+    opacity: 1;
+  }
+  .map-sidebar {
+    display: block;
+    padding: 19px;
+  }
+  .map-sidebar .apartment-card {
+    margin-top: 16px;
+  }
+  .map-sidebar .photo-wrap {
+    height: 205px;
+  }
+  .map-sidebar .rating-buttons button {
+    flex-direction: row;
+    font-size: 9px;
+  }
+  .map-selection-list {
+    max-height: 220px;
+  }
+  .city-map {
+    height: 430px;
+  }
+  .map-title {
+    top: 15px;
+    left: 15px;
+    padding: 11px;
+  }
+  .map-title b {
+    font-size: 8px;
+  }
+  .map-title small {
+    font-size: 7px;
+  }
+  .map-tools {
+    right: 15px;
+    top: 15px;
+  }
+  .map-legend {
+    gap: 10px;
+    left: 15px;
+    bottom: 43px;
+    font-size: 6px;
+    padding: 9px;
+  }
+  .map-precision {
+    font-size: 6px;
+    left: 13px;
+    bottom: 20px;
+  }
+  .duel-section {
+    padding-top: 18px;
+  }
+  .duel-section h2 {
+    font-size: 25px;
+  }
+  .duel-section > p {
+    font-size: 11px;
+  }
+  .duel-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin: 25px 12px;
+  }
+  .duel-grid .versus {
+    font-size: 10px;
+  }
+  .duel-grid .photo-wrap {
+    height: 190px;
+  }
+  .duel-letter {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  .duel-other {
+    gap: 12px;
+  }
+  .duel-other button {
+    font-size: 10px;
+  }
+  .modal {
+    padding: 22px;
+    max-height: calc(100vh - 30px);
+  }
+  .modal-header h2 {
+    font-size: 21px;
+  }
+  .form-grid {
+    gap: 12px;
+  }
+  .settings-form label,
+  .import-form label {
+    font-size: 10px;
+  }
+  .form-grid input {
+    min-width: 0;
+  }
+  .dialog-tabs {
+    gap: 3px;
+  }
+  .dialog-tabs button {
+    font-size: 9px;
+    padding: 8px;
+  }
+  .toast {
+    max-width: calc(100vw - 38px);
+    width: max-content;
+    font-size: 10px;
+    padding: 12px 15px;
+  }
+  .neuron-inspector {
+    top: 95px;
+    left: 18px;
+    max-width: 210px;
+  }
+  .empty-state {
+    padding: 34px 20px;
+  }
+  .empty-state h3 {
+    font-size: 21px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wing,
+  .spin {
+    animation: none;
+  }
+  button {
+    transition: none;
+  }
+}

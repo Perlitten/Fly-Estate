@@ -1,0 +1,95 @@
+.photo-brain-controls {
+  display: flex;
+  gap: 7px;
+  margin-top: 10px;
+}
+.photo-brain-controls button {
+  flex: 1;
+  font-size: 9px;
+  padding: 7px;
+  background: #f1f4e9;
+  border: 1px solid #e1e8d6;
+  border-radius: 5px;
+  color: #849870;
+}
+.photo-brain-controls button.active {
+  background: #e3eecb;
+  border-color: #bed19d;
+  color: #64823e;
+}
+.photo-coverage {
+  font-size: 7px;
+  color: #9aa98a;
+  line-height: 1.8;
+  margin-top: 8px;
+}
+.space-signals {
+  margin: 13px 0 5px;
+  border: 1px solid #dde7cc;
+  background: #eff4e5;
+  border-radius: 7px;
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.space-signals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 9px;
+  color: #869871;
+}
+.space-signals b {
+  color: #6a864c;
+  font-weight: 500;
+}
+.space-signals small {
+  font-size: 7px;
+  color: #9bad87;
+  line-height: 1.6;
+}
+.balcony-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+  color: #9cad88;
+  margin-top: 11px;
+}
+.balcony-note > small {
+  margin-left: auto;
+  font-size: 7px;
+  white-space: nowrap;
+}
+@media (min-width: 601px) and (max-width: 850px) {
+  .brain-sidebar {
+    display: block;
+  }
+  .brain-sidebar .stimulus-photo {
+    height: 220px;
+    margin-top: 13px;
+  }
+  .brain-sidebar .signal-heading {
+    margin-top: 18px;
+  }
+  .brain-sidebar .fly-reaction {
+    margin: 18px 0;
+  }
+  .brain-sidebar .sensory-factors {
+    margin: 15px 0;
+  }
+  .brain-sidebar .signal-bars > div > span {
+    width: 160px;
+  }
+}
+
+.brain-stage {
+  align-self: start;
+}
+@media (min-width: 851px) {
+  .brain-stage {
+    position: sticky;
+    top: 20px;
+  }
+}

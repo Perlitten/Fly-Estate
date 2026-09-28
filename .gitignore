@@ -1,0 +1,14 @@
+node_modules/
+.venv/
+dist/
+__pycache__/
+data/raw/
+data/models/
+data/brain/*.npz
+data/state.sqlite*
+data/brief.md
+data/photos/
+.cache/
+*.log
+.DS_Store
+*.tsbuildinfo
