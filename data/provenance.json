@@ -1,0 +1,19 @@
+{
+  "dataset": "FAFB v783",
+  "record": "https://zenodo.org/records/10676866",
+  "edges": {
+    "id": "8b91c57a-daf2-44f5-8dd3-6939a638b273",
+    "key": "proofread_connections_783.feather",
+    "size": 852022274,
+    "checksum": "md5:f48f972d262323a102aed49af1396b8a",
+    "links": {
+      "self": "https://zenodo.org/api/records/10676866/files/proofread_connections_783.feather/content"
+    }
+  },
+  "annotations": "https://raw.githubusercontent.com/flyconnectome/flywire_annotations/v3.1.0/supplemental_files/Supplemental_file1_neuron_annotations.tsv",
+  "annotation_version": "v3.1.0",
+  "license": {
+    "id": "cc-by-4.0"
+  },
+  "method": "Real topology; artificial input encoding, rate dynamics and learned decision readout."
+}

@@ -1,0 +1,28 @@
+{
+  "dataset": "FAFB v783",
+  "annotations": "v3.1.0",
+  "neurons": 139248,
+  "connections": 2700429,
+  "synapses": 34152544,
+  "threshold": 5,
+  "visual_inputs": 11391,
+  "cyborg_inputs": 8038,
+  "navigation_inputs": 278,
+  "metadata_inputs": 685,
+  "mbon_outputs": 96,
+  "cx_output_types": 229,
+  "groups": {
+    "visual": 11391,
+    "Kenyon_Cell": 5177,
+    "MBON": 96,
+    "CX": 2875,
+    "DAN": 331,
+    "ALPN": 685
+  },
+  "dynamics": "Positive, incoming-normalized synapse counts; 16 leaky tanh rate steps. Not electrophysiology.",
+  "plasticity": "Artificial learned MBON/CX decision readout. KC\u2192MBON biological plasticity is not implemented.",
+  "sources": [
+    "https://zenodo.org/records/10676866",
+    "https://github.com/flyconnectome/flywire_annotations/tree/v3.1.0"
+  ]
+}

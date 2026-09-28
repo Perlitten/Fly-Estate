@@ -1,0 +1,255 @@
+{
+  "Agios Athanasios": {
+    "coords": [
+      34.7103009,
+      33.0517218
+    ],
+    "name": "Agios Athanasios, Chistoforou Savva, Άγιος Αθανάσιος, Δήμος Αγίου Αθανασίου, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4104, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Germasogeia": {
+    "coords": [
+      34.7130838,
+      33.0879427
+    ],
+    "name": "Δήμος Γερμασόγειας, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agia Fyla": {
+    "coords": [
+      34.7074482,
+      33.0083101
+    ],
+    "name": "Agia Fyla High School 2, Vrasida, Παναγία Ευαγγελίστρια, Agia Fylaxis, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 3110, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Trachoni Lemesou": {
+    "coords": [
+      34.6521288,
+      32.9639689
+    ],
+    "name": "Τραχώνι, Δήμος Κουρίου, Επαρχία Λεμεσού, Κύπρος, 4651, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Pyrgos": {
+    "coords": [
+      34.7382188,
+      33.183607
+    ],
+    "name": "Πύργος Λεμεσού, Κοινότητα Πύργου Λεμεσού, Σύμπλεγμα Κοινοτήτων Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4529, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Panthea": {
+    "coords": [
+      34.7155672,
+      33.0404196
+    ],
+    "name": "Panthea, Δήμος Αγίου Αθανασίου, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4105, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Zakaki": {
+    "coords": [
+      34.6570014,
+      33.0016391
+    ],
+    "name": "Ζακάκι, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Neapolis": {
+    "coords": [
+      34.6874282,
+      33.0572332
+    ],
+    "name": "Neapolis-1, Λάζαρου Κουντουριώτου, Νεάπολη, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 3106, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Potamos Germasogeias": {
+    "coords": [
+      34.7032947,
+      33.0881994
+    ],
+    "name": "Ποταμός Γερμασόγειας, Δήμος Γερμασόγειας, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Mesa Geitonia": {
+    "coords": [
+      34.701862,
+      33.0449947
+    ],
+    "name": "Δήμος Μέσα Γειτονιάς, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Ypsonas": {
+    "coords": [
+      34.6903956,
+      32.9631519
+    ],
+    "name": "Δήμος Ύψωνας, Δήμος Κουρίου, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agios Tychonas": {
+    "coords": [
+      34.7264828,
+      33.1409179
+    ],
+    "name": "Άγιος Τύχωνας, Κοινότητα Αγίου Τύχωνα, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4521, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Germasogeia Tourist Area": {
+    "coords": [
+      34.7032947,
+      33.0881994
+    ],
+    "name": "Ποταμός Γερμασόγειας, Δήμος Γερμασόγειας, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL",
+    "note": "Approximation using the coastal Potamos Germasogeias district."
+  },
+  "Polemidia Kato": {
+    "coords": [
+      34.6883547,
+      33.0106945
+    ],
+    "name": "Bank of Cyprus, Theodorou Potamianou, Makarios III, Δήμος Κάτω Πολεμιδίων, Δήμος Πολεμιδιών, Επαρχία Λεμεσού, Κύπρος, 4155, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Kato Polemidia": {
+    "coords": [
+      34.690548,
+      33.0034555
+    ],
+    "name": "Δήμος Κάτω Πολεμιδίων, Δήμος Πολεμιδιών, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Pareklisia": {
+    "coords": [
+      34.7428724,
+      33.1613655
+    ],
+    "name": "Παρεκκλησιά, Κοινότητα Παρεκκλησιάς, Σύμπλεγμα Κοινοτήτων Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4520, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Pissouri": {
+    "coords": [
+      34.6689046,
+      32.7010481
+    ],
+    "name": "Πισσούρι, Σύμπλεγμα Κοινοτήτων Δυτικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4607, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Kolossi": {
+    "coords": [
+      34.6781921,
+      32.9388117
+    ],
+    "name": "Κολόσσι, Δήμος Κουρίου, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Kapsalos": {
+    "coords": [
+      34.6979895,
+      33.0361753
+    ],
+    "name": "Κάψαλος, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agia Triada": {
+    "coords": [
+      34.6807258,
+      33.0509696
+    ],
+    "name": "Αγία Τριάδα, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agios Nikolaos": {
+    "coords": [
+      34.6928124,
+      33.0570315
+    ],
+    "name": "Άγιος Νικόλαος, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "source_url": "https://nominatim.openstreetmap.org/search?q=%CE%86%CE%B3%CE%B9%CE%BF%CF%82+%CE%9D%CE%B9%CE%BA%CF%8C%CE%BB%CE%B1%CE%BF%CF%82%2C+%CE%9B%CE%B5%CE%BC%CE%B5%CF%83%CF%8C%CF%82%2C+Cyprus&format=jsonv2&limit=5&countrycodes=cy&addressdetails=1",
+    "osm_url": "https://www.openstreetmap.org/relation/13423298",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Apostolos Andreas": {
+    "coords": [
+      34.6785204,
+      33.0180287
+    ],
+    "name": "Απόστολος Ανδρέας, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agios Spyridon": {
+    "coords": [
+      34.6723493,
+      33.0068938
+    ],
+    "name": "Agios Spyridon, Michael Kouki, Άγιος Σπυρίδωνας, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 3151, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agios Ioannis": {
+    "coords": [
+      34.6739077,
+      33.0263584
+    ],
+    "name": "Agios Ioannis, Λεμεσός, Δήμος Λεμεσού, Επαρχία Λεμεσού, Κύπρος, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  },
+  "Agia Paraskevi": {
+    "coords": [
+      34.7159129,
+      33.0787495
+    ],
+    "name": "Αγία Παρασκευή, Δήμος Γερμασόγειας, Δήμος Ανατολικής Λεμεσού, Επαρχία Λεμεσού, Κύπρος, 4044, Κύπρος - Kıbrıs",
+    "source": "OpenStreetMap/Nominatim",
+    "precision": "area",
+    "license": "ODbL"
+  }
+}
