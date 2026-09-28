@@ -150,7 +150,7 @@ class Brain:
         trained = (len(ratings)+len(comparisons) >= 5) and (class_diversity or len(comparisons) >= 5)
         info = {"ratings": len(ratings), "comparisons":len(comparisons), "ready":trained,
                 "has_both_classes": class_diversity, "task": "Artificial logistic MBON/CX readout",
-                "next": "Оцени хотя бы пять квартир, включая удачный и неудачный вариант." if not trained else "Муха учится твоим предпочтениям. Добавляй оценки, чтобы проверить выбор на новых квартирах."}
+                "next": "Rate at least five apartments, including one you like and one you dislike." if not trained else "Your fly is learning your preferences. Add ratings to evaluate its choices on new apartments."}
         return probability, info
 
     def predict(self, listings, settings, ratings, comparisons):
@@ -163,7 +163,7 @@ class Brain:
         train_pairs = [p for p in comparisons if p["a"] in valid_ids and p["b"] in valid_ids]
         p, info = self.fit(x[valid_idx], photos, train_ratings, train_pairs)
         if not info:
-            info = {"ratings":0,"comparisons":0,"ready":False,"has_both_classes":False,"next":"Добавь квартиры с фотографиями."}
+            info = {"ratings":0,"comparisons":0,"ready":False,"has_both_classes":False,"next":"Add apartments with photos."}
         probabilities = dict(zip([l["id"] for l in photos], p))
         predictions = {}
         for i, l in enumerate(listings):

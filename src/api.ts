@@ -16,16 +16,16 @@ export async function api<T = Record<string, unknown>>(
   const result = await response.json();
   if (!response.ok) {
     let detail =
-      result.detail || result.error || "Не удалось выполнить действие";
+      result.detail || result.error || "Could not complete the action";
     if (Array.isArray(detail)) detail = detail.map((x) => x.msg).join("; ");
     throw new Error(detail);
   }
   return result;
 }
 export const money = (v: number) =>
-  new Intl.NumberFormat("ru-RU", {
+  new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
   }).format(v);
-export const count = (v: number) => new Intl.NumberFormat("ru-RU").format(v);
+export const count = (v: number) => new Intl.NumberFormat("en-GB").format(v);

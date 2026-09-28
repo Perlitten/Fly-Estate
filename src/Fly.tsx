@@ -12,7 +12,7 @@ export default function Fly({
       height={size}
       viewBox="0 0 80 80"
       role="img"
-      aria-label="Муха"
+      aria-label="Fly"
     >
       <g
         fill="none"

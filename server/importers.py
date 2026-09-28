@@ -19,10 +19,10 @@ PHOTO_HOSTS = ALLOWED_SOURCES | {"kzqfyrabaeobdtmemyzl.supabase.co", "cdn.bazara
 def public_url(url, hosts):
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.hostname not in hosts or parsed.username or parsed.password or parsed.port not in (None,443):
-        raise ValueError("Нужна HTTPS-ссылка с поддерживаемого сайта.")
+        raise ValueError("An HTTPS URL from a supported site is required.")
     for item in socket.getaddrinfo(parsed.hostname,443,type=socket.SOCK_STREAM):
         if not ipaddress.ip_address(item[4][0]).is_global:
-            raise ValueError("Локальные адреса не разрешены.")
+            raise ValueError("Local addresses are not allowed.")
     return url
 
 def fetch(url, hosts, limit):
@@ -34,14 +34,14 @@ def fetch(url, hosts, limit):
                     url = public_url(urljoin(url,r.headers["location"]),hosts)
                     continue
                 if r.status_code in (403,429):
-                    raise ValueError("Сайт отклонил прямой импорт. Используй кнопку-закладку на открытом объявлении или ручной ввод.")
+                    raise ValueError("The site rejected direct import. Use the bookmark button on an open listing or enter it manually.")
                 r.raise_for_status()
                 data = bytearray()
                 for chunk in r.iter_bytes():
                     data.extend(chunk)
-                    if len(data) > limit: raise ValueError("Файл слишком большой.")
+                    if len(data) > limit: raise ValueError("File is too large.")
                 return bytes(data)
-    raise ValueError("Слишком много перенаправлений.")
+    raise ValueError("Too many redirects.")
 
 def from_schema(x):
     about = x.get("about") or x.get("itemOffered") or x
@@ -51,7 +51,7 @@ def from_schema(x):
     address = about.get("address",{})
     if isinstance(address,str): address={"streetAddress":address}
     amenities = {str(a.get("name","")).lower():a.get("value") for a in about.get("amenityFeature",[]) if isinstance(a,dict)}
-    title = x.get("name",about.get("name","Квартира"))
+    title = x.get("name",about.get("name","Apartment"))
     desc = x.get("description",about.get("description",""))
     balcony=amenities.get("balcony")
     if balcony is None: balcony=bool(re.search(r"\b(?:balcony|balconies|veranda|loggia|terrace)\b|балкон|лоджи",desc,re.I)) and not bool(re.search(r"no\s+(?:balcony|terrace)|без\s+балкона",desc,re.I))
@@ -109,7 +109,7 @@ def parse(payload):
     bedrooms = match(r"(?:Bedrooms|СПАЛЬНИ)\s*[:\n]?\s*(\d+)") or match(r"(\d+)\s*[- ]?bedroom")
     size = match(r"(\d+(?:\.\d+)?)\s*(?:m²|m2|sqm|м²)")
     if not price or not bedrooms or not size:
-        raise ValueError("Не найдены цена, спальни и площадь. Используй кнопку-закладку, JSON или форму ручного ввода.")
+        raise ValueError("Price, bedrooms and floor area were not found. Use the bookmark button, JSON or the manual form.")
     return [{"title":(soup.find('h1').get_text(strip=True) if soup.find('h1') else text.splitlines()[0])[:160],
              "price":float(re.sub(r"[^\d]","",price)),"bedrooms":int(bedrooms),"size":float(size),
              "area":match(r"(?:Location|Район)\s*[:\n]\s*([^\n]+)") or "", "city":"Limassol",
@@ -120,12 +120,12 @@ def normalize(item):
     if item.get("@type"): item=from_schema(item)
     url=str(item.get("url","")).strip()
     if url: public_url(url,ALLOWED_SOURCES)
-    title=str(item.get("title","Квартира"))[:180]
+    title=str(item.get("title","Apartment"))[:180]
     try:
         price=float(item["price"]); bedrooms=int(item["bedrooms"]); size=float(item["size"])
-    except (TypeError,KeyError,ValueError): raise ValueError("Для квартиры нужны числовые цена, спальни и площадь.")
+    except (TypeError,KeyError,ValueError): raise ValueError("Numeric price, bedroom count and floor area are required.")
     if not (100 <= price <= 100000 and 0 <= bedrooms <= 20 and 10 <= size <= 5000):
-        raise ValueError("Проверь цену, спальни и площадь.")
+        raise ValueError("Check the price, bedroom count and floor area.")
     area = str(item.get("area") or "").strip()
     area = {"Неаполи":"Neapolis","Туристическая зона":"Germasogeia Tourist Area",
             "Потамос Гермасойи":"Potamos Germasogeias","Агиос Афанасиос":"Agios Athanasios",
@@ -138,37 +138,37 @@ def normalize(item):
     known = json.loads((ROOT / "data/areas.json").read_text()) if (ROOT / "data/areas.json").exists() else {}
     if not area:
         # Only infer an area explicitly named in the source title, never an exact address.
-        area = next((a for a in sorted(known,key=len,reverse=True) if a.casefold() in title.casefold()), "Район не указан")
+        area = next((a for a in sorted(known,key=len,reverse=True) if a.casefold() in title.casefold()), "Area unspecified")
     coords = item.get("coords")
     coord_kind = item.get("coord_kind", "source") if coords else "area"
     if coord_kind not in ("source", "area"): coord_kind="source" if coords else "area"
     if coords:
         coords=list(map(float,coords))
         if len(coords)!=2 or not all(__import__('math').isfinite(v) for v in coords) or not (34 <= coords[0] <= 36 and 32 <= coords[1] <= 35):
-            raise ValueError("Координаты должны находиться на Кипре.")
+            raise ValueError("Coordinates must be in Cyprus.")
     else: coords=known.get(area,{}).get("coords")
     parking=str(item.get("parking","unknown")).lower()
     parking={"крытая":"covered","крытая парковка":"covered","открытая":"uncovered","no":"none"}.get(parking,parking)
     if parking not in ("covered","uncovered","none","unknown"): parking="unknown"
     id=hashlib.sha256((url or json.dumps([title,price,area])).encode()).hexdigest()[:16]
     photo_urls=list(dict.fromkeys(item.get("photo_urls",[])))
-    if len(photo_urls)>100: raise ValueError("Более 100 фото в объявлении: разбей импорт. Фотографии не были обрезаны.")
+    if len(photo_urls)>100: raise ValueError("More than 100 photos in this listing: split the import. Photos have not been truncated.")
     balcony_size=item.get("balcony_size")
     if balcony_size is not None:
         balcony_size=float(balcony_size)
-        if not (0<balcony_size<500): raise ValueError("Проверь указанную площадь балкона.")
+        if not (0<balcony_size<500): raise ValueError("Check the stated balcony area.")
     return {"id":id,"url":url,"title":title,"price":price,"bedrooms":bedrooms,"size":size,
             "area":area,"city":str(item.get("city") or "Limassol"),"parking":parking,
             "balcony":bool(item.get("balcony",False) or balcony_size),"balcony_size":balcony_size,"balcony_covered":item.get("balcony_covered") is True,"furnished":bool(item.get("furnished",False)),
             "coords":coords,"coord_kind":coord_kind if coords else "unknown",
             "published_at":item.get("published_at"),"captured_at":now(),"updated_at":now(),
-            "available":item.get("available",True),"source":urlparse(url).hostname or "Ручной ввод",
+            "available":item.get("available",True),"source":urlparse(url).hostname or "Manual entry",
             "photo_urls":photo_urls,"photos":[],"vision":None,
-            "description":f'{bedrooms} спальни · {size:g} м² · {area}. Парковка: {parking}. Данные — снимок объявления; доступность уточняется у владельца.'}
+            "description":f'{bedrooms} bedrooms · {size:g} m² · {area}. Parking: {parking}. Listing snapshot; confirm availability with the owner.'}
 
 def save_photo(data,name):
     with Image.open(io.BytesIO(data)) as im:
-        if im.width*im.height > 50000000: raise ValueError("Слишком большое изображение.")
+        if im.width*im.height > 50000000: raise ValueError("Image is too large.")
         im=ImageOps.exif_transpose(im).convert("RGB")
         im.thumbnail((1400,1000))
         dest=ROOT / "data/photos" / (name+".jpg")
@@ -186,7 +186,7 @@ def photos(listing,uploads=None):
             listing["photos"].append(path)
         except Exception as e: warnings.append(str(e))
     for encoded in (uploads or []):
-        if len(encoded)>16*1024*1024: raise ValueError("Фотография больше 12 MB.")
+        if len(encoded)>16*1024*1024: raise ValueError("Photo exceeds 12 MB.")
         data=base64.b64decode(encoded.split(',')[-1],validate=True)
         listing["photos"].append(save_photo(data,hashlib.sha256(data).hexdigest()[:24]))
     listing["photos"]=list(dict.fromkeys(listing["photos"]))

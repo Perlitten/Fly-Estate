@@ -24,13 +24,13 @@ import Fly from "./Fly";
 import { RatingButtons, decisions } from "./ApartmentCard";
 
 const groups = [
-  ["Все нейроны", "#a3bcc0"],
-  ["Зрение", "#43d9ea"],
+  ["All neurons", "#a3bcc0"],
+  ["Vision", "#43d9ea"],
   ["Kenyon cells", "#c39aff"],
-  ["Навигация · CX", "#f7bf75"],
-  ["Выход · MBON", "#d5fc87"],
-  ["Вход · ALPN", "#82aaff"],
-  ["Дофамин · DAN", "#f592ac"],
+  ["Navigation · CX", "#f7bf75"],
+  ["Output · MBON", "#d5fc87"],
+  ["Input · ALPN", "#82aaff"],
+  ["Dopamine · DAN", "#f592ac"],
 ] as const;
 type Geometry = {
   positions: Float32Array;
@@ -49,7 +49,7 @@ class SceneBoundary extends Component<
   render() {
     return this.state.error ? (
       <div className="scene-message">
-        3D недоступен в этом браузере. Открой проект в Chrome с включённым
+        3D is unavailable in this browser. Open the project in Chrome with
         WebGL.
       </div>
     ) : (
@@ -200,7 +200,7 @@ export default function BrainView({
     Promise.all(
       ["/api/brain/geometry", "/api/brain/lines"].map(async (u) => {
         const r = await fetch(u, { signal: controller.signal });
-        if (!r.ok) throw Error("Не удалось загрузить нейроны");
+        if (!r.ok) throw Error("Could not load neurons");
         return r.arrayBuffer();
       }),
     )
@@ -246,7 +246,7 @@ export default function BrainView({
       .then(async (r) => {
         if (!r.ok) {
           const x = await r.json();
-          throw Error(x.detail || "Ошибка расчёта");
+          throw Error(x.detail || "Computation failed");
         }
         return new Uint8Array(await r.arrayBuffer());
       })
@@ -295,12 +295,12 @@ export default function BrainView({
     );
   const attributes = photoSignal?.attributes || {};
   const signals = [
-    ["Естественный свет", attributes.natural_light],
-    ["Простор", attributes.spacious],
-    ["Современный интерьер", attributes.modern],
-    ["Визуальный шум", attributes.clutter],
-    ["Большой балкон / лоджия", attributes.large_balcony],
-    ["Укрытие на балконе", attributes.sheltered_balcony],
+    ["Natural light", attributes.natural_light],
+    ["Spaciousness", attributes.spacious],
+    ["Modern interior", attributes.modern],
+    ["Visual clutter", attributes.clutter],
+    ["Large balcony / loggia", attributes.large_balcony],
+    ["Balcony shelter", attributes.sheltered_balcony],
   ] as const;
   return (
     <div className="brain-layout">
@@ -309,15 +309,15 @@ export default function BrainView({
           <div>
             <span className="eyebrow">LIVE CONNECTOME / v783</span>
             <h2>
-              Посмотри, как она думает<span className="mint">.</span>
+              Watch it think<span className="mint">.</span>
             </h2>
           </div>
           <span className="simulation-badge">
             <span className="live-dot" />
-            Расчётная активность
+            Computed activity
           </span>
         </div>
-        <div className="brain-canvas" aria-label="Интерактивный 3D-мозг мухи">
+        <div className="brain-canvas" aria-label="Interactive 3D fly brain">
           <SceneBoundary>
             {geometry ? (
               <Canvas
@@ -351,19 +351,19 @@ export default function BrainView({
               </Canvas>
             ) : (
               <div className="scene-message">
-                {error || "Загружаю 139 248 нейронов…"}
+                {error || "Loading 139,248 neurons…"}
               </div>
             )}
           </SceneBoundary>
         </div>
         <div className="brain-corner">
           <span>01 — DROSOPHILA MELANOGASTER</span>
-          <small>Вращай · приближай · нажми на нейрон</small>
+          <small>Rotate · zoom · select a neuron</small>
         </div>
         <button
           className="scene-reset"
-          title="Сбросить камеру"
-          aria-label="Сбросить камеру"
+          title="Reset camera"
+          aria-label="Reset camera"
           onClick={() => setReset((v) => v + 1)}
         >
           <Scan size={18} />
@@ -372,17 +372,17 @@ export default function BrainView({
           <div className="neuron-inspector">
             <button
               onClick={() => setNeuron(undefined)}
-              aria-label="Закрыть нейрон"
+              aria-label="Close neuron details"
             >
               ×
             </button>
-            <span className="eyebrow">ВЫБРАННЫЙ НЕЙРОН</span>
+            <span className="eyebrow">SELECTED NEURON</span>
             <strong>{neuron.type}</strong>
             <small>{neuron.group}</small>
             <code>{neuron.id}</code>
             <p>
-              {count(neuron.incoming)} входящих · {count(neuron.outgoing)}{" "}
-              исходящих связей
+              {count(neuron.incoming)} incoming · {count(neuron.outgoing)}{" "}
+              outgoing connections
             </p>
           </div>
         )}
@@ -402,9 +402,7 @@ export default function BrainView({
           <button
             disabled={!frames}
             onClick={() => setPlaying(!playing)}
-            aria-label={
-              playing ? "Приостановить активность" : "Воспроизвести активность"
-            }
+            aria-label={playing ? "Pause activity" : "Play activity"}
           >
             {playing ? <Pause size={17} /> : <Play size={17} />}
           </button>
@@ -414,7 +412,7 @@ export default function BrainView({
               setStep(0);
               setPlaying(false);
             }}
-            aria-label="В начало расчёта"
+            aria-label="Restart activity"
           >
             <RotateCcw size={16} />
           </button>
@@ -422,17 +420,17 @@ export default function BrainView({
             <div className="timeline-label">
               <b>
                 {loading
-                  ? "Распространяю сигналы…"
+                  ? "Propagating signals…"
                   : frames
-                    ? "Сигнал проходит по мозгу"
+                    ? "Signal travels through the brain"
                     : l?.filter_reasons.length
-                      ? "Квартира исключена фильтрами"
-                      : "Выбери квартиру с фото"}
+                      ? "Apartment excluded by filters"
+                      : "Select an apartment with photos"}
               </b>
-              <span>ШАГ {String(step + 1).padStart(2, "0")} / 16</span>
+              <span>STEP {String(step + 1).padStart(2, "0")} / 16</span>
             </div>
             <input
-              aria-label="Шаг нейронной активности"
+              aria-label="Neural activity step"
               type="range"
               min="0"
               max="15"
@@ -449,37 +447,37 @@ export default function BrainView({
         <div className="brain-source">
           <Info size={14} />
           <span>
-            Реальные координаты и связи FlyWire. Точки — позиции нейронов, линии
-            — часть связей. Яркость — активность нашей модели, нормированная
-            внутри каждого шага.
+            Real FlyWire positions and connections. Points are neuron locations;
+            lines show a subset of connections. Brightness is our model’s
+            activity, normalized within each step.
           </span>
           <a
             href="https://zenodo.org/records/10676866"
             target="_blank"
             rel="noreferrer"
           >
-            Источник ↗
+            Source ↗
           </a>
         </div>
         {error && geometry && <p className="inline-error">{error}</p>}
       </section>
       <aside className="brain-sidebar">
         <div className="side-heading">
-          <span className="eyebrow">СТИМУЛ → РЕАКЦИЯ</span>
-          <h3>Квартира глазами мухи</h3>
+          <span className="eyebrow">STIMULUS → RESPONSE</span>
+          <h3>An apartment through fly eyes</h3>
         </div>
         <label className="select-label">
-          Текущее объявление
+          Current listing
           <select
             value={l?.id || ""}
             onChange={(e) => onSelect(e.target.value)}
           >
             <option value="" disabled>
-              Выбери квартиру
+              Select an apartment
             </option>
             {eligible.map((x) => (
               <option key={x.id} value={x.id}>
-                {money(x.price)} · {x.area} · {x.bedrooms} сп.
+                {money(x.price)} · {x.area} · {x.bedrooms} bed
               </option>
             ))}
           </select>
@@ -490,10 +488,10 @@ export default function BrainView({
               {l.photos[Math.max(photoIndex, 0)] ? (
                 <img src={l.photos[Math.max(photoIndex, 0)]} alt={l.title} />
               ) : (
-                <div className="no-photo">Нужно фото</div>
+                <div className="no-photo">Photo needed</div>
               )}
               <span>
-                {money(l.price)} <small>/ мес.</small>
+                {money(l.price)} <small>/ month</small>
               </span>
             </div>
             <div className="photo-brain-controls">
@@ -501,7 +499,7 @@ export default function BrainView({
                 className={photoIndex === -1 ? "active" : ""}
                 onClick={() => setPhotoSelection({ id: l.id, index: -1 })}
               >
-                Все {l.vision?.photos_analyzed || 0} фото
+                All {l.vision?.photos_analyzed || 0} photos
               </button>
               <button
                 className={photoIndex >= 0 ? "active" : ""}
@@ -515,26 +513,26 @@ export default function BrainView({
                 }
               >
                 {photoIndex < 0
-                  ? "По одному →"
-                  : `Фото ${photoIndex + 1} / ${l.photos.length} →`}
+                  ? "One at a time →"
+                  : `Photo ${photoIndex + 1} / ${l.photos.length} →`}
               </button>
             </div>
             <p className="photo-coverage">
-              Обработано {l.vision?.photos_analyzed || 0} из{" "}
-              {Math.max(l.photo_urls.length, l.photos.length)} фото
+              Processed {l.vision?.photos_analyzed || 0} of{" "}
+              {Math.max(l.photo_urls.length, l.photos.length)} photos
               {l.import_warnings.length > 0
-                ? " · часть фото недоступна"
-                : " · каждый снимок прошёл через мозг"}
+                ? " · some photos unavailable"
+                : " · every photo passed through the brain"}
             </p>
             <p className="stimulus-address">
-              {l.bedrooms} спальни · {l.size} м² · {l.area}
+              {l.bedrooms} bedrooms · {l.size} m² · {l.area}
             </p>
             <div className="signal-heading">
               <span>01</span>
               <b>
                 {data.settings.mode === "cyborg"
-                  ? "Сигналы изображения"
-                  : "Свет → сетчатка"}
+                  ? "Image signals"
+                  : "Light → retina"}
               </b>
               <small>
                 {data.settings.mode === "cyborg" ? "CLIP" : "8 × 8 RGB"}
@@ -554,9 +552,7 @@ export default function BrainView({
                     </div>
                   </div>
                 ))}
-                <small>
-                  Сходство фото с описанием · не проверенные свойства
-                </small>
+                <small>Photo–text similarity · unverified properties</small>
               </div>
             ) : (
               <div className="retina-grid">
@@ -577,27 +573,27 @@ export default function BrainView({
             )}
             <div className="space-signals">
               <div>
-                <span>Простор для полётов</span>
-                <b>+ {l.size} м²</b>
+                <span>Room to fly</span>
+                <b>+ {l.size} m²</b>
               </div>
               <div>
-                <span>Балкон / лоджия</span>
-                <b>{l.balcony ? "+ есть" : "Не подтверждён"}</b>
+                <span>Balcony / loggia</span>
+                <b>{l.balcony ? "+ available" : "Unconfirmed"}</b>
               </div>
               {l.balcony && (
                 <small>
                   {l.balcony_size
-                    ? "Указанная площадь: " + l.balcony_size + " м²"
-                    : "Площадь не указана"}
-                  {l.balcony_covered ? " · есть укрытие" : ""}
+                    ? "Stated area: " + l.balcony_size + " m²"
+                    : "Area unspecified"}
+                  {l.balcony_covered ? " · shelter available" : ""}
                 </small>
               )}
             </div>
             <div className="sensory-factors">
               <div>
                 <span>02</span>
-                <b>Цена</b>
-                <small>{money(data.settings.budget)} ориентир</small>
+                <b>Price</b>
+                <small>{money(data.settings.budget)} target</small>
                 <strong
                   className={l.price > data.settings.budget ? "price-over" : ""}
                 >
@@ -607,29 +603,29 @@ export default function BrainView({
               </div>
               <div>
                 <span>03</span>
-                <b>Расположение</b>
-                <small>От идеальной точки, по прямой</small>
+                <b>Location</b>
+                <small>Straight-line distance from your preferred point</small>
                 <strong>
                   {l.prediction.distance !== null
-                    ? "≈ " + l.prediction.distance + " км"
-                    : "Не задано"}
+                    ? "≈ " + l.prediction.distance + " km"
+                    : "Not set"}
                 </strong>
               </div>
             </div>
             <div className={`fly-reaction ${l.prediction.decision}`}>
               <Fly />
               <div>
-                <span className="eyebrow">ВЫХОД MBON + CX</span>
+                <span className="eyebrow">MBON + CX OUTPUT</span>
                 <strong>
                   {l.filter_reasons.length
-                    ? "Исключена фильтрами"
+                    ? "Excluded by filters"
                     : decisions[l.prediction.decision]}
                 </strong>
                 <small>
                   {data.training.ready && !l.filter_reasons.length
                     ? Math.round(l.prediction.probability * 100) +
-                      "% · оценка сходства с твоими выборами"
-                    : "Дай ей свои оценки, чтобы обучить предпочтения"}
+                      "% · estimated similarity to your choices"
+                    : "Rate apartments to teach it your preferences"}
                 </small>
               </div>
             </div>
@@ -640,10 +636,10 @@ export default function BrainView({
         ) : (
           <div className="empty-stimulus">
             <Fly />
-            <h3>Первый квартирный стимул</h3>
+            <h3>Your first apartment stimulus</h3>
             <p>
-              Добавь объявления с фотографиями. Муха увидит интерьер и запустит
-              сигналы по своим связям.
+              Add listings with photos. Your fly will see the interior and send
+              signals through its connections.
             </p>
             <ArrowRight size={24} />
           </div>

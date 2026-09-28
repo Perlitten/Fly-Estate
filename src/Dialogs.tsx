@@ -42,7 +42,7 @@ export function Modal({
     >
       <div className="modal-header">
         <h2>{title}</h2>
-        <button aria-label="Закрыть окно" onClick={onClose}>
+        <button aria-label="Close dialog" onClick={onClose}>
           <X size={21} />
         </button>
       </div>
@@ -84,15 +84,15 @@ export function SettingsDialog({
     }
   };
   return (
-    <Modal title="Твоя квартира, твои правила" onClose={onClose}>
+    <Modal title="Your apartment, your rules" onClose={onClose}>
       <form onSubmit={submit} className="settings-form">
         <p className="muted">
-          Бюджет влияет на реакцию. Жёсткие ограничения исключают объявления до
-          расчёта.
+          Budget shapes the response. Hard limits exclude listings before
+          computation.
         </p>
         <div className="form-grid">
           <label>
-            Комфортный бюджет, €
+            Target budget, €
             <input
               required
               type="number"
@@ -103,7 +103,7 @@ export function SettingsDialog({
             />
           </label>
           <label>
-            Абсолютный лимит, €
+            Hard limit, €
             <input
               required
               type="number"
@@ -114,20 +114,20 @@ export function SettingsDialog({
             />
           </label>
           <label>
-            Минимум спален
+            Minimum bedrooms
             <select
               value={s.min_bedrooms}
               onChange={(e) => change("min_bedrooms", +e.target.value)}
             >
               {[0, 1, 2, 3, 4, 5].map((x) => (
                 <option key={x} value={x}>
-                  {x === 0 ? "Студия" : x}
+                  {x === 0 ? "Studio" : x}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Радиус идеальной зоны, км
+            Preferred area radius, km
             <input
               type="number"
               min="0.1"
@@ -145,21 +145,21 @@ export function SettingsDialog({
             onChange={(e) => change("covered_parking", e.target.checked)}
           />
           <span>
-            <b>Обязательна крытая парковка</b>
-            <small>Открытая и не указанная парковка тоже исключаются</small>
+            <b>Covered parking required</b>
+            <small>Uncovered and unspecified parking are excluded too</small>
           </span>
         </label>
         <label>
-          Исключённые районы, через запятую
+          Excluded areas, separated by commas
           <input
             value={excluded}
             onChange={(e) => setExcluded(e.target.value)}
-            placeholder="Например: Ypsonas"
+            placeholder="For example: Ypsonas"
           />
         </label>
         <p className="muted">
-          Идеальную точку можно перетащить на карте. Введённые здесь параметры
-          сохраняются только на этом компьютере.
+          You can drag your preferred point on the map. These settings are saved
+          on this computer only.
         </p>
         {error && (
           <p className="inline-error" role="alert">
@@ -168,18 +168,18 @@ export function SettingsDialog({
         )}
         <button className="primary" disabled={busy}>
           <Check size={17} />
-          Сохранить правила
+          Save rules
         </button>
         <a className="backup-link" href="/api/export" download>
           <Download size={16} />
-          Скачать копию объявлений и моих оценок
+          Download my listings and ratings
         </a>
       </form>
     </Modal>
   );
 }
 const bookmarklet =
-  "javascript:(()=>{const scripts=[...document.querySelectorAll('script[type=\"application/ld+json\"]')].map(x=>{try{return JSON.parse(x.textContent)}catch{return null}}).filter(Boolean);const content=scripts.length?JSON.stringify(scripts):document.documentElement.outerHTML;const text=JSON.stringify({url:location.href,content});navigator.clipboard.writeText(text).then(()=>alert('Объявление скопировано. Вставь в Fly Estate → JSON / HTML.')).catch(()=>prompt('Скопируй объявление:',text))})()";
+  "javascript:(()=>{const scripts=[...document.querySelectorAll('script[type=\"application/ld+json\"]')].map(x=>{try{return JSON.parse(x.textContent)}catch{return null}}).filter(Boolean);const content=scripts.length?JSON.stringify(scripts):document.documentElement.outerHTML;const text=JSON.stringify({url:location.href,content});navigator.clipboard.writeText(text).then(()=>alert('Listing copied. Paste it into Fly Estate → JSON / HTML.')).catch(()=>prompt('Copy this listing:',text))})()";
 export function ImportDialog({
   onDone,
   onClose,
@@ -231,7 +231,7 @@ export function ImportDialog({
       } else {
         sessionStorage.removeItem("fly-estate-job");
         setBusy(false);
-        if (j.status === "error") setError(j.error || "Ошибка импорта");
+        if (j.status === "error") setError(j.error || "Import failed");
         await onDone();
       }
     } catch (e) {
@@ -289,12 +289,12 @@ export function ImportDialog({
     }
   };
   return (
-    <Modal title="Добавить квартирные стимулы" onClose={onClose}>
+    <Modal title="Add apartment stimuli" onClose={onClose}>
       <div className="dialog-tabs">
         {[
-          ["url", "Ссылка", Link],
+          ["url", "Link", Link],
           ["content", "JSON / HTML", FileText],
-          ["manual", "Вручную", Plus],
+          ["manual", "Manual", Plus],
         ].map(([key, label, Icon]) => (
           <button
             key={String(key)}
@@ -310,7 +310,7 @@ export function ImportDialog({
         {tab === "url" ? (
           <>
             <label>
-              Ссылка на объявление
+              Listing URL
               <input
                 required
                 type="url"
@@ -320,30 +320,29 @@ export function ImportDialog({
               />
             </label>
             <p className="muted">
-              RentSpot, Fox, Bazaraki, INDEX. Для страниц, которые заполняются
-              JavaScript или требуют проверки браузера, используй вкладку JSON /
-              HTML.
+              RentSpot, Fox, Bazaraki, INDEX. For pages rendered with JavaScript
+              or requiring a browser check, use the JSON / HTML.
             </p>
           </>
         ) : tab === "content" ? (
           <>
             <label>
-              Данные объявления
+              Listing data
               <textarea
                 required
-                aria-label="Данные объявления"
+                aria-label="Listing data"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Вставь JSON, JSON-LD, HTML страницы или текст объявления"
+                placeholder="Paste JSON, JSON-LD, page HTML or listing text"
                 rows={8}
               />
             </label>
             <details>
-              <summary>Как перенести объявление из браузера</summary>
+              <summary>How to import a listing from your browser</summary>
               <p>
-                Перетащи кнопку на панель закладок. Открой объявление, нажми
-                закладку и вставь результат в поле выше. Копируются данные
-                текущей страницы.
+                Drag the button to your bookmarks bar. Open a listing, click the
+                bookmark and paste the result above. It copies data from the
+                current page.
               </p>
               <a
                 className="bookmarklet"
@@ -353,18 +352,18 @@ export function ImportDialog({
                 }}
                 onClick={(e) => e.preventDefault()}
               >
-                🐝 В Fly Estate
+                🐝 To Fly Estate
               </a>
               <small>
-                Если сайт не даёт сохранить закладку, скопируй HTML страницы или
-                заполни карточку вручную.
+                If the site prevents saving the bookmark, copy the page HTML or
+                fill in a listing manually.
               </small>
             </details>
           </>
         ) : (
           <>
             <label>
-              Название
+              Title
               <input
                 required
                 value={manual.title}
@@ -375,7 +374,7 @@ export function ImportDialog({
             </label>
             <div className="form-grid">
               <label>
-                Цена в месяц, €
+                Monthly rent, €
                 <input
                   required
                   type="number"
@@ -388,7 +387,7 @@ export function ImportDialog({
                 />
               </label>
               <label>
-                Площадь, м²
+                Floor area, m²
                 <input
                   type="number"
                   min="10"
@@ -400,7 +399,7 @@ export function ImportDialog({
                 />
               </label>
               <label>
-                Спальни
+                Bedrooms
                 <input
                   type="number"
                   min="0"
@@ -412,17 +411,17 @@ export function ImportDialog({
                 />
               </label>
               <label>
-                Парковка
+                Parking
                 <select
                   value={manual.parking}
                   onChange={(e) =>
                     setManual((x) => ({ ...x, parking: e.target.value }))
                   }
                 >
-                  <option value="unknown">Не указана</option>
-                  <option value="covered">Крытая</option>
-                  <option value="uncovered">Открытая</option>
-                  <option value="none">Нет</option>
+                  <option value="unknown">Unspecified</option>
+                  <option value="covered">Covered</option>
+                  <option value="uncovered">Uncovered</option>
+                  <option value="none">None</option>
                 </select>
               </label>
             </div>
@@ -434,12 +433,12 @@ export function ImportDialog({
                   setManual((x) => ({ ...x, balcony: e.target.checked }))
                 }
               />
-              Балкон или лоджия
+              Balcony or loggia
             </label>
             {manual.balcony && (
               <>
                 <label>
-                  Площадь балкона, м² (если указана)
+                  Balcony area, m² (if stated)
                   <input
                     type="number"
                     min="0.1"
@@ -462,12 +461,12 @@ export function ImportDialog({
                       }))
                     }
                   />
-                  Крытый балкон / закрытая лоджия
+                  Covered balcony / enclosed loggia
                 </label>
               </>
             )}
             <label>
-              Район
+              Area
               <input
                 required
                 value={manual.area}
@@ -477,7 +476,7 @@ export function ImportDialog({
               />
             </label>
             <label>
-              Ссылка на источник (необязательно)
+              Source URL (optional)
               <input
                 type="url"
                 value={url}
@@ -488,11 +487,11 @@ export function ImportDialog({
               <Upload size={22} />
               <b>
                 {files.length
-                  ? `${files.length} фото выбрано`
-                  : "Добавить фотографии"}
+                  ? `${files.length} photos selected`
+                  : "Add photos"}
               </b>
               <small>
-                Все фото · до 100 JPG, PNG или WebP · до 8 МБ каждое
+                All photos · up to 100 JPG, PNG or WebP · up to 8 MB each
               </small>
               <input
                 type="file"
@@ -504,7 +503,7 @@ export function ImportDialog({
                     f.length > 100 ||
                     f.some((x) => x.size > 8 * 1024 * 1024)
                   ) {
-                    setError("До 100 фотографий, каждая до 8 МБ.");
+                    setError("Up to 100 photos, each up to 8 MB.");
                     return;
                   }
                   setFiles(f);
@@ -522,7 +521,7 @@ export function ImportDialog({
           <div className="import-progress">
             <b>{job.phase}</b>
             <span>
-              {job.done} / {job.total} · добавлено {job.imported}
+              {job.done} / {job.total} · imported {job.imported}
             </span>
             <progress max={job.total || 1} value={job.done} />
             {[...job.errors, ...job.warnings].map((x, i) => (
@@ -530,7 +529,8 @@ export function ImportDialog({
             ))}
             {job.status === "done" && (
               <p className="success">
-                Объявления добавлены. Можно закрыть окно и начать обучение.
+                Listings added. You can close this dialog and start teaching
+                your fly.
               </p>
             )}
           </div>
@@ -541,7 +541,7 @@ export function ImportDialog({
           ) : (
             <Upload size={17} />
           )}{" "}
-          {busy ? "Обрабатываю фотографии…" : "Добавить объявления"}
+          {busy ? "Processing photos…" : "Add listings"}
         </button>
       </form>
     </Modal>

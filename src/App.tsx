@@ -30,10 +30,10 @@ import ApartmentCard from "./ApartmentCard";
 import { ImportDialog, SettingsDialog } from "./Dialogs";
 
 const views = [
-  ["brain", "Мозг мухи", Brain],
-  ["map", "Карта интересов", Map],
-  ["learn", "Обучение", Heart],
-  ["duel", "Дуэль квартир", GitCompareArrows],
+  ["brain", "Fly brain", Brain],
+  ["map", "Interest map", Map],
+  ["learn", "Learning", Heart],
+  ["duel", "Apartment duel", GitCompareArrows],
 ] as const;
 export default function App() {
   const [data, setData] = useState<Data>(),
@@ -88,11 +88,11 @@ export default function App() {
       "/api/rating",
       "POST",
       { id, value },
-      value === null ? "Оценка убрана" : "Муха запомнила твой выбор",
+      value === null ? "Rating removed" : "Your fly remembered your choice",
     ).catch(() => {});
   };
   const save = async (s: Settings) => {
-    await mutate("/api/settings", "PUT", s, "Правила сохранены");
+    await mutate("/api/settings", "PUT", s, "Rules saved");
   };
   const eligible = useMemo(
     () =>
@@ -130,7 +130,7 @@ export default function App() {
         "/api/compare",
         "POST",
         { a: pair[0], b: pair[1], choice },
-        "Выбор сохранён",
+        "Choice saved",
       );
       const key = [...pair].sort().join("|");
       const compared = new Set([
@@ -163,7 +163,7 @@ export default function App() {
       <main className="boot">
         <img src="/fly.svg" alt="Fly Estate" />
         <h1>Fly Estate</h1>
-        <p>{error || "Пробуждаю маленький мозг…"}</p>
+        <p>{error || "Waking up a tiny brain…"}</p>
         {error ? (
           <button
             onClick={() => {
@@ -171,7 +171,7 @@ export default function App() {
               load().catch((e) => setError(e.message));
             }}
           >
-            Попробовать ещё раз
+            Try again
           </button>
         ) : (
           <LoaderCircle className="spin" />
@@ -204,7 +204,7 @@ export default function App() {
         <div className="header-right">
           <span className="location-chip">
             <MapPin size={15} />
-            Лимассол, Кипр
+            Limassol, Cyprus
           </span>
           <a
             className="github-link"
@@ -212,20 +212,20 @@ export default function App() {
             target="_blank"
             rel="noreferrer"
           >
-            Проект
+            Project
             <ArrowUpRight size={15} />
           </a>
           <button
             className="icon-button"
-            title="Мои правила"
-            aria-label="Мои правила"
+            title="My rules"
+            aria-label="My rules"
             onClick={() => setDialog("settings")}
           >
             <SlidersHorizontal size={19} />
           </button>
           <button className="primary" onClick={() => setDialog("import")}>
             <Plus size={17} />
-            Добавить квартиру
+            Add apartment
           </button>
         </div>
       </header>
@@ -234,30 +234,29 @@ export default function App() {
           <div>
             <span className="eyebrow intro-eyebrow">
               <span className="live-dot" />
-              ПЕРСОНАЛЬНАЯ КВАРТИРНАЯ МУХА
+              YOUR PERSONAL APARTMENT FLY
             </span>
             <h1>
-              Маленький мозг.
+              Tiny brain.
               <br />
-              Большой квартирный вопрос<span>.</span>
+              Big apartment decision<span>.</span>
             </h1>
             <p>
-              Покажи, что тебе нравится. Наблюдай, как муха
+              Show it what you like. Watch your fly
               <br className="desktop-break" />
-              находит свой путь к твоей следующей квартире.
+              find its way to your next apartment.
             </p>
           </div>
           <div className="intro-stats">
             <div>
               <strong>{count(data.brain.neurons)}</strong>
-              <span>нейронов в настоящем коннектоме</span>
+              <span>neurons in a real connectome</span>
             </div>
             <div>
               <strong>
-                {(data.brain.connections / 1e6).toFixed(2).replace(".", ",")}{" "}
-                <small>млн</small>
+                {(data.brain.connections / 1e6).toFixed(2)} <small>M</small>
               </strong>
-              <span>связей для маленького решения</span>
+              <span>connections behind a tiny decision</span>
             </div>
             <span className="data-tag">
               FLYWIRE · RELEASE 783 <ArrowUpRight size={12} />
@@ -265,7 +264,7 @@ export default function App() {
           </div>
         </section>
         <section className="control-strip">
-          <nav aria-label="Разделы проекта">
+          <nav aria-label="Project sections">
             {views.map(([id, label, Icon]) => (
               <button
                 key={id}
@@ -278,11 +277,11 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="mode-switch" aria-label="Режим зрения">
+          <div className="mode-switch" aria-label="Vision mode">
             <button
               disabled={busy}
               className={data.settings.mode === "pure" ? "active" : ""}
-              title="Фото как сетка света и цвета; искусственное отображение на входы мозга"
+              title="Photos as a grid of light and color; an artificial mapping to brain inputs"
               onClick={() =>
                 save({ ...data.settings, mode: "pure" }).catch(() => {})
               }
@@ -292,7 +291,7 @@ export default function App() {
             <button
               disabled={busy}
               className={data.settings.mode === "cyborg" ? "active" : ""}
-              title="CLIP превращает фото в визуальные сигналы для мозга"
+              title="CLIP turns photos into visual signals for the brain"
               onClick={() =>
                 save({ ...data.settings, mode: "cyborg" }).catch(() => {})
               }
@@ -310,7 +309,7 @@ export default function App() {
         )}
         {view === "brain" && (
           <Suspense
-            fallback={<div className="empty-state">Загружаю 3D-мозг…</div>}
+            fallback={<div className="empty-state">Loading the 3D brain…</div>}
           >
             <BrainView
               data={data}
@@ -334,15 +333,15 @@ export default function App() {
             />
             <aside className="map-sidebar">
               <div className="side-heading">
-                <span className="eyebrow">МАРШРУТ К ТВОЕЙ КВАРТИРЕ</span>
+                <span className="eyebrow">FINDING YOUR NEXT APARTMENT</span>
                 <h3>
                   {data.training.ready
-                    ? "Куда тянется муха"
-                    : "Муха изучает Лимассол"}
+                    ? "Where your fly wants to go"
+                    : "Your fly explores Limassol"}
                 </h3>
                 <p>
-                  Зелёная зона — желаемое место. Перетащи её центр, чтобы
-                  изменить предпочтение.
+                  The green area is your preferred location. Drag its center to
+                  update your preference.
                 </p>
               </div>
               {selected ? (
@@ -350,7 +349,7 @@ export default function App() {
               ) : (
                 <div className="empty-stimulus">
                   <Fly />
-                  <p>Выбери маркер квартиры на карте.</p>
+                  <p>Select an apartment marker on the map.</p>
                 </div>
               )}
               <div className="map-selection-list">
@@ -363,7 +362,7 @@ export default function App() {
                     <span>
                       {l.area}
                       <small>
-                        {l.bedrooms} сп. · ≈ {l.prediction.distance ?? "—"} км
+                        {l.bedrooms} bed · ≈ {l.prediction.distance ?? "—"} km
                       </small>
                     </span>
                     <b>{money(l.price)}</b>
@@ -378,15 +377,15 @@ export default function App() {
           <section className="listings-section">
             <div className="section-heading">
               <div>
-                <span className="eyebrow">ТВОЙ ВКУС → ЕЁ ПРЕДПОЧТЕНИЯ</span>
+                <span className="eyebrow">YOUR TASTE → ITS PREFERENCES</span>
                 <h2>
                   {data.training.ready
-                    ? "Квартиры по вкусу твоей мухи"
-                    : "Покажи мухе свой вкус"}
+                    ? "Apartments your fly likes"
+                    : "Show your fly what you like"}
                 </h2>
                 <p>
-                  «Посмотрел бы», «Может быть», «Не моё» — каждая оценка
-                  уточняет модель.
+                  “Would visit”, “Maybe”, “Not for me” — every rating refines
+                  the model.
                 </p>
               </div>
               <div className="list-controls">
@@ -396,16 +395,16 @@ export default function App() {
                     checked={showExcluded}
                     onChange={(e) => setShowExcluded(e.target.checked)}
                   />
-                  Показать исключённые
+                  Show excluded
                 </label>
                 <select
-                  aria-label="Сортировка квартир"
+                  aria-label="Sort apartments"
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                 >
-                  <option value="fly">По интересу мухи</option>
-                  <option value="price">По цене</option>
-                  <option value="distance">По расстоянию</option>
+                  <option value="fly">Fly interest</option>
+                  <option value="price">Price</option>
+                  <option value="distance">Distance</option>
                 </select>
               </div>
             </div>
@@ -428,13 +427,13 @@ export default function App() {
                 <Fly />
                 <h3>
                   {data.listings.length
-                    ? "Ни одна квартира не прошла правила"
-                    : "Начнём с настоящих квартир"}
+                    ? "No apartments match your rules"
+                    : "Start with real apartments"}
                 </h3>
                 <p>
                   {data.listings.length
-                    ? "Измени фильтры или добавь подходящие объявления."
-                    : "Добавь объявления с фото, чтобы муха смогла познакомиться с твоим вкусом."}
+                    ? "Adjust your filters or add suitable listings."
+                    : "Add listings with photos so your fly can learn your taste."}
                 </p>
                 <button
                   className="primary"
@@ -442,27 +441,25 @@ export default function App() {
                     setDialog(data.listings.length ? "settings" : "import")
                   }
                 >
-                  {data.listings.length
-                    ? "Изменить правила"
-                    : "Добавить квартиры"}
+                  {data.listings.length ? "Edit rules" : "Add apartments"}
                   <ArrowRight size={17} />
                 </button>
               </div>
             )}
             <p className="catalogue-note">
-              Публичные снимки объявлений · доступность и цену уточняй по ссылке
-              на источник. Дата добавления:{" "}
+              Public listing snapshots · check availability and prices at the
+              source. Added on:{" "}
               {data.listings[0]?.captured_at?.slice(0, 10) || "—"}.
             </p>
           </section>
         )}
         {view === "duel" && (
           <section className="duel-section">
-            <span className="eyebrow">А ИЛИ Б? МУХА ЗАПОМНИТ.</span>
-            <h2>Куда бы ты пошёл на просмотр?</h2>
+            <span className="eyebrow">A OR B? YOUR FLY WILL REMEMBER.</span>
+            <h2>Which apartment would you visit?</h2>
             <p>
-              Сравни две квартиры. Это помогает учиться даже там, где обе
-              хороши.
+              Compare two apartments. Your choices help it learn even when both
+              look good.
             </p>
             {a && b ? (
               <>
@@ -475,41 +472,40 @@ export default function App() {
                       disabled={busy}
                       onClick={() => compare(1)}
                     >
-                      Выбираю A<Check size={17} />
+                      Choose A<Check size={17} />
                     </button>
                   </div>
                   <span className="versus">VS</span>
                   <div>
-                    <span className="duel-letter">Б</span>
+                    <span className="duel-letter">B</span>
                     <ApartmentCard key={b.id} listing={b} />
                     <button
                       className="primary"
                       disabled={busy}
                       onClick={() => compare(-1)}
                     >
-                      Выбираю Б<Check size={17} />
+                      Choose B<Check size={17} />
                     </button>
                   </div>
                 </div>
                 <div className="duel-other">
                   <button disabled={busy} onClick={() => compare(0)}>
-                    Примерно одинаково
+                    About the same
                   </button>
                   <button disabled={busy} onClick={nextPair}>
-                    Другая пара →
+                    Another pair →
                   </button>
                 </div>
               </>
             ) : (
               <div className="empty-state">
                 <Fly />
-                <h3>Нужны две квартиры</h3>
+                <h3>Two apartments needed</h3>
                 <p>
-                  Добавь минимум два объявления с фото, которые проходят твои
-                  фильтры.
+                  Add at least two listings with photos that match your filters.
                 </p>
                 <button className="primary" onClick={() => setDialog("import")}>
-                  Добавить квартиры
+                  Add apartments
                 </button>
               </div>
             )}
@@ -521,25 +517,25 @@ export default function App() {
           </div>
           <div>
             <span className="eyebrow">
-              ТВОЯ МУХА{" "}
+              YOUR FLY{" "}
               {data.training.ready
-                ? "УЖЕ ЛОВИТ ТВОЙ ВКУС"
-                : "ПОКА ЗНАКОМИТСЯ С ТОБОЙ"}
+                ? "IS LEARNING YOUR TASTE"
+                : "IS GETTING TO KNOW YOU"}
             </span>
             <h3>
               {data.training.ready
-                ? "Маленькие решения становятся точнее"
-                : "Немного твоего вкуса — и она оживёт"}
+                ? "Tiny decisions get better"
+                : "A little of your taste brings it to life"}
             </h3>
             <p>
-              {data.training.next} · {eligible.length} квартир с фото проходят
-              правила.
+              {data.training.next} · {eligible.length} apartments with photos
+              match your rules.
             </p>
           </div>
           <div className="training-progress">
             <div>
               <b>{done}</b>
-              <small>оценок и сравнений</small>
+              <small>ratings and comparisons</small>
             </div>
             <div className="progress-dots">
               {Array.from({ length: 10 }, (_, i) => (
@@ -548,17 +544,17 @@ export default function App() {
             </div>
           </div>
           <button className="text-button" onClick={() => setView("learn")}>
-            Обучить муху
+            Teach your fly
             <ArrowRight size={17} />
           </button>
         </section>
         <footer>
           <span>
-            flyestate <small>· эксперимент с настоящим коннектомом</small>
+            flyestate <small>· an experiment with a real connectome</small>
           </span>
-          <span>Фото → сенсорные входы → FlyWire → твой выбор</span>
+          <span>Photos → sensory inputs → FlyWire → your choice</span>
           <a href="https://codex.flywire.ai/" target="_blank" rel="noreferrer">
-            Исследовать FlyWire
+            Explore FlyWire
             <ArrowUpRight size={13} />
           </a>
         </footer>
