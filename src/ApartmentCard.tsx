@@ -15,11 +15,11 @@ import {
 import type { Listing } from "./types";
 import { money } from "./api";
 export const decisions = {
-  waiting: "Муха ещё учится",
-  approach: "Муха хочет сюда",
-  avoid: "Муха разворачивается",
-  maybe: "Муха сомневается",
-  no_photo: "Нужны фотографии",
+  waiting: "Your fly is still learning",
+  approach: "Your fly wants to go here",
+  avoid: "Your fly turns away",
+  maybe: "Your fly is unsure",
+  no_photo: "Photos needed",
 };
 export function RatingButtons({
   listing,
@@ -36,28 +36,28 @@ export function RatingButtons({
         disabled={busy}
         className={listing.rating === 1 ? "chosen love" : "love"}
         onClick={() => onRate(listing.id, listing.rating === 1 ? null : 1)}
-        aria-label="Посмотрел бы"
+        aria-label="Would visit"
       >
         <Heart size={18} />
-        Посмотрел бы
+        Would visit
       </button>
       <button
         disabled={busy}
         className={listing.rating === 0 ? "chosen neutral" : "neutral"}
         onClick={() => onRate(listing.id, listing.rating === 0 ? null : 0)}
-        aria-label="Может быть"
+        aria-label="Maybe"
       >
         <Minus size={18} />
-        Может быть
+        Maybe
       </button>
       <button
         disabled={busy}
         className={listing.rating === -1 ? "chosen nope" : "nope"}
         onClick={() => onRate(listing.id, listing.rating === -1 ? null : -1)}
-        aria-label="Не моё"
+        aria-label="Not for me"
       >
         <ThumbsDown size={18} />
-        Не моё
+        Not for me
       </button>
     </div>
   );
@@ -87,18 +87,18 @@ export default function ApartmentCard({
         {l.photos.length ? (
           <img
             src={l.photos[photo % l.photos.length]}
-            alt={`${l.title} — фото ${photo + 1}`}
+            alt={`${l.title} — photo ${photo + 1}`}
             loading="lazy"
           />
         ) : (
-          <div className="no-photo">Фотографий пока нет</div>
+          <div className="no-photo">No photos yet</div>
         )}
         <span className="photo-tag">{l.area}</span>
         {l.photos.length > 1 && !compact && (
           <>
             <button
               className="photo-prev"
-              aria-label="Предыдущее фото"
+              aria-label="Previous photo"
               onClick={() =>
                 setPhoto((photo + l.photos.length - 1) % l.photos.length)
               }
@@ -107,7 +107,7 @@ export default function ApartmentCard({
             </button>
             <button
               className="photo-next"
-              aria-label="Следующее фото"
+              aria-label="Next photo"
               onClick={() => setPhoto((photo + 1) % l.photos.length)}
             >
               <ChevronRight size={18} />
@@ -121,13 +121,13 @@ export default function ApartmentCard({
       <div className="card-content">
         <div className="card-price-row">
           <strong>{money(l.price)}</strong>
-          <small>/ месяц</small>
+          <small>/ month</small>
           {l.url && (
             <a
               href={l.url}
               target="_blank"
               rel="noreferrer"
-              aria-label="Открыть исходное объявление"
+              aria-label="Open original listing"
             >
               <ArrowUpRight size={19} />
             </a>
@@ -143,33 +143,33 @@ export default function ApartmentCard({
         <div className="amenities">
           <span>
             <BedDouble size={15} />
-            {l.bedrooms} сп.
+            {l.bedrooms} bed
           </span>
           <span>
             <Maximize size={14} />
-            {l.size} м²
+            {l.size} m²
           </span>
           <span>
             <CarFront size={16} />
             {l.parking === "covered"
-              ? "Крытая"
+              ? "Covered"
               : l.parking === "uncovered"
-                ? "Открытая"
+                ? "Uncovered"
                 : l.parking === "none"
-                  ? "Нет"
-                  : "Не указана"}
+                  ? "None"
+                  : "Unspecified"}
           </span>
         </div>
         <div className="balcony-note">
           <Fence size={13} />
           {l.balcony
             ? l.balcony_size
-              ? "Балкон / веранда · " + l.balcony_size + " м²"
-              : "Балкон / веранда есть"
-            : "Балкон не подтверждён"}
+              ? "Balcony / veranda · " + l.balcony_size + " m²"
+              : "Balcony / veranda available"
+            : "Balcony unconfirmed"}
           <small>
             {l.vision?.photos_analyzed || 0} /{" "}
-            {Math.max(l.photo_urls.length, l.photos.length)} фото
+            {Math.max(l.photo_urls.length, l.photos.length)} photos
           </small>
         </div>
         <div
@@ -181,7 +181,7 @@ export default function ApartmentCard({
             : decisions[l.prediction.decision]}
           {l.prediction.distance !== null && (
             <small>
-              <MapPin size={12} />≈ {l.prediction.distance} км
+              <MapPin size={12} />≈ {l.prediction.distance} km
             </small>
           )}
         </div>

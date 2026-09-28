@@ -1,12 +1,12 @@
 # Fly Estate
 
-Личная квартирная муха для Лимассола: фотографии, бюджет и расположение становятся входами модели на реальных связях FlyWire. Ты оцениваешь объявления и выбираешь между парами; приложение обучает твои предпочтения и показывает результат на карте и в 3D-мозге.
+A personal apartment fly for Limassol. Photos, budget and location become inputs to a model built on real FlyWire connections. Rate listings and choose between pairs; the application learns your preferences and shows its responses on a map and in a 3D brain.
 
-План спайковой модели, дофаминового обучения и следующих этапов: **[дорожная карта](docs/ROADMAP.md)**.
+Spiking dynamics, dopamine learning and upcoming work: **[roadmap](docs/ROADMAP.md)**.
 
-## Запуск
+## Getting started
 
-Нужны Node.js 22+, pnpm 11 и Python 3.11+. На компьютере с установленным Codex скрипт также умеет находить его комплектный Python.
+Requires Node.js 22+, pnpm 11 and Python 3.11+. On a computer with Codex installed, setup can also locate its bundled Python.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -14,89 +14,89 @@ pnpm setup
 pnpm dev
 ```
 
-Открой **http://127.0.0.1:5176**. Python API работает на `127.0.0.1:8000`. Серверы слушают только локальный интерфейс. API-ключ не требуется.
+Open **http://127.0.0.1:5176**. The Python API runs on `127.0.0.1:8000`. Both servers listen on localhost only. No API key is required.
 
-Первый `setup` скачивает около 2 ГБ публичных данных и весов модели, готовит граф и импортирует каталог. Нужны интернет и несколько гигабайт свободного места. Повторный запуск использует кэш и пропускает уже импортированные квартиры. `pnpm setup --no-seed` готовит мозг без квартир. `FLY_PYTHON` позволяет указать Python для создания окружения.
+The first setup downloads approximately 2 GB of public data and model weights, prepares the graph and imports the catalogue. Internet access and several GB of free space are required. Subsequent runs reuse cached files and skip apartments already imported. `pnpm setup --no-seed` prepares the brain without importing apartments. Set `FLY_PYTHON` to choose the Python used to create the environment.
 
-`pnpm build` собирает frontend и проверяет TypeScript. Для просмотра production-сборки запусти API отдельно (`.venv/bin/python -m uvicorn server.main:app --host 127.0.0.1 --port 8000`), затем `pnpm preview`. На Windows Python находится в `.venv/Scripts/python.exe`.
+`pnpm build` builds the frontend and checks TypeScript. To preview the production build, start the API separately (`.venv/bin/python -m uvicorn server.main:app --host 127.0.0.1 --port 8000`), then run `pnpm preview`. On Windows, Python is located at `.venv/Scripts/python.exe`.
 
-## Что работает
+## Available features
 
-- **Мозг мухи:** 139 248 аннотированных нейронов в 3D; вращение, масштаб, выделение групп и информация о нейроне по нажатию. Для каждой квартиры API отдаёт 16 шагов рассчитанной активности. Можно смотреть общую реакцию на всю галерею или реакцию на отдельное фото.
-- **Карта интересов:** OpenStreetMap, маркеры цен, объединение квартир в одной точке, желаемая зона и перетаскиваемый центр. Маркер мухи показывает интерес модели к выбранной квартире.
-- **Обучение:** «Посмотрел бы», «Может быть», «Не моё» с возможностью отменить оценку. Повторная оценка заменяет прежнюю.
-- **Дуэль:** выбор A, Б или ничья. Одна и та же пара хранится один раз, независимо от порядка квартир.
-- **Правила:** ориентир бюджета, абсолютный лимит, спальни, крытая парковка и исключённые районы. Объявления отсекаются до расчёта и обучения.
-- **Pure Fly:** фото превращаются в сетку 8×8 RGB и попадают на выбранные зрительные входы.
-- **Cyborg Fly:** локальный CLIP извлекает визуальные сигналы простора, света, интерьера, большого балкона и укрытия. Дальше предпочтения рассчитываются через граф FlyWire.
-- **Все фотографии:** каждый доступный снимок проходит через энкодер и 16 шагов нейронной сети. После этого усредняются выходы MBON/CX, а не исходные фото. Интерфейс показывает обработанное и ожидаемое число снимков; недоступные фото не заменяются вымышленными.
-- **Простор и балкон:** площадь квартиры, наличие балкона/лоджии, его указанная площадь и наличие укрытия дают положительные входные сигналы. Большой балкон и укрытие дополнительно оцениваются по фото в Cyborg Fly. Площадь балкона не вычисляется по картинке: если её нет в источнике, она остаётся неизвестной.
-- **Импорт:** JSON-LD, JSON, HTML/текст, поддерживаемые ссылки и ручная карточка с загрузкой фото. Для страниц с JavaScript есть закладка, которая копирует данные открытого объявления.
+- **Fly brain:** 139,248 annotated neurons in 3D. Rotate, zoom, highlight groups and select a neuron to inspect it. The API returns 16 steps of computed activity for each apartment. View the response to the whole gallery or to an individual photo.
+- **Interest map:** OpenStreetMap, price markers, grouped apartments at shared coordinates, a preferred area and a draggable center. The fly marker shows the model’s interest in the selected apartment.
+- **Learning:** “Would visit”, “Maybe” and “Not for me”, with an option to remove a rating. A new rating replaces the previous one.
+- **Apartment duels:** choose A, B or a tie. Each pair is stored once, regardless of its order.
+- **Rules:** target budget, hard price limit, bedroom count, covered parking and excluded areas. Listings are filtered before computation and learning.
+- **Pure Fly:** photos become an 8×8 RGB grid projected onto selected visual inputs.
+- **Cyborg Fly:** local CLIP extracts signals of spaciousness, light, interior design, a large balcony and shelter. Preferences are then computed through the FlyWire graph.
+- **Every photo:** each available image passes through the encoder and 16 neural steps. MBON/CX outputs are averaged after computation; the input photos are not averaged first. The interface shows processed and expected photo counts. Unavailable photos are not replaced with invented images.
+- **Space and balconies:** floor area, balcony/loggia presence, stated balcony size and shelter provide positive input signals. Cyborg Fly also estimates large balcony and shelter signals from photos. Balcony area is never inferred in square meters from an image: it stays unknown if the source does not state it.
+- **Import:** JSON-LD, JSON, HTML/text, supported listing URLs and manual entry with uploaded photos. A bookmark button copies listing data from pages rendered with JavaScript.
 
-Дефолты из исходного описания: комфортный бюджет €1800, абсолютный лимит €2800, минимум одна спальня, обязательная крытая парковка, исключён Ypsonas. Это изменяемые начальные настройки.
+Defaults from the original brief: €1,800 target budget, €2,800 hard limit, at least one bedroom, covered parking required and Ypsonas excluded. These are editable initial settings.
 
-Классификация начинается после пяти оценок/сравнений и наличия положительного и отрицательного примера либо пяти парных сравнений. До этого интерфейс честно пишет, что муха ещё учится. Новая установка не содержит сгенерированных личных оценок.
+Classification starts after at least five ratings/comparisons with both positive and negative examples, or five pairwise comparisons. Until then, the interface says the fly is still learning. A fresh installation contains no fabricated personal ratings.
 
-## Как устроена модель
+## Model architecture
 
 ```text
-Каждое фото → RGB / CLIP ───┐
-Цена, простор, балкон → ALPN├→ граф FlyWire → MBON + CX каждого фото
-Положение и расстояние → CX┘                         ↓
-                                          среднее по всем снимкам
-                                                    ↓
-                               твои оценки → обучаемый выход → интерес
+Every photo → RGB / CLIP ──┐
+Price, space, balcony → ALPN├→ FlyWire graph → MBON + CX per photo
+Location and distance → CX┘                         ↓
+                                      average across all photos
+                                                   ↓
+                              your ratings → learned readout → interest
 ```
 
-`scripts/prepare_brain.py` объединяет реальные синаптические связи по паре нейронов, убирает самосвязи и пары с суммарным числом синапсов меньше 5. В текущей подготовке: **2 700 429** направленных связей и **34 152 544** синапса на этих связях. Веса положительные и нормированы по входящему весу.
+`scripts/prepare_brain.py` aggregates real synaptic connections by neuron pair, removes self-connections and excludes pairs with fewer than five synapses. The current prepared graph contains **2,700,429** directed connections and **34,152,544** synapses on those connections. Weights are positive and normalized by incoming weight.
 
-В `server/brain.py` используется простая модель скорости активности: 16 шагов утечки и `tanh`, затем значения 96 MBON и усреднение по 229 типам CX. Только эти выходы входят в регуляризованный логистический слой, обучаемый на оценках и разностях пар. Цена и фото не передаются напрямую в итоговый классификатор. Этот же расчёт поставляет кадры 3D-визуализации.
+`server/brain.py` implements simple rate dynamics: 16 leak-and-`tanh` steps, followed by the activity of 96 MBONs and pooling across 229 CX types. Only these outputs enter a regularized logistic readout trained on ratings and pair differences. Price and photo features are not passed directly to the final classifier. The same neural computation supplies the frames of the 3D visualization.
 
-Каждый снимок рассчитывается независимо с одинаковыми характеристиками квартиры. Размер батча ограничивает расход памяти, но не количество обработанных фотографий. Общая визуализация усредняет модули активности всех снимков перед нормированием кадра. Предпочтение простора и балкона задано искусственными положительными входами по пожеланию пользователя; итоговый обучаемый выход всё ещё зависит от его оценок.
+Each image is computed independently using the same apartment metadata. Batch size limits memory use, not the total number of processed photos. The gallery visualization averages absolute activities across images before normalizing each frame. Positive space and balcony inputs are artificial preferences requested by the user; the learned readout still depends on their ratings.
 
-### Научные границы
+### Scientific boundaries
 
-**Реальны анатомические позиции, идентификаторы, типы и топология связей.** Динамика, сенсорные адаптеры и квартирный выход — наша экспериментальная модель. Это не измеренная активность живой мухи и не проверенная эмуляция её решений.
+**Anatomical positions, identifiers, types and connection topology are real.** Dynamics, sensory adapters and the apartment readout are our experimental model. They are not measured activity from a living fly or a validated emulation of its decisions.
 
-- Отображение RGB на зрительные нейроны — детерминированный искусственный адаптер, не восстановленная ретинотопия. Pretrained FlyVis здесь не подключён.
-- ALPN не являются «нейронами цены». Числовые признаки проецируются туда искусственно. CX получает искусственный сигнал направления и расстояния.
-- Возбуждающие/тормозные знаки, задержки, биофизика и рецепторная специфичность не восстановлены. Метка нейромедиатора не используется как доказанный знак веса.
-- Учится отдельный выход MBON/CX. Биологическая дофаминовая пластичность KC→MBON пока не реализована. Группа DAN в 3D — анатомическая группа.
-- CLIP-сигналы — сходство фото с текстовыми описаниями, не подтверждённые свойства жилья и не калиброванные вероятности. Итоговая оценка тоже не является вероятностью того, что квартира понравится в реальности.
-- Точки — аннотированные позиции нейронов; это не морфологии нейритов. Линии — отображаемая выборка реальных связей. Полный граф используется в расчёте.
-- Яркость показывает модуль активности, со шкалой `sqrt(abs(a)/max(abs(a)))` отдельно в каждом кадре. Между кадрами яркость нельзя сравнивать как абсолютную скорость спайков.
-- Полёт маркера на карте — визуальное отображение результата. Это не симуляция моторной системы или реальный дорожный маршрут.
+- RGB-to-neuron mapping is a deterministic artificial adapter, not reconstructed retinotopy. Pretrained FlyVis is not connected.
+- ALPNs are not “price neurons”. Numeric features are projected onto them artificially. CX receives an artificial direction and distance signal.
+- Excitatory/inhibitory signs, delays, biophysics and receptor specificity are not reconstructed in the application engine. A neurotransmitter label is not treated as a proven synaptic sign.
+- A separate MBON/CX readout is trained. Biological dopamine-dependent KC→MBON plasticity is not yet integrated. The DAN group in 3D is an anatomical group.
+- CLIP signals are photo–text similarities, not verified housing properties or calibrated probabilities. The final score is not a probability that you will like an apartment in real life.
+- Points represent annotated neuron locations, not neurite morphologies. Lines display a subset of real connections. The complete prepared graph is used for computation.
+- Brightness shows activity magnitude using `sqrt(abs(a)/max(abs(a)))`, normalized separately in each frame. Brightness cannot be compared between frames as an absolute firing rate.
+- The fly marker’s movement on the map visualizes a result. It does not simulate a motor system or a real travel route.
 
-## Источники и версии
+## Sources and versions
 
-- Связи: [FlyWire public release 783, Zenodo 10676866](https://zenodo.org/records/10676866), файл `proofread_connections_783.feather`. Скрипт проверяет опубликованный MD5. Метаданные и лицензия CC BY 4.0 сохранены в `data/provenance.json`.
-- Аннотации: [flyconnectome/flywire_annotations, тег v3.1.0](https://github.com/flyconnectome/flywire_annotations/tree/v3.1.0), `Supplemental_file1_neuron_annotations.tsv`. Координаты переведены в физический масштаб по [документации fafbseg: 4×4×40 нм](https://natverse.org/fafbseg/reference/flywire_voxdims.html).
-- Зрение: [официальная модель openai/clip-vit-base-patch32](https://huggingface.co/openai/clip-vit-base-patch32), фиксированная ревизия `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`. Все доступные изображения обрабатываются локально, пакетами по четыре, без обрезания галереи.
-- Каталог: публичные карточки [RentSpot Cyprus](https://www.rentspotcy.com/rentals). В `data/listings.json` хранятся ссылки, краткие поля и URL изображений, полученные 28 сентября 2026. Полные описания и контактные данные не включены. Фото скачиваются по публичным URL при импорте и не хранятся в Git.
-- География: OpenStreetMap/Nominatim, ODbL. Ссылки и точность в `data/areas.json`. Большинство маркеров — приблизительные точки районов, а не точные адреса. Расстояние вычисляется по прямой. Доступность и цена объявления могут измениться: переходи к первоисточнику.
+- Connections: [FlyWire public release 783, Zenodo 10676866](https://zenodo.org/records/10676866), `proofread_connections_783.feather`. The download script verifies the published MD5. Metadata and the CC BY 4.0 license are recorded in `data/provenance.json`.
+- Annotations: [flyconnectome/flywire_annotations, v3.1.0](https://github.com/flyconnectome/flywire_annotations/tree/v3.1.0), `Supplemental_file1_neuron_annotations.tsv`. Coordinates are converted to physical scale according to [fafbseg documentation: 4×4×40 nm](https://natverse.org/fafbseg/reference/flywire_voxdims.html).
+- Vision: the [official openai/clip-vit-base-patch32 model](https://huggingface.co/openai/clip-vit-base-patch32), pinned to `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`. All available images are processed locally in batches of four, without truncating galleries.
+- Catalogue: public cards from [RentSpot Cyprus](https://www.rentspotcy.com/rentals). `data/listings.json` contains links, short fields and image URLs captured on September 28, 2026. Full descriptions and contact details are excluded. Photos are downloaded from public URLs during import and are not stored in Git.
+- Geography: OpenStreetMap/Nominatim, ODbL. Sources and accuracy are recorded in `data/areas.json`. Most markers are approximate area locations, not exact addresses. Distances are straight-line distances. Listing availability and prices may change; check the original source.
 
-Согласно [правилам цитирования аннотаций](https://github.com/flyconnectome/flywire_annotations#how-to-cite), при использовании версии ≥3.0 следует ссылаться на **Berg et al. (2025)**, **Schlegel et al. (2024)**, **Matsliah et al. (2024)** и **Dorkenwald et al. (2024)**. Полные библиографические записи доступны в исходном репозитории. Fly Estate не является официальным продуктом команды FlyWire.
+The [annotation citation guidelines](https://github.com/flyconnectome/flywire_annotations#how-to-cite) require citing **Berg et al. (2025)**, **Schlegel et al. (2024)**, **Matsliah et al. (2024)** and **Dorkenwald et al. (2024)** when using annotation versions ≥3.0. Full references are available in the upstream repository. Fly Estate is not an official FlyWire product.
 
-## Хранение и импорт
+## Storage and import
 
-SQLite в `data/state.sqlite` содержит локальные объявления, правила и оценки. `data/photos` содержит фото. Все эти файлы, загруженные модели и исходные большие данные исключены из Git.
+SQLite at `data/state.sqlite` stores local listings, rules and ratings. `data/photos` stores photos. These files, downloaded models and large raw datasets are excluded from Git.
 
-Кнопка экспорта сохраняет JSON с объявлениями, настройками и оценками. Такой JSON можно вставить в импорт: настройки и оценки восстановятся для успешно импортированных квартир. Изображения загружаются заново по исходным URL; для вручную загруженных фото их нужно добавить повторно. Это не полная резервная копия изображений.
+Export downloads JSON containing listings, settings and ratings. Paste it into import to restore settings and ratings for successfully imported apartments. Images are downloaded again from their original URLs; manually uploaded photos must be added again. This export is not a complete image backup.
 
-Прямые ссылки принимаются только с RentSpot, Fox, Bazaraki и INDEX. Поддержка ссылки не гарантирует, что источник отдаст данные без браузера. Bazaraki при разработке возвращал проверку Cloudflare: прямой сбор оттуда не работает. Для таких источников используй открытую страницу через закладку, JSON/HTML или ручную форму.
+Direct URLs are accepted only from RentSpot, Fox, Bazaraki and INDEX. Supporting a URL does not guarantee that its source will return data without a browser. Bazaraki presented a Cloudflare check during development, so direct collection from it is unavailable. Use an open page with the bookmark button, JSON/HTML or the manual form for such sources.
 
-Сервер ограничивает источники и публичные HTTPS-адреса, проверяет редиректы и размеры. Приложение предназначено для локального использования одним человеком. Для публичного развёртывания нужны аутентификация, раздельное хранение пользователей и ограничения ресурсов.
+The server restricts sources to supported sites and public HTTPS addresses, checks redirects and enforces size limits. The application is intended for one person running it locally. Public deployment requires authentication, separate user storage and resource limits.
 
-За один импорт принимается до 100 объявлений, до 100 снимков в каждом. Галереи сверх этого лимита отклоняются с явной ошибкой и не обрезаются. Недоступные фотографии отмечаются предупреждениями.
+Each import accepts up to 100 listings and up to 100 images per listing. Larger galleries are rejected with an explicit error rather than truncated. Unavailable photos are reported as warnings.
 
-## Структура
+## Project structure
 
 ```text
-src/                     React, 3D-мозг, карта, карточки, импорт
-server/                  FastAPI, граф, CLIP, SQLite, импорт
-scripts/                 воспроизводимая подготовка и запуск
-data/listings.json       публичные поля начального каталога
-data/areas.json           приблизительные координаты районов
-data/provenance.json      версии, источники и checksum
-.github/workflows/        сборка frontend и проверка синтаксиса Python
+src/                     React, 3D brain, map, cards and import
+server/                  FastAPI, graph, CLIP, SQLite and import
+scripts/                 reproducible preparation and startup
+data/listings.json       public fields of the initial catalogue
+data/areas.json          approximate area coordinates
+data/provenance.json     versions, sources and checksums
+.github/workflows/       frontend build and Python syntax checks
 ```

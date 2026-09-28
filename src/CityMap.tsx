@@ -23,7 +23,7 @@ const originIcon = L.divIcon({
 });
 const flyIcon = L.divIcon({
   className: "map-fly",
-  html: '<img src="/fly.svg" width="44" height="44" alt="Муха"/>',
+  html: '<img src="/fly.svg" width="44" height="44" alt="Fly"/>',
   iconSize: [44, 44],
   iconAnchor: [22, 22],
 });
@@ -158,7 +158,7 @@ export default function CityMap({
               onIdeal([e.target.getLatLng().lat, e.target.getLatLng().lng]),
           }}
         >
-          <Popup>Идеальная зона · перетащи точку</Popup>
+          <Popup>Preferred area · drag the point</Popup>
         </Marker>
         {Array.from(groups.entries()).map(([k, g]) => {
           const chosen = g.find((l) => l.id === selected?.id) || g[0];
@@ -182,14 +182,14 @@ export default function CityMap({
                 <div className="map-popup">
                   <strong>{chosen.area}</strong>
                   <small>
-                    Позиция:{" "}
+                    Location:{" "}
                     {chosen.coord_kind === "area"
-                      ? "приблизительная точка района"
-                      : "координаты источника"}
+                      ? "approximate area location"
+                      : "source coordinates"}
                   </small>
                   {g.map((l) => (
                     <button key={l.id} onClick={() => onSelect(l.id)}>
-                      {l.bedrooms} сп. · {l.size} м² <b>{money(l.price)}</b>
+                      {l.bedrooms} bed · {l.size} m² <b>{money(l.price)}</b>
                     </button>
                   ))}
                 </div>
@@ -216,21 +216,21 @@ export default function CityMap({
       <div className="map-title">
         <span className="live-dot" />
         <b>LIMASSOL, CYPRUS</b>
-        <small>Карта интересов твоей мухи</small>
+        <small>Your fly’s interest map</small>
       </div>
       <div className="map-tools">
         <button
           onClick={() => setFitTick((v) => v + 1)}
-          title="Показать все квартиры"
-          aria-label="Показать все квартиры"
+          title="Show all apartments"
+          aria-label="Show all apartments"
         >
           <LocateFixed size={19} />
         </button>
         <button
           className={choose ? "active" : ""}
           onClick={() => setChoose(!choose)}
-          title="Изменить идеальную точку"
-          aria-label="Изменить идеальную точку"
+          title="Change preferred point"
+          aria-label="Change preferred point"
         >
           <MousePointer2 size={19} />
         </button>
@@ -238,31 +238,31 @@ export default function CityMap({
       {choose && (
         <div className="map-instruction">
           <MapPin size={16} />
-          Нажми на карте, где тебе хотелось бы жить
+          Click on the map where you would like to live
         </div>
       )}
       {tileErrors > 5 && (
         <div className="map-instruction map-error">
-          Не удалось загрузить фон карты. Маркеры сохранены.
+          Could not load map tiles. Your markers are preserved.
         </div>
       )}
       <div className="map-legend">
         <span>
           <i className="legend-circle green" />
-          Хочет сюда
+          Wants to go here
         </span>
         <span>
           <i className="legend-circle red" />
-          Разворачивается
+          Turns away
         </span>
         <span>
           <i className="legend-circle gray" />
-          Ещё учится
+          Still learning
         </span>
       </div>
       <div className="map-precision">
         <Navigation size={13} />
-        Точки районов приблизительны · расстояние по прямой
+        Area locations are approximate · straight-line distance
       </div>
     </div>
   );

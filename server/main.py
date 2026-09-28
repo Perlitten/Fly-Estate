@@ -44,8 +44,8 @@ class Settings(BaseModel):
     mode:Literal["pure","cyborg"]
     @model_validator(mode="after")
     def validate_values(self):
-        if self.ceiling<self.budget: raise ValueError("Абсолютный лимит не может быть ниже бюджета.")
-        if not (34<=self.ideal[0]<=36 and 32<=self.ideal[1]<=35): raise ValueError("Идеальная точка должна быть на Кипре.")
+        if self.ceiling<self.budget: raise ValueError("The hard limit cannot be lower than the target budget.")
+        if not (34<=self.ideal[0]<=36 and 32<=self.ideal[1]<=35): raise ValueError("The preferred point must be in Cyprus.")
         self.excluded=[x.strip()[:80] for x in self.excluded if x.strip()]
         return self
 
@@ -75,9 +75,9 @@ class Rating(BaseModel):
 def rating(payload:Rating):
     data=store.get()
     l=next((l for l in data["listings"] if l["id"]==payload.id),None)
-    if not l: raise HTTPException(404,"Квартира не найдена.")
+    if not l: raise HTTPException(404,"Apartment not found.")
     if payload.value is not None and (filter_reasons(l,data["settings"]) or not l.get("vision")):
-        raise HTTPException(422,"Оценивать можно квартиры с фото, прошедшие фильтры.")
+        raise HTTPException(422,"You can rate apartments with photos that pass your filters.")
     store.rating(payload.id,payload.value)
     return {"ok":True}
 
@@ -91,7 +91,7 @@ def compare(payload:Comparison):
     data=store.get()
     valid={l["id"] for l in data["listings"] if not filter_reasons(l,data["settings"]) and l.get("vision")}
     if payload.a==payload.b or payload.a not in valid or payload.b not in valid:
-        raise HTTPException(422,"Нужны две разные квартиры с фото, прошедшие фильтры.")
+        raise HTTPException(422,"Two different apartments with photos that pass your filters are required.")
     store.compare(payload.a,payload.b,payload.choice)
     return {"ok":True}
 
@@ -114,7 +114,7 @@ def import_job(id,payload):
         if not isinstance(backup,dict) or backup.get("version")!=1 or "listings" not in backup: backup=None
         restored_settings=Settings.model_validate(backup["settings"]).model_dump() if backup else None
         items=importers.parse(content)
-        if not items or len(items)>100: raise ValueError("За один импорт нужно от 1 до 100 объявлений.")
+        if not items or len(items)>100: raise ValueError("Import between 1 and 100 listings at a time.")
         job["total"]=len(items)
         import_settings=store.get()["settings"]
         restored_ids={}
@@ -122,17 +122,17 @@ def import_job(id,payload):
             try:
                 if not item.get("url") and payload.url: item["url"]=payload.url
                 l=importers.normalize(item)
-                job["phase"]="Загружаю фотографии"
+                job["phase"]="Downloading photos"
                 warnings=importers.photos(l,payload.uploads if len(items)==1 else [])
-                if warnings: job["warnings"].append(l["title"]+f': доступны {len(l["photos"])} из {max(len(l["photo_urls"]),len(l["photos"]))} фото.')
-                job["phase"]="Фото → энкодер → нейронные сигналы"
+                if warnings: job["warnings"].append(l["title"]+f': available {len(l["photos"])} of {max(len(l["photo_urls"]),len(l["photos"]))} photos.')
+                job["phase"]="Photos → encoder → neural signals"
                 if l["photos"]:
                     with model_lock:
                         l["vision"]=vision.encode(l["photos"])
-                        job["phase"]="Каждый снимок → нейроны → MBON/CX"
+                        job["phase"]="Every photo → neurons → MBON/CX"
                         brain.features([l],import_settings)
                 l["import_warnings"]=warnings
-                if not l["photos"]: job["warnings"].append(l["title"]+": фото не загружены; оценка отключена.")
+                if not l["photos"]: job["warnings"].append(l["title"]+": photos could not be downloaded; rating is disabled.")
                 store.listing(l)
                 if item.get("id"): restored_ids[item["id"]]=l["id"]
                 job["imported"]+=1
@@ -140,7 +140,7 @@ def import_job(id,payload):
                 logging.exception("Listing import failed")
                 job["errors"].append(str(e))
             job["done"]+=1
-        if not job["imported"]: raise ValueError("; ".join(job["errors"]) or "Импорт не завершён.")
+        if not job["imported"]: raise ValueError("; ".join(job["errors"]) or "Import did not complete.")
         if backup:
             for old_id,value in backup.get("ratings",{}).items():
                 if old_id in restored_ids and type(value) is int and value in (-1,0,1): store.rating(restored_ids[old_id],value)
@@ -148,24 +148,24 @@ def import_job(id,payload):
                 if pair.get("a") in restored_ids and pair.get("b") in restored_ids and pair["a"]!=pair["b"] and type(pair.get("choice")) is int and pair["choice"] in (-1,0,1):
                     store.compare(restored_ids[pair["a"]],restored_ids[pair["b"]],pair["choice"])
             store.settings(restored_settings)
-            job["warnings"].append("Правила и оценки восстановлены для успешно импортированных квартир. Фото из ручных загрузок нужно добавить повторно.")
-        job.update(status="done",phase="Готово")
+            job["warnings"].append("Rules and ratings restored for successfully imported apartments. Manually uploaded photos must be added again.")
+        job.update(status="done",phase="Done")
     except Exception as e:
         logging.exception("Import failed")
-        job.update(status="error",phase="Ошибка",error=str(e))
+        job.update(status="error",phase="Error",error=str(e))
 
 @app.post("/api/import")
 def start_import(payload:Import):
     if len([j for j in jobs.values() if j["status"]=="running"])>=1:
-        raise HTTPException(409,"Дождись завершения текущего импорта.")
+        raise HTTPException(409,"Wait for the current import to finish.")
     id=uuid.uuid4().hex
-    jobs[id]={"id":id,"status":"running","phase":"Читаю объявление","total":0,"done":0,"imported":0,"errors":[],"warnings":[]}
+    jobs[id]={"id":id,"status":"running","phase":"Reading listing","total":0,"done":0,"imported":0,"errors":[],"warnings":[]}
     threading.Thread(target=import_job,args=(id,payload),daemon=True).start()
     return {"job":id}
 
 @app.get("/api/jobs/{id}")
 def job(id:str):
-    if id not in jobs: raise HTTPException(404,"Импорт не найден.")
+    if id not in jobs: raise HTTPException(404,"Import not found.")
     return jobs[id]
 
 @app.get("/api/export")
@@ -194,18 +194,18 @@ def geometry_meta():
 
 @app.get("/api/brain/neuron/{index}")
 def neuron(index:int):
-    if not 0<=index<len(brain.nodes["ids"]): raise HTTPException(404,"Нейрон не найден.")
-    return {"id":str(brain.nodes["ids"][index]),"type":str(brain.nodes["types"][index]) or "Не типизирован", "group":str(brain.nodes["classes"][index]) or "Другая группа",
+    if not 0<=index<len(brain.nodes["ids"]): raise HTTPException(404,"Neuron not found.")
+    return {"id":str(brain.nodes["ids"][index]),"type":str(brain.nodes["types"][index]) or "Untyped", "group":str(brain.nodes["classes"][index]) or "Other group",
             "incoming":brain.w[index].nnz,"outgoing":brain.w.getcol(index).nnz}
 
 @app.get("/api/brain/activity/{id}")
 def activity(id:str,photo:int|None=Query(default=None,ge=0)):
     data=store.get();l=next((l for l in data["listings"] if l["id"]==id),None)
-    if not l or not l.get("vision"): raise HTTPException(422,"Для активности нужны фотографии.")
-    if filter_reasons(l,data["settings"]): raise HTTPException(422,"Квартира исключена жёсткими фильтрами.")
+    if not l or not l.get("vision"): raise HTTPException(422,"Photos are required to compute activity.")
+    if filter_reasons(l,data["settings"]): raise HTTPException(422,"Apartment excluded by hard filters.")
     if photo is not None:
         photo_signals=l["vision"].get("per_photo",[])
-        if photo>=len(photo_signals): raise HTTPException(422,"Снимок ещё не обработан: импортируй объявление повторно.")
+        if photo>=len(photo_signals): raise HTTPException(422,"This photo has not been processed yet: import the listing again.")
         l={**l,"vision":photo_signals[photo]}
     with model_lock: _,_,frames=brain.features([l],data["settings"],record=True)
     return Response(frames.tobytes(),media_type="application/octet-stream",headers={"X-Neurons":str(frames.shape[1]),"X-Frames":str(frames.shape[0])})
