@@ -1,0 +1,361 @@
+{
+  "learning": [
+    {
+      "run": "learning_g20_s0",
+      "gain": 20.0,
+      "seed": 0,
+      "pre_A_spikes": 3764.0,
+      "post_A_spikes": 41.0,
+      "A_suppression_percent": 98.91073326248672,
+      "pre_B_spikes": 4274.0,
+      "post_B_spikes": 3998.0,
+      "B_change_percent": -6.457650912494151,
+      "plastic_weight_mass_change_percent": 6.620000000000004,
+      "changed_pairs": 5483,
+      "changes_outside_KC_MBON": 0,
+      "pre_KC_active_ge1_percent": 9.286266177322775,
+      "pre_KC_active_ge2_percent": null,
+      "pre_A_repeat_jaccard_ge1": 0.9708333333333333,
+      "pre_B_repeat_jaccard_ge1": 0.9777327935222672,
+      "A_B_jaccard_ge1": 0.05720572057205721
+    },
+    {
+      "run": "learning_g20_s1",
+      "gain": 20.0,
+      "seed": 1,
+      "pre_A_spikes": 3490.0,
+      "post_A_spikes": 0.0,
+      "A_suppression_percent": 100.0,
+      "pre_B_spikes": 4289.5,
+      "post_B_spikes": 4127.0,
+      "B_change_percent": -3.788320317053273,
+      "plastic_weight_mass_change_percent": 5.220000000000002,
+      "changed_pairs": 4051,
+      "changes_outside_KC_MBON": 0,
+      "pre_KC_active_ge1_percent": 8.552250338033609,
+      "pre_KC_active_ge2_percent": 8.161097160517675,
+      "pre_A_repeat_jaccard_ge1": 0.9351351351351351,
+      "pre_B_repeat_jaccard_ge1": 0.9429097605893186,
+      "A_B_jaccard_ge1": 0.07600950118764846
+    },
+    {
+      "run": "learning_g20_s2",
+      "gain": 20.0,
+      "seed": 2,
+      "pre_A_spikes": 4245.5,
+      "post_A_spikes": 69.5,
+      "A_suppression_percent": 98.3629725591803,
+      "pre_B_spikes": 3524.5,
+      "post_B_spikes": 3252.5,
+      "B_change_percent": -7.717406724358067,
+      "plastic_weight_mass_change_percent": 7.920000000000005,
+      "changed_pairs": 6455,
+      "changes_outside_KC_MBON": 0,
+      "pre_KC_active_ge1_percent": 9.653274096967355,
+      "pre_KC_active_ge2_percent": 9.155881784817463,
+      "pre_A_repeat_jaccard_ge1": 0.9821109123434705,
+      "pre_B_repeat_jaccard_ge1": 0.89171974522293,
+      "A_B_jaccard_ge1": 0.03297872340425532
+    },
+    {
+      "run": "learning_g1_s0",
+      "gain": 1.0,
+      "seed": 0,
+      "pre_A_spikes": 40.5,
+      "post_A_spikes": 41.5,
+      "A_suppression_percent": -2.4691358024691468,
+      "pre_B_spikes": 29.0,
+      "post_B_spikes": 22.5,
+      "B_change_percent": -22.413793103448278,
+      "plastic_weight_mass_change_percent": 2.629999999999999,
+      "changed_pairs": 1894,
+      "changes_outside_KC_MBON": 0,
+      "pre_KC_active_ge1_percent": 3.370677998841028,
+      "pre_KC_active_ge2_percent": 3.298242225226965,
+      "pre_A_repeat_jaccard_ge1": 0.9751552795031055,
+      "pre_B_repeat_jaccard_ge1": 0.9895287958115183,
+      "A_B_jaccard_ge1": 0.017543859649122806
+    }
+  ],
+  "resources": [
+    {
+      "run": "taste_s0_n3",
+      "total_wall_seconds": 884.9456255829427,
+      "first_build_seconds": 15.162572332890704,
+      "first_run_seconds": 37.92665779090021,
+      "repeat_median_seconds": 29.553735541994683,
+      "repeat_unit": "1 s trial, rebuilt network",
+      "peak_worker_GiB": 2.7072906494140625,
+      "peak_process_tree_GiB": 2.7072906494140625
+    },
+    {
+      "run": "learning_g20_s0",
+      "total_wall_seconds": 39.64236749999691,
+      "first_build_seconds": 7.901690292055719,
+      "first_run_seconds": 17.673277749912813,
+      "repeat_median_seconds": 0.3803815839346498,
+      "repeat_unit": "0.5 s stimulus + 0.15 s washout",
+      "peak_worker_GiB": 2.012115478515625,
+      "peak_process_tree_GiB": 2.012115478515625
+    },
+    {
+      "run": "learning_g20_s1",
+      "total_wall_seconds": 15.402095917030238,
+      "first_build_seconds": 4.998391582979821,
+      "first_run_seconds": 0.4971140830311924,
+      "repeat_median_seconds": 0.29656454094219953,
+      "repeat_unit": "0.5 s stimulus + 0.15 s washout",
+      "peak_worker_GiB": 1.683074951171875,
+      "peak_process_tree_GiB": 1.683074951171875
+    },
+    {
+      "run": "learning_g20_s2",
+      "total_wall_seconds": 11.13876991707366,
+      "first_build_seconds": 1.5204383750678971,
+      "first_run_seconds": 0.43529391707852483,
+      "repeat_median_seconds": 0.3068514571059495,
+      "repeat_unit": "0.5 s stimulus + 0.15 s washout",
+      "peak_worker_GiB": 1.825164794921875,
+      "peak_process_tree_GiB": 1.825164794921875
+    },
+    {
+      "run": "learning_g1_s0",
+      "total_wall_seconds": 11.131246333010495,
+      "first_build_seconds": 1.46519333391916,
+      "first_run_seconds": 0.4020041659241542,
+      "repeat_median_seconds": 0.3062397080939263,
+      "repeat_unit": "0.5 s stimulus + 0.15 s washout",
+      "peak_worker_GiB": 1.7917022705078125,
+      "peak_process_tree_GiB": 1.7976531982421875
+    },
+    {
+      "run": "stability_full_raw_s0",
+      "total_wall_seconds": 10.5623923339881,
+      "first_build_seconds": 1.4022184159839526,
+      "first_run_seconds": 3.17843649990391,
+      "repeat_median_seconds": 0.7388123340206221,
+      "repeat_unit": "0.25\u20130.5 s stages, reused network",
+      "peak_worker_GiB": 1.9026641845703125,
+      "peak_process_tree_GiB": 1.977264404296875
+    },
+    {
+      "run": "stability_subgraph_raw_s0",
+      "total_wall_seconds": 4.62592358305119,
+      "first_build_seconds": 1.5507093749474734,
+      "first_run_seconds": 0.3527332920348272,
+      "repeat_median_seconds": 0.14923795801587403,
+      "repeat_unit": "0.25\u20130.5 s stages, reused network",
+      "peak_worker_GiB": 1.8004150390625,
+      "peak_process_tree_GiB": 1.8004150390625
+    },
+    {
+      "run": "stability_subgraph_edited_s0",
+      "total_wall_seconds": 3.693120624986477,
+      "first_build_seconds": 1.350247499998659,
+      "first_run_seconds": 0.3033124159555882,
+      "repeat_median_seconds": 0.09176599991042167,
+      "repeat_unit": "0.25\u20130.5 s stages, reused network",
+      "peak_worker_GiB": 1.6634979248046875,
+      "peak_process_tree_GiB": 1.6634979248046875
+    }
+  ],
+  "stability": [
+    {
+      "run": "stability_full_raw_s0",
+      "initial_idle_spikes": 0,
+      "weak_odor_spikes": 217775,
+      "final_washout_spikes": 119032,
+      "final_washout_spikes_per_second": 476128.0,
+      "final_washout_active_neurons": 8121,
+      "final_washout_KC_ge2_percent": 63.8980104307514
+    },
+    {
+      "run": "stability_subgraph_raw_s0",
+      "initial_idle_spikes": 0,
+      "weak_odor_spikes": 157376,
+      "final_washout_spikes": 85855,
+      "final_washout_spikes_per_second": 343420.0,
+      "final_washout_active_neurons": 5018,
+      "final_washout_KC_ge2_percent": 68.78501062391346
+    },
+    {
+      "run": "stability_subgraph_edited_s0",
+      "initial_idle_spikes": 0,
+      "weak_odor_spikes": 645,
+      "final_washout_spikes": 0,
+      "final_washout_spikes_per_second": 0.0,
+      "final_washout_active_neurons": 0,
+      "final_washout_KC_ge2_percent": 0.0
+    }
+  ],
+  "taste": [
+    {
+      "condition": "sugar_25Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "sugar_25Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "sugar_25Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 62,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_50Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 14.0,
+      "std_hz": 6.16
+    },
+    {
+      "condition": "sugar_50Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 9.0,
+      "std_hz": 4.55
+    },
+    {
+      "condition": "sugar_50Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 280,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_100Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 63.0,
+      "std_hz": 2.94
+    },
+    {
+      "condition": "sugar_100Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 46.0,
+      "std_hz": 2.45
+    },
+    {
+      "condition": "sugar_100Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 363,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_150Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 82.67,
+      "std_hz": 5.19
+    },
+    {
+      "condition": "sugar_150Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 61.0,
+      "std_hz": 6.48
+    },
+    {
+      "condition": "sugar_150Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 402,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_200Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 93.33,
+      "std_hz": 3.3
+    },
+    {
+      "condition": "sugar_200Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 66.33,
+      "std_hz": 4.5
+    },
+    {
+      "condition": "sugar_200Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 424,
+      "std_hz": null
+    },
+    {
+      "condition": "bitter_150Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "bitter_150Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "bitter_150Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 79,
+      "std_hz": null
+    },
+    {
+      "condition": "water_150Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 6.0,
+      "std_hz": 1.41
+    },
+    {
+      "condition": "water_150Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 0.67,
+      "std_hz": 0.47
+    },
+    {
+      "condition": "water_150Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 155,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar150_bitter150",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 7.0,
+      "std_hz": 1.63
+    },
+    {
+      "condition": "sugar150_bitter150",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 13.67,
+      "std_hz": 2.05
+    },
+    {
+      "condition": "sugar150_bitter150",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 364,
+      "std_hz": null
+    }
+  ]
+}

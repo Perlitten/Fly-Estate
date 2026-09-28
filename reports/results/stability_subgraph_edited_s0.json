@@ -1,0 +1,238 @@
+{
+  "run": "stability_subgraph_edited_s0",
+  "protocol": "stability",
+  "seed": 0,
+  "gain": 20,
+  "trials": 3,
+  "exit_code": 0,
+  "wall_seconds": 3.693120624986477,
+  "peak_worker_rss_bytes": 1786167296,
+  "peak_process_tree_rss_bytes": 1786167296,
+  "peak_tree_phase": "worker",
+  "rss_sampling_seconds": 0.05,
+  "environment": {
+    "python": "3.12.14",
+    "os": "macOS-15.7.5-arm64-arm-64bit",
+    "machine": "arm64",
+    "logical_cpus": 12,
+    "packages": {
+      "brian2": "2.9.0",
+      "numpy": "1.26.4",
+      "pandas": "2.2.3",
+      "scipy": "1.14.1",
+      "pyarrow": "19.0.1",
+      "cython": "3.0.12",
+      "joblib": "1.5.2",
+      "psutil": "7.1.0",
+      "sympy": "1.14.0",
+      "matplotlib": "3.10.6"
+    },
+    "codegen": "cython",
+    "workers": 1,
+    "processor": "Apple M4 Pro",
+    "memory_bytes": 25769803776
+  },
+  "log_path": ".cache/research/runs/stability_subgraph_edited_s0/run.log",
+  "upstream_manifest_sha256": "51596f50bffcb5840b600fdbd064402ed871bd74963751ef4105c54c2f38ec67",
+  "profile": {
+    "network_builds": [
+      {
+        "seconds": 1.350247499998659,
+        "neurons": 8991,
+        "directed_pairs": 791613
+      }
+    ],
+    "runs": [
+      {
+        "index": 0,
+        "simulated_seconds": 0.5,
+        "wall_seconds": 0.3033124159555882,
+        "spikes": 0
+      },
+      {
+        "index": 1,
+        "simulated_seconds": 0.5,
+        "wall_seconds": 0.1404004159849137,
+        "spikes": 645
+      },
+      {
+        "index": 2,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.09077916597016156,
+        "spikes": 0
+      },
+      {
+        "index": 3,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.09263887500856072,
+        "spikes": 0
+      },
+      {
+        "index": 4,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.09176599991042167,
+        "spikes": 0
+      },
+      {
+        "index": 5,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.0915293749421835,
+        "spikes": 0
+      }
+    ],
+    "dt_ms": 0.1,
+    "source_sha256": "fc45837d7122c6ce2a7f3f2f23c515992e4b232aadb919efabb72337fac88e4e",
+    "seed": 0
+  },
+  "stability": {
+    "scope": "subgraph",
+    "stabilized": true,
+    "odor_type": "ORN_DA1",
+    "input_neurons": 126,
+    "structural_edits": {
+      "dan_out": {
+        "selected_pairs": 50155,
+        "nonzero_pairs_zeroed": 50155
+      },
+      "kc_kc": {
+        "selected_pairs": 293762,
+        "nonzero_pairs_zeroed": 293762
+      },
+      "orn_in": {
+        "selected_pairs": 65429,
+        "nonzero_pairs_zeroed": 65429
+      },
+      "excitatory_alln_out": {
+        "selected_pairs": 72767,
+        "nonzero_pairs_zeroed": 37892
+      }
+    },
+    "groups": {
+      "orn": 2279,
+      "alln": 429,
+      "alpn": 685,
+      "kc": 5177,
+      "apl": 2,
+      "mbon": 96,
+      "pam": 307,
+      "ppl1": 16
+    },
+    "stages": [
+      {
+        "stage": "idle",
+        "input_hz": 0,
+        "seconds": 0.5,
+        "total_spikes": 0,
+        "active_neurons": 0,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 0,
+          "alln": 0,
+          "alpn": 0,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      },
+      {
+        "stage": "weak_odor",
+        "input_hz": 10,
+        "seconds": 0.5,
+        "total_spikes": 645,
+        "active_neurons": 136,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 610,
+          "alln": 19,
+          "alpn": 16,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      },
+      {
+        "stage": "washout_1",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 0,
+        "active_neurons": 0,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 0,
+          "alln": 0,
+          "alpn": 0,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      },
+      {
+        "stage": "washout_2",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 0,
+        "active_neurons": 0,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 0,
+          "alln": 0,
+          "alpn": 0,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      },
+      {
+        "stage": "washout_3",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 0,
+        "active_neurons": 0,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 0,
+          "alln": 0,
+          "alpn": 0,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      },
+      {
+        "stage": "washout_4",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 0,
+        "active_neurons": 0,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 0,
+          "alln": 0,
+          "alpn": 0,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      }
+    ]
+  },
+  "recorded_at": "2026-09-28"
+}

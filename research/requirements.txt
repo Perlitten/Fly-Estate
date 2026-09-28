@@ -1,0 +1,11 @@
+# Optional research environment; the apartment application does not need these.
+# Brian2 2.9's units use ndarray.ptp; use a separate NumPy 1 environment.
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+pyarrow==19.0.1
+cython==3.0.12
+brian2==2.9.0
+psutil==7.1.0
+joblib==1.5.2
+matplotlib==3.10.6

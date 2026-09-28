@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "name": "shiu",
+      "repository": "philshiu/Drosophila_brain_model",
+      "revision": "91bdd1e7dcf193f3e7ca5a8933497fcef63b7960",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "LICENSE",
+          "cache_path": ".cache/research/upstream/shiu/LICENSE",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/LICENSE",
+          "bytes": 1085,
+          "sha256": "3621f6d6476189190e2960fa43f11b275ba4eca848fdac50a1ba2925de6223e8"
+        },
+        {
+          "path": "Readme.md",
+          "cache_path": ".cache/research/upstream/shiu/Readme.md",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/Readme.md",
+          "bytes": 3617,
+          "sha256": "0654ac53f9af85000b50f6a5d2297aade8602c507a44e811f8aff602629c2625"
+        },
+        {
+          "path": "environment_full.yml",
+          "cache_path": ".cache/research/upstream/shiu/environment_full.yml",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/environment_full.yml",
+          "bytes": 3445,
+          "sha256": "402fcef4968c99397b0e908b3323ab9e6ef86af5583e46e6427f96f3d1091adf"
+        },
+        {
+          "path": "model.py",
+          "cache_path": ".cache/research/upstream/shiu/model.py",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/model.py",
+          "bytes": 11900,
+          "sha256": "fc45837d7122c6ce2a7f3f2f23c515992e4b232aadb919efabb72337fac88e4e"
+        },
+        {
+          "path": "utils.py",
+          "cache_path": ".cache/research/upstream/shiu/utils.py",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/utils.py",
+          "bytes": 2176,
+          "sha256": "f378cf0b464f2ac5e1daf3609ba25fd51c7e34f294846281707ffe006c3e9ef1"
+        },
+        {
+          "path": "2023_03_23_completeness_630_final.csv",
+          "cache_path": ".cache/research/upstream/shiu/2023_03_23_completeness_630_final.csv",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/2023_03_23_completeness_630_final.csv",
+          "bytes": 3057611,
+          "sha256": "e6b71e17671a9bdb05f55e4bc6774640a1418cb7a05125e0fc994ad40f9bfdfb"
+        },
+        {
+          "path": "2023_03_23_connectivity_630_final.parquet",
+          "cache_path": ".cache/research/upstream/shiu/2023_03_23_connectivity_630_final.parquet",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/2023_03_23_connectivity_630_final.parquet",
+          "bytes": 86630944,
+          "sha256": "94db8c650533bc36ffa3223f2e62325d5648b8d6bd31c3a4e1c804628c7557b3"
+        },
+        {
+          "path": "Completeness_783.csv",
+          "cache_path": ".cache/research/upstream/shiu/Completeness_783.csv",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/Completeness_783.csv",
+          "bytes": 3327347,
+          "sha256": "bbb847a4cc2caaa7a16349722d220c087317b946d148d4d592d94d250617a311"
+        },
+        {
+          "path": "Connectivity_783.parquet",
+          "cache_path": ".cache/research/upstream/shiu/Connectivity_783.parquet",
+          "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/Connectivity_783.parquet",
+          "bytes": 100804642,
+          "sha256": "efeb23fb99098e9c390f6869969b2a121a2ee92c833cfc45ecb2c1d8e1af0347"
+        }
+      ]
+    },
+    {
+      "name": "fly-api",
+      "repository": "dtch1997/fly-api",
+      "revision": "a6ad07a810b1a43cd0356149c07b32105eb46d2a",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "LICENSE",
+          "cache_path": ".cache/research/upstream/fly-api/LICENSE",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/LICENSE",
+          "bytes": 1067,
+          "sha256": "639c88cee1b46b15f91aacef5de976f279eca220894ab7882b1e6c8f94069788"
+        },
+        {
+          "path": "README.md",
+          "cache_path": ".cache/research/upstream/fly-api/README.md",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/README.md",
+          "bytes": 7668,
+          "sha256": "f1486775230f5ced5669016e31993d7044c94fae8e627f7d4a191b0de392a42c"
+        },
+        {
+          "path": "demo/track_a_lif.py",
+          "cache_path": ".cache/research/upstream/fly-api/demo/track_a_lif.py",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/demo/track_a_lif.py",
+          "bytes": 4810,
+          "sha256": "c451be3aa78ad8a7f4305b34db6db11f888c9535c95afb3ff3a14b28af73da8f"
+        },
+        {
+          "path": "docs/demo-report.md",
+          "cache_path": ".cache/research/upstream/fly-api/docs/demo-report.md",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/docs/demo-report.md",
+          "bytes": 5367,
+          "sha256": "f102006487962428f0a05061de0e8048c5bbfcf1748a0a20b32a4efbd971e174"
+        },
+        {
+          "path": "experiments/learning/model_ext.py",
+          "cache_path": ".cache/research/upstream/fly-api/experiments/learning/model_ext.py",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/experiments/learning/model_ext.py",
+          "bytes": 4305,
+          "sha256": "d53bec2d22c4ff8764b5d1083b0e46d7ef5925e58bd5f8ca70bbef8ca370e935"
+        },
+        {
+          "path": "experiments/learning/learning_driver_mb.py",
+          "cache_path": ".cache/research/upstream/fly-api/experiments/learning/learning_driver_mb.py",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/experiments/learning/learning_driver_mb.py",
+          "bytes": 9249,
+          "sha256": "bea56d6e86cf9acf1e9730399f085628c6f3bb92fbd86b9bc5a5feec7be97c2c"
+        },
+        {
+          "path": "experiments/learning/report.md",
+          "cache_path": ".cache/research/upstream/fly-api/experiments/learning/report.md",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/experiments/learning/report.md",
+          "bytes": 5461,
+          "sha256": "d0172586c8878d9979e5c7ef0af40323b717acdaf429e6f0f6f9d01015887670"
+        },
+        {
+          "path": "experiments/learning/notes.md",
+          "cache_path": ".cache/research/upstream/fly-api/experiments/learning/notes.md",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/experiments/learning/notes.md",
+          "bytes": 4497,
+          "sha256": "e95f11322b1f5b5028250bcb55c41d71f0dd7c9300b33c46f65de80267e8ffd1"
+        },
+        {
+          "path": "experiments/learning/sugar_ids_783.json",
+          "cache_path": ".cache/research/upstream/fly-api/experiments/learning/sugar_ids_783.json",
+          "url": "https://raw.githubusercontent.com/dtch1997/fly-api/a6ad07a810b1a43cd0356149c07b32105eb46d2a/experiments/learning/sugar_ids_783.json",
+          "bytes": 400,
+          "sha256": "22be4e8d0660ca1219fb6b96ffc7d726cfed5ccc26786e2b0d4ac8c00a03e3af"
+        }
+      ]
+    }
+  ]
+}

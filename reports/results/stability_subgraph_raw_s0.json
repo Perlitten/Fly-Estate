@@ -1,0 +1,221 @@
+{
+  "run": "stability_subgraph_raw_s0",
+  "protocol": "stability",
+  "seed": 0,
+  "gain": 20,
+  "trials": 3,
+  "exit_code": 0,
+  "wall_seconds": 4.62592358305119,
+  "peak_worker_rss_bytes": 1933180928,
+  "peak_process_tree_rss_bytes": 1933180928,
+  "peak_tree_phase": "worker",
+  "rss_sampling_seconds": 0.05,
+  "environment": {
+    "python": "3.12.14",
+    "os": "macOS-15.7.5-arm64-arm-64bit",
+    "machine": "arm64",
+    "logical_cpus": 12,
+    "packages": {
+      "brian2": "2.9.0",
+      "numpy": "1.26.4",
+      "pandas": "2.2.3",
+      "scipy": "1.14.1",
+      "pyarrow": "19.0.1",
+      "cython": "3.0.12",
+      "joblib": "1.5.2",
+      "psutil": "7.1.0",
+      "sympy": "1.14.0",
+      "matplotlib": "3.10.6"
+    },
+    "codegen": "cython",
+    "workers": 1,
+    "processor": "Apple M4 Pro",
+    "memory_bytes": 25769803776
+  },
+  "log_path": ".cache/research/runs/stability_subgraph_raw_s0/run.log",
+  "upstream_manifest_sha256": "51596f50bffcb5840b600fdbd064402ed871bd74963751ef4105c54c2f38ec67",
+  "profile": {
+    "network_builds": [
+      {
+        "seconds": 1.5507093749474734,
+        "neurons": 8991,
+        "directed_pairs": 791613
+      }
+    ],
+    "runs": [
+      {
+        "index": 0,
+        "simulated_seconds": 0.5,
+        "wall_seconds": 0.3527332920348272,
+        "spikes": 0
+      },
+      {
+        "index": 1,
+        "simulated_seconds": 0.5,
+        "wall_seconds": 0.2502513339277357,
+        "spikes": 157376
+      },
+      {
+        "index": 2,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.15384524990804493,
+        "spikes": 85889
+      },
+      {
+        "index": 3,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.14923795801587403,
+        "spikes": 85960
+      },
+      {
+        "index": 4,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.1453732498921454,
+        "spikes": 86252
+      },
+      {
+        "index": 5,
+        "simulated_seconds": 0.25,
+        "wall_seconds": 0.14592412498313934,
+        "spikes": 85855
+      }
+    ],
+    "dt_ms": 0.1,
+    "source_sha256": "fc45837d7122c6ce2a7f3f2f23c515992e4b232aadb919efabb72337fac88e4e",
+    "seed": 0
+  },
+  "stability": {
+    "scope": "subgraph",
+    "stabilized": false,
+    "odor_type": "ORN_DA1",
+    "input_neurons": 126,
+    "structural_edits": {},
+    "groups": {
+      "orn": 2279,
+      "alln": 429,
+      "alpn": 685,
+      "kc": 5177,
+      "apl": 2,
+      "mbon": 96,
+      "pam": 307,
+      "ppl1": 16
+    },
+    "stages": [
+      {
+        "stage": "idle",
+        "input_hz": 0,
+        "seconds": 0.5,
+        "total_spikes": 0,
+        "active_neurons": 0,
+        "kc_active_ge1": 0,
+        "kc_active_ge2": 0,
+        "groups_spikes": {
+          "orn": 0,
+          "alln": 0,
+          "alpn": 0,
+          "kc": 0,
+          "apl": 0,
+          "mbon": 0,
+          "pam": 0,
+          "ppl1": 0
+        }
+      },
+      {
+        "stage": "weak_odor",
+        "input_hz": 10,
+        "seconds": 0.5,
+        "total_spikes": 157376,
+        "active_neurons": 5150,
+        "kc_active_ge1": 3591,
+        "kc_active_ge2": 3575,
+        "groups_spikes": {
+          "orn": 5794,
+          "alln": 25736,
+          "alpn": 27988,
+          "kc": 89710,
+          "apl": 320,
+          "mbon": 3890,
+          "pam": 3125,
+          "ppl1": 813
+        }
+      },
+      {
+        "stage": "washout_1",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 85889,
+        "active_neurons": 5011,
+        "kc_active_ge1": 3578,
+        "kc_active_ge2": 3556,
+        "groups_spikes": {
+          "orn": 2873,
+          "alln": 13938,
+          "alpn": 15131,
+          "kc": 49397,
+          "apl": 175,
+          "mbon": 2164,
+          "pam": 1758,
+          "ppl1": 453
+        }
+      },
+      {
+        "stage": "washout_2",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 85960,
+        "active_neurons": 5017,
+        "kc_active_ge1": 3589,
+        "kc_active_ge2": 3565,
+        "groups_spikes": {
+          "orn": 2871,
+          "alln": 13864,
+          "alpn": 15142,
+          "kc": 49542,
+          "apl": 173,
+          "mbon": 2157,
+          "pam": 1758,
+          "ppl1": 453
+        }
+      },
+      {
+        "stage": "washout_3",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 86252,
+        "active_neurons": 5026,
+        "kc_active_ge1": 3592,
+        "kc_active_ge2": 3564,
+        "groups_spikes": {
+          "orn": 2933,
+          "alln": 13940,
+          "alpn": 15174,
+          "kc": 49638,
+          "apl": 173,
+          "mbon": 2176,
+          "pam": 1759,
+          "ppl1": 459
+        }
+      },
+      {
+        "stage": "washout_4",
+        "input_hz": 0,
+        "seconds": 0.25,
+        "total_spikes": 85855,
+        "active_neurons": 5018,
+        "kc_active_ge1": 3579,
+        "kc_active_ge2": 3561,
+        "groups_spikes": {
+          "orn": 2951,
+          "alln": 13914,
+          "alpn": 15139,
+          "kc": 49318,
+          "apl": 175,
+          "mbon": 2157,
+          "pam": 1747,
+          "ppl1": 454
+        }
+      }
+    ]
+  },
+  "recorded_at": "2026-09-28"
+}
