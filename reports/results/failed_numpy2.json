@@ -1,0 +1,38 @@
+{
+  "run": "taste_s0_n3",
+  "protocol": "taste",
+  "seed": 0,
+  "gain": 20,
+  "trials": 3,
+  "exit_code": 1,
+  "wall_seconds": 8.403936124988832,
+  "peak_worker_rss_bytes": 111247360,
+  "peak_process_tree_rss_bytes": 184057856,
+  "peak_tree_phase": "compilation",
+  "rss_sampling_seconds": 0.05,
+  "environment": {
+    "python": "3.12.14",
+    "os": "macOS-15.7.5-arm64-arm-64bit",
+    "machine": "arm64",
+    "logical_cpus": 12,
+    "packages": {
+      "brian2": "2.9.0",
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "scipy": "1.18.1",
+      "pyarrow": "25.0.1",
+      "cython": "3.3.0",
+      "joblib": "1.5.2",
+      "psutil": "7.1.0",
+      "sympy": "1.14.0",
+      "matplotlib": "3.10.6"
+    },
+    "codegen": "cython",
+    "workers": 1,
+    "processor": "Apple M4 Pro",
+    "memory_bytes": 25769803776
+  },
+  "log_path": ".cache/research/failed/taste_s0_n3_numpy2/run.log",
+  "upstream_manifest_sha256": "51596f50bffcb5840b600fdbd064402ed871bd74963751ef4105c54c2f38ec67",
+  "recorded_at": "2026-09-28"
+}

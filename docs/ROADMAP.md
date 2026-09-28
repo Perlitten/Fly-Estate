@@ -10,6 +10,8 @@ The initial catalogue snapshot on September 28 contains 121 apartments. It proce
 
 The current engine uses 139,248 annotated neurons, a fixed positive connection matrix and a learned MBON/CX readout. The next version adds spiking dynamics and mutable KC→MBON memory. See [README](../README.md) for the working model.
 
+**R1 completed September 28:** upstream sources and data are pinned, the original taste response and olfactory learning protocol were reproduced, and runtime, memory and sustained activity were measured. [Report and figures](../reports/lif-baseline.md), [reproduction instructions](../research/README.md). The selected integration target is one persistent worker for the explicitly edited 8,991-neuron olfactory→MB subgraph. This research engine is not yet connected to apartment photos or personal ratings.
+
 ## Research foundation
 
 | Component | Decision for Fly Estate |
@@ -29,7 +31,7 @@ Upstream revisions checked when creating this plan:
 
 | Phase | Target | Dependencies | Observable result |
 | --- | --- | --- | --- |
-| R1. Reproduction and resources | September 29 – October 4 | Current version | Versions, IDs, weight signs, original responses and memory/runtime profile |
+| R1. Reproduction and resources | Completed September 28 | Current version | [Versions, IDs, original responses and memory/runtime profile](../reports/lif-baseline.md) |
 | D1. Catalogue quality and sources | By October 11 | Current import | Apartment/photo deduplication, freshness, reimport and an access path for Bazaraki |
 | R2. Spiking engine and queue | October 5–11 | R1 | Background LIF computation with durable jobs and saved state |
 | R3. Sensory inputs and every photo | October 12–18 | R2, D1 | Versioned stimuli for each photo, space, balcony and location |
@@ -59,6 +61,8 @@ flowchart LR
 ## Acceptance criteria
 
 ### R1 — reproduction and resource profile
+
+Status: complete as an exploratory reproduction; three taste trials per condition, not the paper’s 30. Results include three learning seeds, gain sensitivity and edited/unedited stability controls. See the [measured report](../reports/lif-baseline.md) for the protocol and limitations.
 
 - Pin upstream SHAs, Python/Brian2 and data configuration. Match v783 root IDs against current annotations; publish matched and missing counts.
 - Report neurons, directed neuron pairs and total synapses separately. Record connection thresholds, weight signs, delays, units and structural edits.
@@ -131,7 +135,7 @@ Connect NeuroMechFly/MuJoCo after R5/R6 and resource measurements. Start with a 
 
 ## Next concrete step
 
-**R1: pin upstream versions, reproduce the model and measure local episode cost.** D1 can improve galleries and source quality alongside it. Research phases will be implemented in separate code changes; this roadmap defines the plan and tasks.
+**R2: introduce the engine interface, a durable queue and versioned checkpoints.** Use one persistent worker for the edited 8,991-neuron subgraph selected in R1. Preserve the current apartment rate engine as the baseline, and distinguish simulated neurons from display-only anatomy. D1 can improve galleries and source quality alongside it. Apartment sensory inputs and plasticity follow in R3/R4.
 
 ## GitHub tasks
 

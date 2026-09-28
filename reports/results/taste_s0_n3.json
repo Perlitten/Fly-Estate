@@ -1,0 +1,482 @@
+{
+  "run": "taste_s0_n3",
+  "protocol": "taste",
+  "seed": 0,
+  "gain": 20,
+  "trials": 3,
+  "exit_code": 0,
+  "wall_seconds": 884.9456255829427,
+  "peak_worker_rss_bytes": 2906931200,
+  "peak_process_tree_rss_bytes": 2906931200,
+  "peak_tree_phase": "worker",
+  "rss_sampling_seconds": 0.05,
+  "environment": {
+    "python": "3.12.14",
+    "os": "macOS-15.7.5-arm64-arm-64bit",
+    "machine": "arm64",
+    "logical_cpus": 12,
+    "packages": {
+      "brian2": "2.9.0",
+      "numpy": "1.26.4",
+      "pandas": "2.2.3",
+      "scipy": "1.14.1",
+      "pyarrow": "19.0.1",
+      "cython": "3.0.12",
+      "joblib": "1.5.2",
+      "psutil": "7.1.0",
+      "sympy": "1.14.0",
+      "matplotlib": "3.10.6"
+    },
+    "codegen": "cython",
+    "workers": 1,
+    "processor": "Apple M4 Pro",
+    "memory_bytes": 25769803776
+  },
+  "log_path": ".cache/research/runs/taste_s0_n3/run.log",
+  "upstream_manifest_sha256": "51596f50bffcb5840b600fdbd064402ed871bd74963751ef4105c54c2f38ec67",
+  "profile": {
+    "network_builds": [
+      {
+        "seconds": 15.162572332890704,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.0458329999819398,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.0616694579366595,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.0485448749968782,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1905577500583604,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1419031249824911,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.2289360840804875,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.0791016250150278,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 0.9876085409196094,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.2430041669867933,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.0279159588972107,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1386330829700455,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 0.9880744579713792,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1461426249006763,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1262323750415817,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.044061291962862,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.049672874971293,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1367238749517128,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.069002791075036,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.080064166104421,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1611090829828754,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.094698290922679,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1323578750016168,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      },
+      {
+        "seconds": 1.1839655420044437,
+        "neurons": 127400,
+        "directed_pairs": 14687178
+      }
+    ],
+    "runs": [
+      {
+        "index": 0,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 37.92665779090021,
+        "spikes": 825
+      },
+      {
+        "index": 1,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 27.45452204195317,
+        "spikes": 887
+      },
+      {
+        "index": 2,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 27.371558250044473,
+        "spikes": 798
+      },
+      {
+        "index": 3,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.089344874955714,
+        "spikes": 3155
+      },
+      {
+        "index": 4,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.713348958059214,
+        "spikes": 2437
+      },
+      {
+        "index": 5,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.410052375053056,
+        "spikes": 2466
+      },
+      {
+        "index": 6,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 30.06987725000363,
+        "spikes": 9934
+      },
+      {
+        "index": 7,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 29.553735541994683,
+        "spikes": 9912
+      },
+      {
+        "index": 8,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 29.59384616697207,
+        "spikes": 9223
+      },
+      {
+        "index": 9,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 30.05845395801589,
+        "spikes": 14053
+      },
+      {
+        "index": 10,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.129263791954145,
+        "spikes": 13007
+      },
+      {
+        "index": 11,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.542488417006098,
+        "spikes": 13434
+      },
+      {
+        "index": 12,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.673442250001244,
+        "spikes": 16573
+      },
+      {
+        "index": 13,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 29.57814887491986,
+        "spikes": 17175
+      },
+      {
+        "index": 14,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 30.67317429103423,
+        "spikes": 17380
+      },
+      {
+        "index": 15,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 30.63189425005112,
+        "spikes": 4660
+      },
+      {
+        "index": 16,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 29.69133779197,
+        "spikes": 4650
+      },
+      {
+        "index": 17,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 29.852368582971394,
+        "spikes": 4605
+      },
+      {
+        "index": 18,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 26.2045332089765,
+        "spikes": 5372
+      },
+      {
+        "index": 19,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 26.603607499971986,
+        "spikes": 5257
+      },
+      {
+        "index": 20,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 28.477584291016683,
+        "spikes": 5166
+      },
+      {
+        "index": 21,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 60.06310479203239,
+        "spikes": 13285
+      },
+      {
+        "index": 22,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 59.89567212504335,
+        "spikes": 13875
+      },
+      {
+        "index": 23,
+        "simulated_seconds": 1.0,
+        "wall_seconds": 64.42708625004161,
+        "spikes": 12717
+      }
+    ],
+    "dt_ms": 0.1,
+    "source_sha256": "c451be3aa78ad8a7f4305b34db6db11f888c9535c95afb3ff3a14b28af73da8f",
+    "seed": 0
+  },
+  "results": [
+    {
+      "condition": "sugar_25Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "sugar_25Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "sugar_25Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 62,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_50Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 14.0,
+      "std_hz": 6.16
+    },
+    {
+      "condition": "sugar_50Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 9.0,
+      "std_hz": 4.55
+    },
+    {
+      "condition": "sugar_50Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 280,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_100Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 63.0,
+      "std_hz": 2.94
+    },
+    {
+      "condition": "sugar_100Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 46.0,
+      "std_hz": 2.45
+    },
+    {
+      "condition": "sugar_100Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 363,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_150Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 82.67,
+      "std_hz": 5.19
+    },
+    {
+      "condition": "sugar_150Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 61.0,
+      "std_hz": 6.48
+    },
+    {
+      "condition": "sugar_150Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 402,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar_200Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 93.33,
+      "std_hz": 3.3
+    },
+    {
+      "condition": "sugar_200Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 66.33,
+      "std_hz": 4.5
+    },
+    {
+      "condition": "sugar_200Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 424,
+      "std_hz": null
+    },
+    {
+      "condition": "bitter_150Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "bitter_150Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 0.0,
+      "std_hz": 0.0
+    },
+    {
+      "condition": "bitter_150Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 79,
+      "std_hz": null
+    },
+    {
+      "condition": "water_150Hz",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 6.0,
+      "std_hz": 1.41
+    },
+    {
+      "condition": "water_150Hz",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 0.67,
+      "std_hz": 0.47
+    },
+    {
+      "condition": "water_150Hz",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 155,
+      "std_hz": null
+    },
+    {
+      "condition": "sugar150_bitter150",
+      "neuron": "MN9_L",
+      "flyid": 720575940660219265,
+      "rate_hz": 7.0,
+      "std_hz": 1.63
+    },
+    {
+      "condition": "sugar150_bitter150",
+      "neuron": "MN9_R",
+      "flyid": 720575940645521262,
+      "rate_hz": 13.67,
+      "std_hz": 2.05
+    },
+    {
+      "condition": "sugar150_bitter150",
+      "neuron": "n_active_neurons",
+      "flyid": null,
+      "rate_hz": 364,
+      "std_hz": null
+    }
+  ],
+  "postprocessing": "Rates recomputed from spike parquet, including silent trials; upstream NaN pivot cells become measured zero.",
+  "recorded_at": "2026-09-28"
+}

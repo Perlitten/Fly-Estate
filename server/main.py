@@ -114,7 +114,8 @@ def import_job(id,payload):
         if not isinstance(backup,dict) or backup.get("version")!=1 or "listings" not in backup: backup=None
         restored_settings=Settings.model_validate(backup["settings"]).model_dump() if backup else None
         items=importers.parse(content)
-        if not items or len(items)>100: raise ValueError("Import between 1 and 100 listings at a time.")
+        limit=1000 if backup else 100
+        if not items or len(items)>limit: raise ValueError(f"Import between 1 and {limit:,} listings at a time.")
         job["total"]=len(items)
         import_settings=store.get()["settings"]
         restored_ids={}
@@ -171,7 +172,8 @@ def job(id:str):
 @app.get("/api/export")
 def export():
     data=store.get()
-    # Portable public listing snapshots, annotations and preferences. Photos can be downloaded again.
+    # Recompute machine-local photo paths and encoder tensors after restoring.
+    data["listings"]=[{k:v for k,v in l.items() if k not in ("photos","vision","import_warnings")} for l in data["listings"]]
     return JSONResponse({"version":1,"exported_at":now(),**data},headers={"Content-Disposition":"attachment; filename=fly-estate-backup.json"})
 
 @app.get("/api/catalogue")

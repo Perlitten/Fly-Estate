@@ -4,6 +4,8 @@ A personal apartment fly for Limassol. Photos, budget and location become inputs
 
 Spiking dynamics, dopamine learning and upcoming work: **[roadmap](docs/ROADMAP.md)**.
 
+Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. The application still uses its rate engine; the reproduced LIF experiments run separately.
+
 ## Getting started
 
 Requires Node.js 22+, pnpm 11 and Python 3.11+. On a computer with Codex installed, setup can also locate its bundled Python.
@@ -19,6 +21,24 @@ Open **http://127.0.0.1:5176**. The Python API runs on `127.0.0.1:8000`. Both se
 The first setup downloads approximately 2 GB of public data and model weights, prepares the graph and imports the catalogue. Internet access and several GB of free space are required. Subsequent runs reuse cached files and skip apartments already imported. `pnpm setup --no-seed` prepares the brain without importing apartments. Set `FLY_PYTHON` to choose the Python used to create the environment.
 
 `pnpm build` builds the frontend and checks TypeScript. To preview the production build, start the API separately (`.venv/bin/python -m uvicorn server.main:app --host 127.0.0.1 --port 8000`), then run `pnpm preview`. On Windows, Python is located at `.venv/Scripts/python.exe`.
+
+## Working from another computer
+
+Install Git, Node.js 22+, pnpm 11 and Python 3.11+, then clone the repository:
+
+```sh
+git clone https://github.com/Perlitten/Fly-Estate.git
+cd Fly-Estate
+pnpm install --frozen-lockfile
+pnpm setup
+pnpm dev
+```
+
+`main` contains the code, English interface and documentation, public catalogue, roadmap and measured research results. Setup downloads datasets, models and available source photos on the new computer; those large caches are regenerated locally.
+
+To carry your personal preferences over, click **Export** on the old computer and transfer the JSON file privately. On the new computer, open **Import**, paste the JSON and start import. A version 1 backup supports up to 1,000 listings and restores settings, ratings and pairwise choices for successfully imported apartments. Photos and encoder outputs are rebuilt, so importing can take several minutes. Manually uploaded photos must be added again. Personal state is stored locally and is excluded from this public repository.
+
+To continue development, create a branch with `git switch -c codex/your-change`. Run `git pull --ff-only` on `main` before starting new work.
 
 ## Available features
 
@@ -81,13 +101,13 @@ The [annotation citation guidelines](https://github.com/flyconnectome/flywire_an
 
 SQLite at `data/state.sqlite` stores local listings, rules and ratings. `data/photos` stores photos. These files, downloaded models and large raw datasets are excluded from Git.
 
-Export downloads JSON containing listings, settings and ratings. Paste it into import to restore settings and ratings for successfully imported apartments. Images are downloaded again from their original URLs; manually uploaded photos must be added again. This export is not a complete image backup.
+Export downloads portable JSON containing listings, settings, ratings and pairwise choices. It excludes local photo paths and encoder tensors. Paste it into import to restore settings and ratings for successfully imported apartments. Images are downloaded again from their original URLs; manually uploaded photos must be added again. This export is not a complete image backup.
 
 Direct URLs are accepted only from RentSpot, Fox, Bazaraki and INDEX. Supporting a URL does not guarantee that its source will return data without a browser. Bazaraki presented a Cloudflare check during development, so direct collection from it is unavailable. Use an open page with the bookmark button, JSON/HTML or the manual form for such sources.
 
 The server restricts sources to supported sites and public HTTPS addresses, checks redirects and enforces size limits. The application is intended for one person running it locally. Public deployment requires authentication, separate user storage and resource limits.
 
-Each import accepts up to 100 listings and up to 100 images per listing. Larger galleries are rejected with an explicit error rather than truncated. Unavailable photos are reported as warnings.
+Each ordinary import accepts up to 100 listings; a version 1 backup accepts up to 1,000. The pasted content limit is 4 million characters. Each listing accepts up to 100 images. Larger galleries are rejected with an explicit error rather than truncated. Unavailable photos are reported as warnings.
 
 ## Project structure
 
@@ -98,5 +118,8 @@ scripts/                 reproducible preparation and startup
 data/listings.json       public fields of the initial catalogue
 data/areas.json          approximate area coordinates
 data/provenance.json     versions, sources and checksums
+research/                pinned LIF reproduction and separate dependency lock
+reports/                 measured results, resource profile and figures
+docs/ROADMAP.md          stages, acceptance criteria and GitHub tasks
 .github/workflows/       frontend build and Python syntax checks
 ```
