@@ -5,7 +5,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin: 12px 0 2px;
+  margin: 12px 24px 2px;
 }
 .response-source button {
   padding: 5px 9px;
@@ -80,8 +80,17 @@
 }
 
 @media (max-width: 1100px) {
+  .response-source {
+    margin-inline: 18px;
+  }
   .timeline-note {
     font-size: var(--fs-micro);
     margin-top: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .response-source {
+    margin-inline: 17px;
   }
 }
