@@ -1,0 +1,122 @@
+/*
+ * Fly Estate — дизайн-токены. Единственный источник цветов, шрифтов, размеров и движения.
+ * Правила применения: docs/BRAND_KIT.md. Новые hex в компонентах не вводить.
+ */
+:root {
+  /* Бумага и поверхности: светлая «агентская» бумага, карточки чуть теплее фона. */
+  --paper: #f6f7f2;
+  --surface: #fffef8;
+  --surface-2: #eff2e7;
+  --surface-3: #e3e9d8;
+  --line: #e1e6dc;
+  --line-strong: #cad5bb;
+
+  /* Текст. */
+  --ink: #20362d;
+  --ink-2: #4c5f42;
+  --muted: #7b8a70;
+  --subtle: #9ea892;
+
+  /* Фирменный зелёный: лайм — единственный яркий акцент, мох — акцент для текста на светлом. */
+  --forest: #243d31;
+  --moss: #65874a;
+  --leaf: #9dbb74;
+  --lime: #d8f291;
+  --lime-mid: #d5ecab;
+  --lime-soft: #ecf5d4;
+
+  /* Ночная сцена мозга. */
+  --night: #102326;
+  --night-2: #1c3636;
+  --night-line: #36544c;
+  --night-text: #dcebd5;
+  --night-muted: #8da39b;
+
+  /* Тёплый контрапункт: «дороже бюджета», «не подходит». */
+  --clay: #a57253;
+  --clay-muted: #c6a08a;
+  --clay-soft: #f5e4dc;
+  --sand: #f7ead6;
+
+  --white: #ffffff;
+  --black: #000000;
+
+  /* Типографика. Display — только крупные заголовки и цифры «визитки». */
+  --font-display: "Instrument Serif", "Times New Roman", serif;
+  --font-text: "DM Sans Variable", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", monospace;
+
+  --fs-micro: 10px; /* только UPPERCASE-метки с трекингом */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 19px;
+  --fs-xl: 24px;
+  --fs-2xl: 30px;
+  --fs-3xl: 40px;
+  --fs-display: 60px;
+
+  --track-label: 0.14em;
+  --track-tight: -0.02em;
+
+  /* Форма. */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 999px;
+  --shadow-float: 0 8px 28px color-mix(in srgb, var(--forest) 16%, transparent);
+
+  /*
+   * Движение: «муха-профессионал» — короткий точный бросок и полная неподвижность.
+   * Никаких пружин, отскоков и бесконечных циклов, кроме индикатора «на связи».
+   */
+  --dur-instant: 90ms;
+  --dur-quick: 160ms;
+  --dur-move: 240ms;
+  --dur-settle: 420ms;
+  /* Живой знак в шапке: один взмах крыла и один сеанс чистки лапок. */
+  --dur-wingbeat: 46ms;
+  --dur-groom: 2600ms;
+  /* Эффекты (effects.css): досчёт чисел, дешифровка вердикта. */
+  --dur-count: 900ms;
+  --dur-decrypt: 420ms;
+  /* Циклы, которые идут только пока модель считает. */
+  --dur-scan: 1100ms;
+  --dur-sheen: 1400ms;
+  --ease-dart: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --dart-distance: 6px;
+}
+
+/* Появление блока: короткий бросок на 6 px и остановка. */
+@keyframes dart-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--dart-distance));
+  }
+}
+/* Индикатор «на связи»: единственный разрешённый бесконечный цикл. */
+@keyframes on-duty {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-quick: 0ms;
+    --dur-move: 0ms;
+    --dur-settle: 0ms;
+    --dur-wingbeat: 0ms;
+    --dur-groom: 0ms;
+    --dur-count: 0ms;
+    --dur-decrypt: 0ms;
+    --dur-scan: 0ms;
+    --dur-sheen: 0ms;
+    --dart-distance: 0px;
+  }
+}

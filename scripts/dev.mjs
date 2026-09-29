@@ -35,6 +35,22 @@ const children = [
     { cwd: root, stdio: "inherit" },
   ),
 ];
+// The spiking engine runs in its own process; the app stays usable without it.
+if (existsSync(path.join(root, "data/engine/olfactory_mb_v783.npz"))) {
+  const worker = spawn(python, ["-m", "server.worker"], {
+    cwd: root,
+    stdio: "inherit",
+  });
+  worker.on("error", (e) => console.error(`[worker] ${e.message}`));
+  worker.on("exit", (code) => {
+    if (!stopping) console.error(`[worker] exited (${code}); simulations stay queued.`);
+  });
+  children.push(worker);
+} else {
+  console.log(
+    "[worker] Spiking engine not prepared: python -m research.bootstrap, then python -m server.engine.subgraph.",
+  );
+}
 let stopping = false;
 function stop(code = 0) {
   if (stopping) return;
@@ -42,7 +58,7 @@ function stop(code = 0) {
   for (const p of children) p.kill("SIGTERM");
   setTimeout(() => process.exit(code), 300);
 }
-for (const p of children) {
+for (const p of children.slice(0, 2)) {
   p.on("error", (e) => {
     console.error(e.message);
     stop(1);

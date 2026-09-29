@@ -1,0 +1,24 @@
+{
+  "source": "data/brain/neurons.npz",
+  "source_sha256": "dac230b1b0084773",
+  "frame": "Brain.geometry(): nm, median-centred, longest axis = 6 units, Y flipped",
+  "neurons": 139248,
+  "grid": [
+    137,
+    79,
+    64
+  ],
+  "voxel": 0.05357,
+  "sigma_voxels": 1.6,
+  "coverage": 0.97,
+  "iso_neurons_per_voxel": 0.6554,
+  "neurons_inside": 0.9762,
+  "parts": 1,
+  "close_voxels": 3,
+  "relax_voxels": 1.2,
+  "taubin_passes": 12,
+  "cluster_cell_voxels": 0.925,
+  "vertices": 16208,
+  "triangles": 32541,
+  "bytes": 292534
+}

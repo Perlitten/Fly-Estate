@@ -86,6 +86,19 @@ def walk_schema(x):
             if key in x: yield from walk_schema(x[key])
         if "item" in x: yield from walk_schema(x["item"])
 
+def parse_schema_blocks(html):
+    """Raw schema.org listing nodes of a page (an `@type` may be a list, as on Bazaraki)."""
+    def nodes(x):
+        if isinstance(x,list):
+            for item in x: yield from nodes(item)
+        elif isinstance(x,dict):
+            kinds=x.get("@type"); kinds=kinds if isinstance(kinds,list) else [kinds]
+            if {"Apartment","RealEstateListing","House","Accommodation"} & set(kinds): yield x
+            if "@graph" in x: yield from nodes(x["@graph"])
+    for script in BeautifulSoup(html,"html.parser").select('script[type="application/ld+json"]'):
+        try: yield from nodes(json.loads(script.get_text()))
+        except (json.JSONDecodeError,TypeError,ValueError): pass
+
 def parse(payload):
     if isinstance(payload,dict):
         if payload.get("@type"): return list(walk_schema(payload))
@@ -135,7 +148,7 @@ def normalize(item):
             "Polemidia Kato":"Kato Polemidia","Полемидия":"Kato Polemidia",
             "Гермасойя":"Germasogeia","Меса-Гитонья":"Mesa Geitonia",
             "Агиос Николаос":"Agios Nikolaos","Апостолос Андреас":"Apostolos Andreas"}.get(area,area)
-    known = json.loads((ROOT / "data/areas.json").read_text()) if (ROOT / "data/areas.json").exists() else {}
+    known = json.loads((ROOT / "data/areas.json").read_text(encoding="utf-8")) if (ROOT / "data/areas.json").exists() else {}
     if not area:
         # Only infer an area explicitly named in the source title, never an exact address.
         area = next((a for a in sorted(known,key=len,reverse=True) if a.casefold() in title.casefold()), "Area unspecified")
@@ -171,23 +184,39 @@ def save_photo(data,name):
         if im.width*im.height > 50000000: raise ValueError("Image is too large.")
         im=ImageOps.exif_transpose(im).convert("RGB")
         im.thumbnail((1400,1000))
-        dest=ROOT / "data/photos" / (name+".jpg")
+        output=io.BytesIO()
+        im.save(output,"JPEG",quality=88)
+        encoded=output.getvalue()
+        # The stored bytes identify the image, independent of its source URL.
+        dest=ROOT / "data/photos" / (hashlib.sha256(encoded).hexdigest()+".jpg")
         dest.parent.mkdir(parents=True,exist_ok=True)
-        im.save(dest,"JPEG",quality=88)
+        if not dest.exists(): dest.write_bytes(encoded)
     return "/data/photos/"+dest.name
 
-def photos(listing,uploads=None):
+def photos(listing,uploads=None,previous=None):
     warnings=[]
+    outcomes=[]
+    old={entry.get("url"):entry for entry in (previous or {}).get("photo_downloads",[]) if entry.get("url")}
     for url in listing["photo_urls"]:
         name=hashlib.sha256(url.encode()).hexdigest()[:24]
         try:
             dest=ROOT / "data/photos" / (name+".jpg")
             path="/data/photos/"+dest.name if dest.exists() else save_photo(fetch(url,PHOTO_HOSTS,12*1024*1024),name)
             listing["photos"].append(path)
-        except Exception as e: warnings.append(str(e))
+            outcomes.append({"url":url,"status":"available","path":path,"captured_at":now()})
+        except Exception as e:
+            prior=old.get(url)
+            kept=prior.get("path") if prior else None
+            if kept and (ROOT / kept.lstrip("/")).exists():
+                listing["photos"].append(kept)
+                outcomes.append({"url":url,"status":"cached","path":kept,"error":str(e),"captured_at":now()})
+            else:
+                outcomes.append({"url":url,"status":"unavailable","error":str(e),"captured_at":now()})
+            warnings.append(f"{url}: {e}")
     for encoded in (uploads or []):
         if len(encoded)>16*1024*1024: raise ValueError("Photo exceeds 12 MB.")
         data=base64.b64decode(encoded.split(',')[-1],validate=True)
         listing["photos"].append(save_photo(data,hashlib.sha256(data).hexdigest()[:24]))
     listing["photos"]=list(dict.fromkeys(listing["photos"]))
+    listing["photo_downloads"]=outcomes
     return warnings

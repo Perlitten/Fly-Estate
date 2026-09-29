@@ -202,7 +202,7 @@ def worker(args: argparse.Namespace, out: Path) -> None:
             "before_sha256": __import__("hashlib").sha256(initial_w.tobytes()).hexdigest(),
             "after_sha256": __import__("hashlib").sha256(final_w.tobytes()).hexdigest(),
             "checkpoint_sha256": sha256(out / "research-weights.npz"),
-        }, indent=2) + "\n")
+        }, indent=2) + "\n", encoding="utf-8", newline="\n")
     else:
         import pandas as pd
         from research.audit import groups
@@ -266,9 +266,9 @@ def worker(args: argparse.Namespace, out: Path) -> None:
             print('[stability] ' + json.dumps(row), flush=True)
         (out / 'stability.json').write_text(json.dumps({'scope': args.scope, 'stabilized': args.stabilized,
             'odor_type': str(odor_type), 'input_neurons': len(targets), 'structural_edits': edits,
-            'groups': {k: len(v) for k, v in g.items()}, 'stages': stages}, indent=2) + '\n')
+            'groups': {k: len(v) for k, v in g.items()}, 'stages': stages}, indent=2) + '\n', encoding="utf-8", newline="\n")
     (out / "profile.json").write_text(json.dumps({"network_builds": builds, "runs": profile,
-        "dt_ms": 0.1, "source_sha256": sha256(source), "seed": args.seed}, indent=2) + "\n")
+        "dt_ms": 0.1, "source_sha256": sha256(source), "seed": args.seed}, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def main() -> None:
@@ -280,7 +280,7 @@ def main() -> None:
         return
     import psutil
     # Verify pins before executing cached upstream Python.
-    manifest = json.loads(MANIFEST.read_text())
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     for s in manifest["sources"]:
         for f in s["files"]:
             if sha256(ROOT / f["cache_path"]) != f["sha256"]:
@@ -298,7 +298,7 @@ def main() -> None:
     t0 = time.perf_counter()
     peak_worker = peak_tree = 0
     peak_phase = None
-    with (out / "run.log").open("w") as log:
+    with (out / "run.log").open("w", encoding="utf-8") as log:
         p = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
         process = psutil.Process(p.pid)
         while p.poll() is None:
@@ -323,23 +323,23 @@ def main() -> None:
                "upstream_manifest_sha256": sha256(MANIFEST)}
     for filename in ("profile.json", "weights-summary.json", "meta.json", "stability.json"):
         if (out / filename).exists():
-            summary[filename[:-5].replace("-", "_")] = json.loads((out / filename).read_text())
+            summary[filename[:-5].replace("-", "_")] = json.loads((out / filename).read_text(encoding="utf-8"))
     if 'meta' in summary:
         summary['meta']['args']['model_dir'] = str((CACHE / 'shiu').relative_to(ROOT))
         summary['meta']['args']['out'] = str(out.relative_to(ROOT))
     for filename in ("results.jsonl", "episodes.jsonl"):
         if (out / filename).exists():
-            summary[filename[:-6]] = [json.loads(line) for line in (out / filename).read_text().splitlines()]
+            summary[filename[:-6]] = [json.loads(line) for line in (out / filename).read_text(encoding="utf-8").splitlines()]
     if args.protocol == 'taste' and 'results' in summary:
         summary['results'] = normalize_taste(summary['results'], out, args.trials)
         summary['postprocessing'] = 'Rates recomputed from spike parquet, including silent trials; upstream NaN pivot cells become measured zero.'
     result_path = ROOT / "reports/results" / (name + ".json")
     result_path.parent.mkdir(parents=True, exist_ok=True)
-    result_path.write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
+    result_path.write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps({k: summary[k] for k in ('run', 'exit_code', 'wall_seconds', 'peak_worker_rss_bytes', 'peak_process_tree_rss_bytes')}, indent=2))
     print(result_path.relative_to(ROOT), flush=True)
     if p.returncode:
-        print((out / "run.log").read_text()[-5000:])
+        print((out / "run.log").read_text(encoding="utf-8")[-5000:])
         raise SystemExit(p.returncode)
 
 

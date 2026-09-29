@@ -1,0 +1,81 @@
+/*
+ * Движение Fly Estate. Характер — муха за работой: короткий точный бросок, затем неподвижность.
+ * Длительности и кривые — только из tokens.css; при prefers-reduced-motion они обнуляются там же.
+ */
+button,
+a,
+select,
+input,
+.apartment-card,
+.map-selection-list button {
+  transition-property:
+    background-color, color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--dur-quick);
+  transition-timing-function: var(--ease-standard);
+}
+.primary:active,
+.rating-buttons button:active,
+.control-strip nav button:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--dur-instant);
+}
+
+/* Смена раздела: агент перекладывает папку — один бросок, без каскада по всему экрану. */
+.brain-layout,
+.map-layout,
+.listings-section,
+.duel-section,
+.toast,
+.modal[open] {
+  animation: dart-in var(--dur-move) var(--ease-dart) both;
+}
+
+/* Портфолио раскладывается по одной карточке: задержка 30 мс, не больше восьми шагов. */
+.listing-grid > * {
+  animation: dart-in var(--dur-move) var(--ease-dart) both;
+}
+.listing-grid > :nth-child(2) {
+  animation-delay: 30ms;
+}
+.listing-grid > :nth-child(3) {
+  animation-delay: 60ms;
+}
+.listing-grid > :nth-child(4) {
+  animation-delay: 90ms;
+}
+.listing-grid > :nth-child(5) {
+  animation-delay: 120ms;
+}
+.listing-grid > :nth-child(6) {
+  animation-delay: 150ms;
+}
+.listing-grid > :nth-child(7) {
+  animation-delay: 180ms;
+}
+.listing-grid > :nth-child(n + 8) {
+  animation-delay: 210ms;
+}
+
+/* Toast центрирован через transform, поэтому бросок задаётся отдельно. */
+.toast {
+  animation-name: toast-in;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, var(--dart-distance));
+  }
+}
+
+/* «На связи» — единственный постоянный цикл интерфейса. */
+.live-dot {
+  animation: on-duty 2.4s var(--ease-standard) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .spin {
+    animation: none;
+  }
+}
+

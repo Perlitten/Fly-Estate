@@ -15,7 +15,7 @@ RESULTS = ROOT / 'reports/results'
 
 
 def load(name):
-    return json.loads((RESULTS / (name + '.json')).read_text())
+    return json.loads((RESULTS / (name + '.json')).read_text(encoding="utf-8"))
 
 
 def average(rows, prefix, field='mbon_spk'):
@@ -83,7 +83,7 @@ def main():
             'final_washout_spikes_per_second': last['total_spikes'] / last['seconds'],
             'final_washout_active_neurons': last['active_neurons'],
             'final_washout_KC_ge2_percent': 100 * last['kc_active_ge2'] / s['groups']['kc']})
-    (RESULTS / 'metrics.json').write_text(json.dumps(metrics, indent=2, allow_nan=False) + '\n')
+    (RESULTS / 'metrics.json').write_text(json.dumps(metrics, indent=2, allow_nan=False) + '\n', encoding="utf-8", newline="\n")
 
     plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 10,
                          'axes.spines.top': False, 'axes.spines.right': False})
@@ -125,7 +125,7 @@ def main():
     fig.savefig(figures / 'lif-baseline.png', dpi=180)
     fig.savefig(figures / 'lif-baseline.svg')
     svg = figures / 'lif-baseline.svg'
-    svg.write_text('\n'.join(line.rstrip() for line in svg.read_text().splitlines()) + '\n')
+    svg.write_text('\n'.join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + '\n', encoding="utf-8", newline="\n")
     plt.close(fig)
 
     table_learning = '\n'.join(f"| {r['seed']} | {r['gain']:g} | {r['pre_A_spikes']:.0f} → {r['post_A_spikes']:.0f} | {r['A_suppression_percent']:.2f}% | {r['B_change_percent']:+.2f}% | {r['changed_pairs']:,} |" for r in metrics['learning'])
@@ -229,7 +229,7 @@ The taste script rebuilds each network and repeatedly generates input kernels. I
 
 See [research setup and run instructions](../research/README.md). Run `research.bootstrap`, `research.audit`, `research.suite`, then `research.analyse` in the separate locked environment. Completed successful runs are preserved; cached numerical outputs allow regenerating this report and figure without rerunning simulations. [Machine-readable metrics](results/metrics.json).
 '''
-    (ROOT / 'reports/lif-baseline.md').write_text(report)
+    (ROOT / 'reports/lif-baseline.md').write_text(report, encoding="utf-8", newline="\n")
     print(json.dumps(metrics['learning'], indent=2))
     print('Generated reports/lif-baseline.md and reports/figures/lif-baseline.png')
 

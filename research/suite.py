@@ -22,7 +22,7 @@ def main():
         args = arguments()
         path = ROOT / 'reports/results' / (run_name(args) + '.json')
         if path.exists():
-            result = json.loads(path.read_text())
+            result = json.loads(path.read_text(encoding="utf-8"))
             if result['exit_code'] != 0 or result['upstream_manifest_sha256'] != sha256(MANIFEST):
                 raise RuntimeError(f'Failed or stale run requires review: {path}')
             if result['environment']['packages'] != environment()['packages']:

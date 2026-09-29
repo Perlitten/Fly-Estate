@@ -12,3 +12,8 @@ data/photos/
 *.log
 .DS_Store
 *.tsbuildinfo
+data/engine/
+data/archive/
+artifacts/
+qa-artifacts/
+.mycelium/

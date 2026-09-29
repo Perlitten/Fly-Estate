@@ -9,7 +9,7 @@ from server.importers import normalize,photos
 
 store,vision=Store(),Vision()
 existing={l["id"]:l for l in store.get()["listings"]}
-items=json.loads((ROOT/"data/listings.json").read_text())
+items=json.loads((ROOT/"data/listings.json").read_text(encoding="utf-8"))
 for i,item in enumerate(items):
     try:
         l=normalize(item)

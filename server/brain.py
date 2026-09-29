@@ -1,13 +1,20 @@
 """Connectome-constrained reservoir and an explicitly artificial task readout."""
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+import hashlib
 import json
 import math
+import os
+import pickle
+import threading
 import numpy as np
 from scipy import sparse, optimize
 from scipy.special import expit
 from .vision import SEMANTIC_KEYS
 
 ROOT = Path(__file__).resolve().parents[1]
+# Признаки объявлений переживают перезапуск: без этого первый /api/state считал все фото заново.
+CACHE_PATH = ROOT / ".cache/brain_features.pkl"
 
 def distance_km(a, b):
     lat1, lat2 = math.radians(a[0]), math.radians(b[0])
@@ -17,11 +24,19 @@ def distance_km(a, b):
 
 class Brain:
     def __init__(self):
-        self.summary = json.loads((ROOT / "data/brain/summary.json").read_text())
+        self.summary = json.loads((ROOT / "data/brain/summary.json").read_text(encoding="utf-8"))
         self.w = sparse.load_npz(ROOT / "data/brain/weights.npz")
         self.cx_pool = sparse.load_npz(ROOT / "data/brain/cx_pool.npz")
         self.nodes = np.load(ROOT / "data/brain/neurons.npz")
-        self.cache = {}
+        # scipy умножает разреженную матрицу в один поток; строки весов делятся между потоками
+        # (sparsetools отпускает GIL), результат побитно тот же.
+        workers = max(1, min(12, os.cpu_count() or 1))
+        bounds = np.linspace(0, self.w.shape[0], workers + 1).astype(int)
+        self.row_blocks = [(a, b, self.w[a:b]) for a, b in zip(bounds[:-1], bounds[1:])]
+        self.pool = ThreadPoolExecutor(workers) if workers > 1 else None
+        self.cache_lock = threading.Lock()
+        self.cache_tag = self._cache_tag()
+        self.cache = self._load_cache()
         self.rng = np.random.default_rng(783)
         self.semantic_projection = self.rng.normal(0, 1, (len(self.nodes["cyborg"]), len(SEMANTIC_KEYS))).astype(np.float32) / np.sqrt(len(SEMANTIC_KEYS))
         for name in ("spacious", "large_balcony", "sheltered_balcony"):
@@ -33,10 +48,44 @@ class Brain:
         self.meta_projection[:,[1,5,6,7]]=np.abs(self.meta_projection[:,[1,5,6,7]])
         self.nav_projection = self.rng.normal(0, 1, (len(self.nodes["nav"]), 4)).astype(np.float32) / 2
 
+    def _cache_tag(self):
+        """Код расчёта и файлы весов: при их изменении сохранённые признаки не используются."""
+        digest = hashlib.sha256(Path(__file__).read_bytes())
+        for name in ("weights.npz", "cx_pool.npz", "neurons.npz"):
+            stat = (ROOT / "data/brain" / name).stat()
+            digest.update(f"{name}:{stat.st_size}:{stat.st_mtime_ns}".encode())
+        return digest.hexdigest()
+
+    def _load_cache(self):
+        try:
+            saved = pickle.loads(CACHE_PATH.read_bytes())
+            return saved["entries"] if saved.get("tag") == self.cache_tag else {}
+        except (OSError, pickle.UnpicklingError, EOFError, KeyError, TypeError, AttributeError):
+            return {}
+
+    def _save_cache(self):
+        with self.cache_lock:
+            payload = pickle.dumps({"tag": self.cache_tag, "entries": dict(self.cache)})
+            CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            temporary = CACHE_PATH.with_suffix(f".{os.getpid()}.tmp")
+            temporary.write_bytes(payload)
+            os.replace(temporary, CACHE_PATH)
+
+    def _step(self, state, drive):
+        """Один шаг резервуара; каждый поток считает свой блок строк целиком."""
+        if not self.pool:
+            return 0.35*state + 0.65*np.tanh(0.92*(self.w @ state) + drive)
+        out = np.empty_like(state)
+        def run(block):
+            a, b, rows = block
+            out[a:b] = 0.35*state[a:b] + 0.65*np.tanh(0.92*(rows @ state) + drive[a:b])
+        list(self.pool.map(run, self.row_blocks))
+        return out
+
     def features(self, listings, settings, record=False):
         if not listings: return np.zeros((0,len(self.nodes["mbon"])+self.cx_pool.shape[0])),[]
         outputs,signals=[],[]
-        recorded=None
+        recorded=None;computed=False
         for listing in listings:
             key=json.dumps([settings["mode"],settings["budget"],settings["ideal"],listing["id"],listing.get("updated_at"),"all-photos-v2"],sort_keys=True)
             if not record and key in self.cache:
@@ -62,11 +111,12 @@ class Brain:
             outputs.append(out);signals.append(signal)
             if not record:
                 if len(self.cache)>=1024: self.cache.pop(next(iter(self.cache)))
-                self.cache[key]=(out,signal)
+                self.cache[key]=(out,signal);computed=True
             else:
                 amplitude=amplitudes/count
                 maximum=np.maximum(amplitude.max(axis=1,keepdims=True),1e-8)
                 recorded=(np.sqrt(amplitude/maximum)*255).astype(np.uint8)
+        if computed: self._save_cache()
         return (np.array(outputs),signals,recorded) if record else (np.array(outputs),signals)
 
     def _calculate(self, listings, settings, record=False):
@@ -106,7 +156,7 @@ class Brain:
         state = np.zeros_like(drive)
         frames = []
         for _ in range(16):
-            state = 0.35*state + 0.65*np.tanh(0.92*(self.w @ state) + drive)
+            state = self._step(state, drive)
             if record:
                 frames.append(np.abs(state).mean(axis=1))
         outputs = np.vstack([state[self.nodes["mbon"]], self.cx_pool @ state]).T.astype(np.float64)

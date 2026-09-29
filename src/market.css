@@ -1,0 +1,290 @@
+/*
+ * Bazaraki market: the sidebar panel, the market layer on the map and its popup.
+ * Loops here run only while the market is being read or an import job is running.
+ */
+.market-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--line);
+  animation: dart-in var(--dur-move) var(--ease-dart);
+}
+.map-sidebar .market-panel {
+  grid-column: 1 / -1;
+}
+.market-panel .eyebrow {
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-label);
+}
+.market-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--ink);
+}
+.market-lead b {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 400;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.market-meta {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.market-search {
+  justify-content: center;
+  width: 100%;
+}
+.market-retry {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+}
+.market-notice {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.market-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  color: var(--moss);
+  text-decoration: none;
+}
+.market-link:hover {
+  text-decoration: underline;
+}
+.market-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.market-bar {
+  position: relative;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.market-bar i {
+  position: relative;
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--moss);
+  overflow: hidden;
+  transition: width var(--dur-move) var(--ease-standard);
+}
+.market-bar i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--white) 60%, transparent),
+    transparent
+  );
+  animation: progress-sheen var(--dur-sheen) var(--ease-standard) infinite;
+}
+.market-bar.indeterminate i {
+  width: 34%;
+  animation: market-read var(--dur-sheen) var(--ease-standard) infinite;
+}
+.market-bar.indeterminate i::after {
+  content: none;
+}
+@keyframes market-read {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+/* Market layer: offers on Bazaraki that are not in the file yet. */
+.market-marker span {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--ink-2);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--forest) 35%, transparent);
+  color: var(--surface);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: transform var(--dur-quick) var(--ease-standard);
+}
+.market-marker:hover span {
+  transform: scale(1.15);
+}
+.market-marker.approx span {
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1.5px dashed var(--ink-2);
+  outline: 1.5px solid color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--ink-2);
+}
+.market-marker.muted span {
+  background: var(--subtle);
+  box-shadow: none;
+  opacity: 0.7;
+}
+.market-marker.approx.muted span {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border-color: var(--subtle);
+  color: var(--subtle);
+}
+
+.market-popup-wrap .leaflet-popup-content {
+  margin: 14px 14px 12px;
+}
+.market-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-text);
+  color: var(--ink);
+}
+.market-popup header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 14px;
+}
+.market-popup header strong {
+  font-size: var(--fs-base);
+}
+.market-popup header small,
+.market-popup li small {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.market-popup ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.market-popup li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 24px;
+  gap: 10px;
+  align-items: start;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+.market-popup li.muted > :not(a) {
+  opacity: 0.6;
+}
+.market-popup li img,
+.market-thumb-empty {
+  display: block;
+  width: 56px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+}
+.market-popup li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.market-popup li b {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.market-popup .market-add {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 5px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  transition: background var(--dur-quick) var(--ease-standard);
+}
+.market-popup .market-add:hover:not(:disabled) {
+  background: var(--lime-soft);
+  border-color: var(--leaf);
+}
+.market-popup .market-add:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.market-popup .market-progress {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+}
+.market-popup .market-error {
+  color: var(--clay);
+}
+.market-popup li > a {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+}
+.market-popup li > a:hover {
+  color: var(--moss);
+  background: var(--surface-2);
+}
+
+.legend-dot {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-2);
+}
+.legend-dot.approx {
+  background: transparent;
+  border: 1.5px dashed var(--ink-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-bar i::after {
+    animation: none;
+    content: none;
+  }
+  .market-bar.indeterminate i {
+    animation: none;
+    width: 100%;
+    opacity: 0.45;
+  }
+}

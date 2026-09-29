@@ -60,5 +60,5 @@ summary = {"dataset": "FAFB v783", "annotations": "v3.1.0", "neurons": len(ids),
            "dynamics": "Positive, incoming-normalized synapse counts; 16 leaky tanh rate steps. Not electrophysiology.",
            "plasticity": "Artificial learned MBON/CX decision readout. KC→MBON biological plasticity is not implemented.",
            "sources": ["https://zenodo.org/records/10676866", "https://github.com/flyconnectome/flywire_annotations/tree/v3.1.0"]}
-(OUT / "summary.json").write_text(json.dumps(summary, indent=2))
+(OUT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8", newline="\n")
 print(json.dumps(summary, indent=2), flush=True)

@@ -84,7 +84,7 @@ export function SettingsDialog({
     }
   };
   return (
-    <Modal title="Your apartment, your rules" onClose={onClose}>
+    <Modal title="Client brief" onClose={onClose}>
       <form onSubmit={submit} className="settings-form">
         <p className="muted">
           Budget shapes the response. Hard limits exclude listings before
@@ -168,7 +168,7 @@ export function SettingsDialog({
         )}
         <button className="primary" disabled={busy}>
           <Check size={17} />
-          Save rules
+          Save brief
         </button>
         <a className="backup-link" href="/api/export" download>
           <Download size={16} />
@@ -289,7 +289,7 @@ export function ImportDialog({
     }
   };
   return (
-    <Modal title="Add apartment stimuli" onClose={onClose}>
+    <Modal title="Add listings" onClose={onClose}>
       <div className="dialog-tabs">
         {[
           ["url", "Link", Link],
@@ -316,12 +316,13 @@ export function ImportDialog({
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://www.rentspotcy.com/property/…"
+                placeholder="https://www.bazaraki.com/adv/…"
               />
             </label>
             <p className="muted">
-              RentSpot, Fox, Bazaraki, INDEX. For pages rendered with JavaScript
-              or requiring a browser check, use the JSON / HTML.
+              Bazaraki adverts import directly. “Search Bazaraki” on the area
+              map finds them for you. RentSpot, Fox and INDEX pages also work;
+              for pages that need a browser check, use JSON / HTML.
             </p>
           </>
         ) : tab === "content" ? (
@@ -352,7 +353,7 @@ export function ImportDialog({
                 }}
                 onClick={(e) => e.preventDefault()}
               >
-                🐝 To Fly Estate
+                To Fly Estate
               </a>
               <small>
                 If the site prevents saving the bookmark, copy the page HTML or
@@ -529,8 +530,7 @@ export function ImportDialog({
             ))}
             {job.status === "done" && (
               <p className="success">
-                Listings added. You can close this dialog and start teaching
-                your fly.
+                Listings added. Close this dialog and brief your agent.
               </p>
             )}
           </div>

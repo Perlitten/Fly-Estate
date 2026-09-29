@@ -15,10 +15,10 @@ import {
 import type { Listing } from "./types";
 import { money } from "./api";
 export const decisions = {
-  waiting: "Your fly is still learning",
-  approach: "Your fly wants to go here",
-  avoid: "Your fly turns away",
-  maybe: "Your fly is unsure",
+  waiting: "Your agent is forming a view",
+  approach: "Recommended for a viewing",
+  avoid: "Not recommended",
+  maybe: "Worth a second look",
   no_photo: "Photos needed",
 };
 export function RatingButtons({
@@ -172,6 +172,21 @@ export default function ApartmentCard({
             {Math.max(l.photo_urls.length, l.photos.length)} photos
           </small>
         </div>
+        {l.photo_downloads?.some((photo) => photo.status !== "available") && (
+          <details className="photo-download-status">
+            <summary>
+              {l.photo_downloads.filter((photo) => photo.status === "unavailable").length} unavailable photos
+              {l.photo_downloads.some((photo) => photo.status === "cached") && " · cached copies used"}
+            </summary>
+            <ul>
+              {l.photo_downloads.filter((photo) => photo.status !== "available").map((photo) => (
+                <li key={photo.url}>
+                  {photo.status === "cached" ? "Cached" : "Unavailable"}: {photo.error || "Download failed"}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <div
           className={`decision ${l.filter_reasons.length ? "excluded" : l.prediction.decision}`}
         >

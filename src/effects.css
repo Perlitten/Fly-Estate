@@ -1,0 +1,140 @@
+/*
+ * Эффекты Fly Estate (effects.tsx). Правила: один заметный эффект на экран, числа досчитываются
+ * до точного значения, бесконечные циклы — только пока реально идёт процесс, hover-эффекты —
+ * только для мыши. Цвета и длительности — из tokens.css; при reduced-motion всё сразу в итоге.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Бумага: неподвижное зерно на 3 %, как у бланка агентства. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Числа не прыгают по ширине во время досчёта. */
+.count-up {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Подложка вкладок и переключателя режимов переезжает к активной кнопке. */
+.control-strip nav,
+.mode-switch {
+  position: relative;
+  isolation: isolate;
+}
+.control-strip nav::before,
+.mode-switch::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  top: 0;
+  width: var(--iw, 0);
+  height: var(--ih, 0);
+  transform: translate(var(--ix, 0), var(--iy, 0));
+  border-radius: 8px;
+  background: var(--surface-2);
+  opacity: 0;
+}
+.mode-switch::before {
+  border-radius: 6px;
+  background: var(--white);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--forest) 7%, transparent);
+}
+nav[data-indicator]::before,
+.mode-switch[data-indicator]::before {
+  opacity: 1;
+  transition:
+    transform var(--dur-move) var(--ease-dart),
+    width var(--dur-move) var(--ease-dart),
+    height var(--dur-move) var(--ease-dart);
+}
+nav[data-indicator] > button.active,
+.mode-switch[data-indicator] > button.active {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Карточка объекта: мягкий свет под курсором, фото не тонируется. */
+@media (hover: hover) and (pointer: fine) {
+  .listing-grid .apartment-card {
+    background:
+      radial-gradient(
+        280px circle at var(--mx, -400px) var(--my, -400px),
+        var(--lime-soft),
+        transparent 70%
+      ),
+      var(--surface);
+  }
+  .listing-grid .apartment-card:hover {
+    border-color: var(--line-strong);
+  }
+}
+
+/* Осмотр фото: линия проходит по кадру, пока модель его считает, и гаснет вместе с задачей. */
+.spiking-strip button.running::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0 42%,
+    color-mix(in srgb, var(--lime) 55%, transparent) 50%,
+    transparent 58% 100%
+  );
+  background-size: 100% 240%;
+  animation: inspect-pass var(--dur-scan) linear infinite;
+  pointer-events: none;
+}
+@keyframes inspect-pass {
+  from {
+    background-position: 0 100%;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+.spiking-progress i {
+  position: relative;
+  overflow: hidden;
+}
+.spiking-progress i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--white) 55%, transparent),
+    transparent
+  );
+  animation: progress-sheen var(--dur-sheen) var(--ease-standard) infinite;
+}
+@keyframes progress-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiking-strip button.running::after,
+  .spiking-progress i::after {
+    animation: none;
+    opacity: 0;
+  }
+}

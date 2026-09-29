@@ -18,52 +18,36 @@
   .stimulus-photo {
     height: 172px;
   }
-  .intro h1 {
-    font-size: 49px;
-  }
-  .intro-stats {
-    padding-right: 48px;
-    gap: 45px;
-  }
-  .brain-groups button {
-    font-size: 9px;
+    .brain-groups button {
+    font-size: var(--fs-xs);
   }
   .stage-top h2 {
-    font-size: 27px;
+    font-size: var(--fs-2xl);
   }
   .signal-bars > div {
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .brain-source {
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .timeline-label b {
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
 }
 @media (max-width: 1100px) {
   .app-header {
-    margin: 0 28px;
-    height: 84px;
+    --gutter: 28px;
+    --head: 64px;
   }
   .app main {
     padding: 0 28px;
   }
-  .intro {
-    padding-top: 30px;
+  .intro-ledger > * {
+    padding-left: 16px;
+    padding-right: 16px;
   }
-  .intro h1 {
-    font-size: 35px;
-  }
-  .intro-stats {
-    gap: 17px;
-    padding: 0;
-  }
-  .intro-stats > div {
-    padding-left: 18px;
-  }
-  .intro-stats strong {
-    font-size: 25px;
+  .intro-ledger .data-tag {
+    display: none;
   }
   .header-right {
     gap: 16px;
@@ -78,10 +62,10 @@
     right: 21px;
   }
   .stage-top h2 {
-    font-size: 20px;
+    font-size: var(--fs-lg);
   }
   .simulation-badge {
-    font-size: 7px;
+    font-size: var(--fs-micro);
   }
   .brain-sidebar {
     padding: 20px 17px;
@@ -91,7 +75,7 @@
     gap: 4px;
   }
   .brain-groups button {
-    font-size: 7px;
+    font-size: var(--fs-micro);
     padding: 6px;
   }
   .brain-canvas {
@@ -114,17 +98,17 @@
     padding: 0;
   }
   .training-strip h3 {
-    font-size: 14px;
+    font-size: var(--fs-base);
   }
   .training-strip p {
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .control-strip nav button {
     padding: 10px 11px;
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
   .mode-switch button {
-    font-size: 9px;
+    font-size: var(--fs-xs);
     padding: 7px 9px;
   }
   .listing-grid {
@@ -132,22 +116,21 @@
   }
   .amenities {
     gap: 9px;
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .photo-wrap {
     height: 174px;
   }
   .rating-buttons button {
     flex-direction: column;
-    font-size: 7px;
+    font-size: var(--fs-micro);
   }
   .list-controls {
     min-width: 160px;
   }
 }
 @media (max-width: 850px) {
-  .header-right .github-link,
-  .location-chip {
+  .header-right .github-link {
     display: none;
   }
   .brain-layout,
@@ -217,7 +200,7 @@
     grid-column: 1/-1;
   }
   .brain-source {
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .map-sidebar {
     display: grid;
@@ -234,25 +217,25 @@
     max-height: 300px;
     overflow: auto;
   }
-  .intro-stats {
-    display: none;
+  .intro-ledger {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding: 12px 0;
   }
-  .intro {
-    padding-bottom: 28px;
+  .intro-ledger p {
+    flex-basis: 100%;
+    max-width: none;
   }
-  .intro h1 {
-    font-size: 39px;
+  .intro-ledger > div {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .intro-ledger > p + div {
+    padding-left: 0;
+    border-left: 0;
   }
   .training-progress {
     display: none;
-  }
-  .training-fly {
-    height: 51px;
-    width: 51px;
-  }
-  .training-fly .fly {
-    height: 43px;
-    width: 43px;
   }
   .listing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -271,7 +254,7 @@
     align-items: flex-start;
   }
   .section-heading h2 {
-    font-size: 24px;
+    font-size: var(--fs-xl);
   }
   footer > span:nth-child(2) {
     display: none;
@@ -282,23 +265,28 @@
 }
 @media (max-width: 600px) {
   .app-header {
-    height: 77px;
-    margin: 0 19px;
+    --gutter: 19px;
+    --head: 60px;
+    --head-compact: 52px;
     gap: 10px;
   }
   .app main {
     padding: 0 19px;
   }
   .brand > span {
-    font-size: 24px;
+    font-size: var(--fs-xl);
   }
-  .brand img {
-    width: 35px;
-    height: 35px;
+  .brand .fly-live {
+    width: 30px;
+    height: 30px;
+  }
+  .scrolled .brand .fly-live {
+    width: 26px;
+    height: 26px;
   }
   .brand small {
-    font-size: 5.5px;
-    letter-spacing: 0.8px;
+    font-size: var(--fs-micro);
+    letter-spacing: var(--track-label);
   }
   .header-right {
     gap: 9px;
@@ -314,41 +302,33 @@
     width: 18px;
     height: 18px;
   }
-  .icon-button {
-    height: 36px;
+  .brief-chip {
     width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
   }
-  .intro {
-    padding: 29px 0 25px;
+  .brief-label,
+  .brief-terms {
+    display: none;
   }
-  .intro h1 {
-    font-size: 30px;
-    letter-spacing: -1.5px;
-    line-height: 1.2;
-  }
-  .intro .eyebrow {
-    font-size: 7px;
-    letter-spacing: 1.3px;
-    margin-bottom: 14px;
-  }
-  .intro p {
-    font-size: 11px;
-    line-height: 1.8;
-    margin-top: 13px;
+  .intro-ledger > * {
+    padding-left: 12px;
+    padding-right: 8px;
   }
   .desktop-break {
     display: none;
   }
   .control-strip {
     display: block;
-    padding-bottom: 15px;
+    padding-bottom: 10px;
   }
   .control-strip nav {
     justify-content: space-between;
     gap: 2px;
   }
   .control-strip nav button {
-    font-size: 8px;
+    font-size: var(--fs-micro);
     padding: 10px 6px;
     gap: 5px;
   }
@@ -364,7 +344,7 @@
     width: fit-content;
   }
   .mode-switch button {
-    font-size: 9px;
+    font-size: var(--fs-xs);
     padding: 6px 12px;
   }
   .brain-stage {
@@ -377,10 +357,10 @@
     gap: 8px;
   }
   .stage-top h2 {
-    font-size: 18px;
+    font-size: var(--fs-lg);
   }
   .stage-top .eyebrow {
-    font-size: 6px;
+    font-size: var(--fs-micro);
   }
   .simulation-badge {
     font-size: 0;
@@ -396,10 +376,10 @@
     gap: 4px;
   }
   .brain-corner span {
-    font-size: 5px;
+    font-size: var(--fs-micro);
   }
   .brain-corner small {
-    font-size: 7px;
+    font-size: var(--fs-micro);
   }
   .scene-reset {
     right: 18px;
@@ -415,7 +395,7 @@
     gap: 5px;
   }
   .brain-groups button {
-    font-size: 7px;
+    font-size: var(--fs-micro);
     padding: 6px;
   }
   .timeline {
@@ -424,10 +404,10 @@
     padding: 13px 0 9px;
   }
   .timeline-label b {
-    font-size: 7px;
+    font-size: var(--fs-micro);
   }
   .timeline-label span {
-    font-size: 5px;
+    font-size: var(--fs-micro);
   }
   .timeline > svg {
     width: 14px;
@@ -436,7 +416,7 @@
     width: 20px;
   }
   .brain-source {
-    font-size: 6px;
+    font-size: var(--fs-micro);
     padding: 6px 17px 13px;
     gap: 5px;
   }
@@ -466,34 +446,34 @@
     gap: 10px;
   }
   .brain-sidebar .signal-bars > div {
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .brain-sidebar .signal-bars > div > span {
     width: 139px;
   }
   .brain-sidebar .signal-bars > small {
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .brain-sidebar .stimulus-address {
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .brain-sidebar .sensory-factors {
     margin: 17px 0;
   }
   .brain-sidebar .sensory-factors b {
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
   .brain-sidebar .sensory-factors small {
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .brain-sidebar .fly-reaction {
     margin: 15px 0 17px;
   }
   .brain-sidebar .fly-reaction strong {
-    font-size: 12px;
+    font-size: var(--fs-sm);
   }
   .brain-sidebar .rating-buttons button {
-    font-size: 9px;
+    font-size: var(--fs-xs);
     padding: 10px 4px;
   }
   .brain-sidebar .rating-buttons button svg {
@@ -510,55 +490,47 @@
     min-width: 150px;
   }
   .training-strip .eyebrow {
-    font-size: 5px;
-    letter-spacing: 1px;
+    font-size: var(--fs-micro);
+    letter-spacing: var(--track-label);
   }
   .training-strip h3 {
-    font-size: 12px;
+    font-size: var(--fs-sm);
     line-height: 1.5;
     margin: 6px 0;
   }
   .training-strip p {
-    font-size: 8px;
-  }
-  .training-fly {
-    width: 42px;
-    height: 42px;
-  }
-  .training-fly .fly {
-    height: 36px;
-    width: 36px;
+    font-size: var(--fs-micro);
   }
   .training-strip > .text-button {
-    font-size: 9px;
+    font-size: var(--fs-xs);
     margin-left: 54px;
   }
   footer {
     padding: 22px 0;
     flex-wrap: wrap;
     gap: 10px;
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   footer > span:first-child {
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
   footer small {
     display: block;
-    font-size: 7px;
+    font-size: var(--fs-micro);
     margin-top: 3px;
   }
   footer a {
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .section-heading {
     display: block;
     padding-top: 10px;
   }
   .section-heading h2 {
-    font-size: 22px;
+    font-size: var(--fs-xl);
   }
   .section-heading p {
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
   .list-controls {
     flex-direction: row;
@@ -567,10 +539,10 @@
     align-items: center;
   }
   .list-controls .checkbox-label {
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .list-controls select {
-    font-size: 8px;
+    font-size: var(--fs-micro);
     padding: 8px;
   }
   .listing-grid {
@@ -582,20 +554,20 @@
   }
   .rating-buttons button {
     flex-direction: row;
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .card-content {
     padding: 17px;
   }
   .amenities {
-    font-size: 10px;
+    font-size: var(--fs-xs);
     gap: 16px;
   }
   .card-title {
-    font-size: 13px;
+    font-size: var(--fs-base);
   }
   .decision {
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
   .photo-prev,
   .photo-next {
@@ -613,7 +585,7 @@
   }
   .map-sidebar .rating-buttons button {
     flex-direction: row;
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
   .map-selection-list {
     max-height: 220px;
@@ -627,35 +599,45 @@
     padding: 11px;
   }
   .map-title b {
-    font-size: 8px;
+    font-size: var(--fs-micro);
   }
   .map-title small {
-    font-size: 7px;
+    font-size: var(--fs-micro);
   }
   .map-tools {
     right: 15px;
     top: 15px;
   }
   .map-legend {
-    gap: 10px;
+    gap: 4px 10px;
     left: 15px;
-    bottom: 43px;
-    font-size: 6px;
-    padding: 9px;
+    right: 15px;
+    bottom: 52px;
+    font-size: var(--fs-xs);
+    padding: 8px 9px;
   }
   .map-precision {
-    font-size: 6px;
+    font-size: var(--fs-xs);
     left: 13px;
+    right: 13px;
     bottom: 20px;
+  }
+  /* Pinch to zoom on phones; the buttons would sit on the legend. */
+  .city-map .leaflet-control-zoom {
+    display: none;
+  }
+  /* A popup needs the whole map on a phone: the overlays step aside. */
+  .city-map.popup-open :is(.map-title, .map-legend, .map-precision) {
+    visibility: hidden;
   }
   .duel-section {
     padding-top: 18px;
   }
   .duel-section h2 {
-    font-size: 25px;
+    font-size: var(--fs-xl);
   }
   .duel-section > p {
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
   .duel-grid {
     grid-template-columns: 1fr;
@@ -663,7 +645,7 @@
     margin: 25px 12px;
   }
   .duel-grid .versus {
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
   .duel-grid .photo-wrap {
     height: 190px;
@@ -671,27 +653,27 @@
   .duel-letter {
     width: 32px;
     height: 32px;
-    font-size: 14px;
+    font-size: var(--fs-base);
   }
   .duel-other {
     gap: 12px;
   }
   .duel-other button {
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
   .modal {
     padding: 22px;
     max-height: calc(100vh - 30px);
   }
   .modal-header h2 {
-    font-size: 21px;
+    font-size: var(--fs-xl);
   }
   .form-grid {
     gap: 12px;
   }
   .settings-form label,
   .import-form label {
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
   .form-grid input {
     min-width: 0;
@@ -700,13 +682,13 @@
     gap: 3px;
   }
   .dialog-tabs button {
-    font-size: 9px;
+    font-size: var(--fs-xs);
     padding: 8px;
   }
   .toast {
     max-width: calc(100vw - 38px);
     width: max-content;
-    font-size: 10px;
+    font-size: var(--fs-xs);
     padding: 12px 15px;
   }
   .neuron-inspector {
@@ -718,11 +700,10 @@
     padding: 34px 20px;
   }
   .empty-state h3 {
-    font-size: 21px;
+    font-size: var(--fs-xl);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wing,
   .spin {
     animation: none;
   }

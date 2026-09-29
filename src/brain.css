@@ -1,0 +1,61 @@
+/* Brain view: group chips, shell toggle and the replay timeline. Tokens only. */
+
+.brain-groups i {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+}
+
+/* Shell toggle: sits after the group chips, pushed to the right edge. */
+.brain-groups .shell-toggle {
+  margin-left: auto;
+  transition:
+    color var(--dur-quick) var(--ease-standard),
+    background-color var(--dur-quick) var(--ease-standard),
+    border-color var(--dur-quick) var(--ease-standard);
+}
+.brain-groups .shell-toggle i {
+  background: transparent;
+  border: 1px solid var(--night-muted);
+}
+.brain-groups .shell-toggle.active {
+  color: var(--night-text);
+  background: var(--night-2);
+  border-color: var(--night-line);
+}
+.brain-groups .shell-toggle.active i {
+  background: var(--night-line);
+  border-color: var(--leaf);
+}
+.brain-groups .shell-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.timeline-label b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.timeline-label span {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.timeline-note {
+  margin: 7px 0 0;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--night-muted);
+}
+.timeline > button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (max-width: 1100px) {
+  .timeline-note {
+    font-size: var(--fs-micro);
+    margin-top: 6px;
+  }
+}

@@ -48,7 +48,7 @@ def sha256(path: Path) -> str:
 
 
 def main() -> None:
-    prior = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
+    prior = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
     expected = {f["cache_path"]: f for s in prior.get("sources", []) for f in s["files"]}
     output = {"schema_version": 1, "sources": []}
     for name, source in SOURCES.items():
@@ -58,7 +58,7 @@ def main() -> None:
             url = f"https://raw.githubusercontent.com/{source['repository']}/{source['revision']}/{filename}"
             path = CACHE / name / filename
             path.parent.mkdir(parents=True, exist_ok=True)
-            relative = str(path.relative_to(ROOT))
+            relative = path.relative_to(ROOT).as_posix()
             known = expected.get(relative)
             if path.exists() and known and sha256(path) != known["sha256"]:
                 raise RuntimeError(f"Cached file changed: {path}")
@@ -82,7 +82,7 @@ def main() -> None:
     text = json.dumps(output, indent=2) + "\n"
     if prior and output != prior:
         raise RuntimeError("Manifest changed; review pins before accepting new sources")
-    MANIFEST.write_text(text)
+    MANIFEST.write_text(text, encoding="utf-8", newline="\n")
     print(f"Verified {sum(len(s['files']) for s in output['sources'])} upstream files", flush=True)
 
 
