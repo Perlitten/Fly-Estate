@@ -20,6 +20,8 @@ import {
   Sparkles,
   ChevronRight,
   LoaderCircle,
+  Search,
+  X,
 } from "lucide-react";
 import type { Data, Settings } from "./types";
 import { api, count, money } from "./api";
@@ -32,6 +34,15 @@ import Preloader from "./Preloader";
 import ApartmentCard from "./ApartmentCard";
 import { ImportDialog, SettingsDialog } from "./Dialogs";
 import MarketPanel, { useAgentSearch } from "./Market";
+import "./inspection-ux.css";
+
+const reviewFilters = [
+  ["all", "All apartments"],
+  ["unrated", "To review"],
+  ["visit", "Would visit"],
+  ["rated", "Rated"],
+] as const;
+type ReviewFilter = (typeof reviewFilters)[number][0];
 
 const views = [
   ["brain", "Agent's brain", Brain],
@@ -49,6 +60,8 @@ export default function App() {
     [error, setError] = useState(""),
     [showExcluded, setShowExcluded] = useState(false),
     [sort, setSort] = useState("fly"),
+    [portfolioQuery, setPortfolioQuery] = useState(""),
+    [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all"),
     [pair, setPair] = useState<[string, string]>(["", ""]),
     [toast, setToast] = useState(""),
     [scrolled, setScrolled] = useState(false),
@@ -67,6 +80,9 @@ export default function App() {
   useEffect(() => {
     load().catch((e) => setError(e.message));
   }, [load]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
   // The agent's Bazaraki search: market snapshot (read when the map opens) and import progress.
   const agent = useAgentSearch(view === "map", load);
   // A save that takes longer than a moment says why the buttons are waiting.
@@ -182,6 +198,26 @@ export default function App() {
           : b.prediction.probability - a.prediction.probability,
     );
   }, [data, showExcluded, sort]);
+  const portfolioItems = useMemo(() => {
+    const query = portfolioQuery.trim().toLocaleLowerCase();
+    return sorted.filter(
+      (l) =>
+        (!query ||
+          `${l.area} ${l.title}`.toLocaleLowerCase().includes(query)) &&
+        (reviewFilter === "all" ||
+          (reviewFilter === "unrated"
+            ? l.rating === null
+            : reviewFilter === "visit"
+              ? l.rating === 1
+              : l.rating !== null)),
+    );
+  }, [sorted, portfolioQuery, reviewFilter]);
+  const reviewCounts = {
+    all: sorted.length,
+    unrated: sorted.filter((l) => l.rating === null).length,
+    visit: sorted.filter((l) => l.rating === 1).length,
+    rated: sorted.filter((l) => l.rating !== null).length,
+  };
   const tabsRef = useRef<HTMLElement>(null),
     modeRef = useRef<HTMLDivElement>(null);
   useIndicator(tabsRef, `${view}|${!!data}|${data?.listings.length}`);
@@ -308,11 +344,19 @@ export default function App() {
                 <button
                   key={id}
                   className={view === id ? "active" : ""}
+                  aria-pressed={view === id}
                   onClick={() => setView(id)}
                 >
                   <Icon size={17} />
                   {label}
-                  {id === "learn" && <span>{data.listings.length}</span>}
+                  {id === "learn" && (
+                    <span>
+                      {
+                        data.listings.filter((l) => !l.filter_reasons.length)
+                          .length
+                      }
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -320,6 +364,7 @@ export default function App() {
               <button
                 disabled={busy}
                 className={data.settings.mode === "pure" ? "active" : ""}
+                aria-pressed={data.settings.mode === "pure"}
                 title="Photos as a grid of light and color; an artificial mapping to brain inputs"
                 onClick={() =>
                   save({ ...data.settings, mode: "pure" }).catch(() => {})
@@ -330,6 +375,7 @@ export default function App() {
               <button
                 disabled={busy}
                 className={data.settings.mode === "cyborg" ? "active" : ""}
+                aria-pressed={data.settings.mode === "cyborg"}
                 title="CLIP turns photos into visual signals for the brain"
                 onClick={() =>
                   save({ ...data.settings, mode: "cyborg" }).catch(() => {})
@@ -358,6 +404,7 @@ export default function App() {
                 onSelect={setSelected}
                 onRate={rate}
                 busy={busy}
+                onBrowse={() => setView("learn")}
               />
             </Suspense>
           )}
@@ -398,10 +445,7 @@ export default function App() {
                     </p>
                   </div>
                 )}
-                <div
-                  className="map-selection-list"
-                  hidden={!eligible.length}
-                >
+                <div className="map-selection-list" hidden={!eligible.length}>
                   {eligible.slice(0, 8).map((l) => (
                     <button
                       className={l.id === selected?.id ? "selected" : ""}
@@ -427,14 +471,10 @@ export default function App() {
               <div className="section-heading">
                 <div>
                   <span className="eyebrow">PORTFOLIO</span>
-                  <h2>
-                    {data.training.ready
-                      ? "Your shortlist"
-                      : "Brief your agent"}
-                  </h2>
+                  <h2>Apartments on file</h2>
                   <p>
-                    “Would visit”, “Maybe”, “Not for me” — every rating goes on
-                    file.
+                    Find an apartment, inspect its brain response, then tell
+                    your agent what you think.
                   </p>
                 </div>
                 <div className="list-controls">
@@ -457,8 +497,50 @@ export default function App() {
                   </select>
                 </div>
               </div>
+              <div className="portfolio-toolbar">
+                <label className="portfolio-search">
+                  <Search size={18} />
+                  <input
+                    type="search"
+                    aria-label="Search apartments"
+                    placeholder="Search by area or apartment name"
+                    value={portfolioQuery}
+                    onChange={(e) => setPortfolioQuery(e.target.value)}
+                  />
+                  {portfolioQuery && (
+                    <button
+                      aria-label="Clear apartment search"
+                      onClick={() => setPortfolioQuery("")}
+                    >
+                      <X size={17} />
+                    </button>
+                  )}
+                </label>
+                <div
+                  className="review-filters"
+                  role="group"
+                  aria-label="Filter apartments by your review"
+                >
+                  {reviewFilters.map(([id, label]) => (
+                    <button
+                      key={id}
+                      aria-pressed={reviewFilter === id}
+                      onClick={() => setReviewFilter(id)}
+                    >
+                      {label}
+                      <span>{reviewCounts[id]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="portfolio-results" role="status" aria-live="polite">
+                {portfolioItems.length} of {sorted.length} apartments shown ·{" "}
+                {showExcluded
+                  ? "including apartments outside your brief"
+                  : "matching your brief"}
+              </p>
               <div className="listing-grid">
-                {sorted.map((l) => (
+                {portfolioItems.map((l) => (
                   <ApartmentCard
                     key={l.id}
                     listing={l}
@@ -471,6 +553,23 @@ export default function App() {
                   />
                 ))}
               </div>
+              {!portfolioItems.length && sorted.length > 0 && (
+                <div className="empty-state">
+                  <h3>No apartments found</h3>
+                  <p>
+                    Try another area or clear your search and review filter.
+                  </p>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setPortfolioQuery("");
+                      setReviewFilter("all");
+                    }}
+                  >
+                    Clear search and filter <ArrowRight size={17} />
+                  </button>
+                </div>
+              )}
               {!sorted.length && (
                 <div className="empty-state">
                   <h3>

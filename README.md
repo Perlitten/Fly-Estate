@@ -46,6 +46,8 @@ To continue development, create a branch with `git switch -c codex/your-change`.
 
 - **Fly brain:** 139,248 annotated neurons in 3D. Rotate, zoom, highlight groups and select a neuron to inspect it. **Rate overview** shows 16 computed steps for a gallery or photo. **Analyze in 3D** follows the worker through every photo, showing actual LIF spikes on the 8,991 simulated neurons while the remaining anatomy stays dim. **Replay analysis** plays the saved photos in order; pause, scrub or select a photo to inspect it.
 - **Interest map:** OpenStreetMap, price markers, grouped apartments at shared coordinates, a preferred area and a draggable center. The fly marker shows the model’s interest in the selected apartment.
+- **Portfolio:** search by area or apartment name, filter by your review status and sort by interest, price or distance. Open an apartment through its cover or **Inspect in brain**. Returning to the portfolio keeps the search and review filter.
+- **Apartment inspection:** previous/next apartment and photo controls, a prominent start/replay action, an optional photo gallery and expandable neural/sensory details. The agent’s rate-model view is labelled separately from recorded spiking responses. On a phone, jump between the apartment and connectome; starting or replaying analysis brings the brain into view.
 - **Learning:** “Would visit”, “Maybe” and “Not for me”, with an option to remove a rating. A new rating replaces the previous one.
 - **Apartment duels:** choose A, B or a tie. Each pair is stored once, regardless of its order.
 - **Rules:** target budget, hard price limit, bedroom count, covered parking and excluded areas. Listings are filtered before computation and learning.
