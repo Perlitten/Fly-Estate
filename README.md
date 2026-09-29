@@ -6,7 +6,7 @@ Spiking dynamics, dopamine learning and upcoming work: **[roadmap](docs/ROADMAP.
 
 Voice, colour, type, motion and media rules: **[brand kit](docs/BRAND_KIT.md)** (live version at `/brand.html` in `pnpm dev`).
 
-Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. Scores and the 3D brain still use the rate engine. The spiking LIF engine from R2 runs in its own worker and records per-photo activity, which does not yet affect scores (see [spiking engine](#spiking-engine-and-worker)).
+Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. The 3D brain offers the rate overview and actual per-photo LIF spikes from the worker. The main apartment verdict still uses the rate readout; spiking results have their own experimental readout (see [spiking engine](#spiking-engine-and-worker)).
 
 ## Getting started
 
@@ -44,7 +44,7 @@ To continue development, create a branch with `git switch -c codex/your-change`.
 
 ## Available features
 
-- **Fly brain:** 139,248 annotated neurons in 3D. Rotate, zoom, highlight groups and select a neuron to inspect it. The API returns 16 steps of computed activity for each apartment. View the response to the whole gallery or to an individual photo.
+- **Fly brain:** 139,248 annotated neurons in 3D. Rotate, zoom, highlight groups and select a neuron to inspect it. **Rate overview** shows 16 computed steps for a gallery or photo. **Analyze in 3D** follows the worker through every photo, showing actual LIF spikes on the 8,991 simulated neurons while the remaining anatomy stays dim. **Replay analysis** plays the saved photos in order; pause, scrub or select a photo to inspect it.
 - **Interest map:** OpenStreetMap, price markers, grouped apartments at shared coordinates, a preferred area and a draggable center. The fly marker shows the model’s interest in the selected apartment.
 - **Learning:** “Would visit”, “Maybe” and “Not for me”, with an option to remove a rating. A new rating replaces the previous one.
 - **Apartment duels:** choose A, B or a tie. Each pair is stored once, regardless of its order.
@@ -72,7 +72,7 @@ Location and distance → CX┘                         ↓
 
 `scripts/prepare_brain.py` aggregates real synaptic connections by neuron pair, removes self-connections and excludes pairs with fewer than five synapses. The current prepared graph contains **2,700,429** directed connections and **34,152,544** synapses on those connections. Weights are positive and normalized by incoming weight.
 
-`server/brain.py` implements simple rate dynamics: 16 leak-and-`tanh` steps, followed by the activity of 96 MBONs and pooling across 229 CX types. Only these outputs enter a regularized logistic readout trained on ratings and pair differences. Price and photo features are not passed directly to the final classifier. The same neural computation supplies the frames of the 3D visualization.
+`server/brain.py` implements simple rate dynamics: 16 leak-and-`tanh` steps, followed by the activity of 96 MBONs and pooling across 229 CX types. Only these outputs enter a regularized logistic readout trained on ratings and pair differences. Price and photo features are not passed directly to the final classifier. The same neural computation supplies the **Rate overview** frames. **Spiking analysis** instead displays recordings from the LIF worker described below.
 
 Each image is computed independently using the same apartment metadata. Batch size limits memory use, not the total number of processed photos. The gallery visualization averages absolute activities across images before normalizing each frame. Positive space and balcony inputs are artificial preferences requested by the user; the learned readout still depends on their ratings.
 
@@ -82,11 +82,11 @@ Each image is computed independently using the same apartment metadata. Batch si
 
 - RGB-to-neuron mapping is a deterministic artificial adapter, not reconstructed retinotopy. Pretrained FlyVis is not connected.
 - ALPNs are not “price neurons”. Numeric features are projected onto them artificially. CX receives an artificial direction and distance signal.
-- Excitatory/inhibitory signs, delays, biophysics and receptor specificity are not reconstructed in the application engine. A neurotransmitter label is not treated as a proven synaptic sign.
-- A separate MBON/CX readout is trained. Biological dopamine-dependent KC→MBON plasticity is not yet integrated. The DAN group in 3D is an anatomical group.
+- The rate engine does not reconstruct excitatory/inhibitory signs, delays, biophysics or receptor specificity. The LIF worker uses the explicit assumptions and structural edits documented in R1.
+- The main verdict trains a separate MBON/CX readout. The LIF engine supports the R1 dopamine-gated KC→MBON depression rule; analyzing photos does not apply reinforcement or change weights. Taste-history and before/after learning visualization remain planned.
 - CLIP signals are photo–text similarities, not verified housing properties or calibrated probabilities. The final score is not a probability that you will like an apartment in real life.
 - Points represent annotated neuron locations, not neurite morphologies. Lines display a subset of real connections. The complete prepared graph is used for computation.
-- Brightness shows activity magnitude using `sqrt(abs(a)/max(abs(a)))`, normalized separately in each frame. Brightness cannot be compared between frames as an absolute firing rate.
+- **Rate overview** brightness uses `sqrt(abs(a)/max(abs(a)))`, normalized separately in each frame, so it is not an absolute firing rate. **Spiking analysis** uses actual counts in 25 ms bins and a fixed square-root scale, clipped at 20 spikes per bin. Frames interpolate for display; the underlying count bins stay lossless. The timeline shows simulation time, and replay runs four times slower than the recorded episode.
 - The fly marker’s movement on the map visualizes a result. It does not simulate a motor system or a real travel route.
 
 ## Spiking engine and worker
@@ -102,6 +102,8 @@ Prepare the subgraph once, after `pnpm setup`:
 
 `pnpm dev` then starts one engine worker next to the API (`python -m server.worker`; `--once` processes the queue and exits). Only one worker can hold the lease in `data/engine/engine.sqlite`; a second worker exits with code 3. The HTTP server only enqueues and reads, so the interface stays responsive during computation.
 
+In the brain sidebar, **Analyze in 3D** queues every photo and follows the running photo. The worker publishes completed spike bins every 100 ms of simulated time; the interface polls progress and maps those counts by FlyWire root ID. Only the prepared subgraph receives activity. Saved recordings expose the checkpoint, photo coverage and simulation time. Cached results without a recording are recomputed with the same deterministic seed to add it. Once every photo has a current recording, **Replay analysis** reuses the cache and plays the gallery in order. **Stop** finishes the current photo before stopping the job. Selecting a photo leaves automatic following and opens that photo’s recording; stale recordings are labelled as earlier weights or brief.
+
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /api/engine` | engine, subgraph, worker heartbeat, current checkpoint and queue counts |
@@ -109,6 +111,9 @@ Prepare the subgraph once, after `pnpm setup`:
 | `GET /api/simulations[?listing_id=]`, `GET /api/simulations/{id}` | job status and per-photo progress |
 | `POST /api/simulations/{id}/cancel` | cancel a queued job, or stop a running one before its next photo |
 | `GET /api/engine/activity/{listing_id}` | latest activity per photo; `stale` marks results produced with older weights |
+| `GET /api/engine/gallery/{listing_id}` | current photo readiness, recording keys and live progress under the active brief |
+| `GET /api/engine/replay/{cache_key}` | saved spike bins projected by neuron ID onto the anatomical view |
+| `GET /api/engine/live/{job_id}?photo={position}` | completed bins of the currently running photo, or `available: false` between photos |
 
 Jobs, items and activity are stored in SQLite (WAL). After a crash or restart, the worker requeues interrupted jobs and keeps finished photos. Results are cached by photo SHA256, stimulus, codec settings, engine version and weight fingerprint. Checkpoints are written atomically to `data/engine/checkpoints/<sha256>.npz` and contain plastic weights, network state, seed, parameters, root-ID checksum, RNG state and episode history; restoring validates all of them.
 

@@ -63,7 +63,8 @@ class LifNetwork:
         self.queue = [np.flatnonzero(row) for row in state["pending"]]
 
     def run(self, steps: int, targets: np.ndarray, rates_hz: np.ndarray,
-            rng: np.random.Generator) -> np.ndarray:
+            rng: np.random.Generator, *, spike_bins: np.ndarray | None = None,
+            bin_steps: int = 250, on_bin=None) -> np.ndarray:
         """Advance `steps` × 0.1 ms; returns spike counts per neuron."""
         counts = np.zeros(self.n, dtype=np.int32)
         targets = np.asarray(targets, dtype=np.int64)
@@ -73,7 +74,7 @@ class LifNetwork:
         indptr, indices, data = self.graph.indptr, self.graph.indices, self.graph.data
         v, g, last, queue, n = self.v, self.g, self.last, self.queue, self.n
         slots = DELAY_STEPS + 1
-        for _ in range(steps):
+        for tick in range(steps):
             step = self.step
             integrating = self.no_refractory | (step - last >= REFRACTORY_STEPS)
             np.copyto(v, V_REST + (v - V_REST) * A + g * COUPLING, where=integrating)
@@ -96,5 +97,9 @@ class LifNetwork:
             g[spikes] = 0.0
             last[spikes] = step
             counts[spikes] += 1
+            if spike_bins is not None:
+                spike_bins[tick // bin_steps, spikes] += 1
+                if on_bin and ((tick + 1) % bin_steps == 0 or tick + 1 == steps):
+                    on_bin(tick // bin_steps + 1)
             self.step += 1
         return counts

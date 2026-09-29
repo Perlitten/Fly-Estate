@@ -132,6 +132,10 @@ export type Gallery = {
   listing_id: string;
   mode: "pure" | "cyborg";
   codec: string;
+  params: {
+    mode: string;
+    brief: { ceiling: number; ideal: number[]; radius: number };
+  };
   photos: {
     position: number;
     photo: string;
@@ -139,15 +143,39 @@ export type Gallery = {
     signals: number[] | null;
     result: SpikingSummary | null;
     error?: string;
+    replay_key?: string | null;
   }[];
   counts: Partial<Record<PhotoReadiness, number>>;
   total: number;
   job: SimulationJob | null;
+  live: {
+    job_id: string;
+    position: number;
+    bins: number;
+    bin_ms: number;
+  } | null;
   engine: {
     version: string | null;
     fingerprint: string | null;
     worker: { alive: boolean; heartbeat_age_s?: number };
   };
+};
+export type SpikingReplay = {
+  available: true;
+  listing_id: string;
+  position: number;
+  live: boolean;
+  bins: number;
+  bin_ms: number;
+  duration_ms: number;
+  indices: number[];
+  values: string;
+  simulated_neurons: number;
+  mapped_neurons: number;
+  display_max_spikes_per_bin: number;
+  total_spikes: number;
+  checkpoint: string | null;
+  fingerprint: string;
 };
 export type MarketOffer = {
   id: string;

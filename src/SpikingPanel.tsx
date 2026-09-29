@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Play, Square } from "lucide-react";
 import type { Gallery, Listing, PhotoReadiness } from "./types";
 import { api, count } from "./api";
@@ -15,47 +15,55 @@ const labels: Record<PhotoReadiness, string> = {
 
 export default function SpikingPanel({
   listing,
-  settingsKey,
   photoIndex,
   onPhoto,
+  gallery,
+  galleryError,
+  onRefresh,
+  onVisualize,
+  onJob,
+  onAnalysisError,
 }: {
   listing: Listing;
-  settingsKey: string;
   photoIndex: number;
   onPhoto: (index: number) => void;
+  gallery: Gallery | undefined;
+  galleryError: string;
+  onRefresh: () => void;
+  onVisualize: (replayOnly: boolean) => void;
+  onJob: (listingId: string, jobId: string) => void;
+  onAnalysisError: () => void;
 }) {
-  const [gallery, setGallery] = useState<Gallery>(),
-    [error, setError] = useState(""),
-    [sending, setSending] = useState(false),
-    [tick, setTick] = useState(0);
+  const [error, setError] = useState(""),
+    [sending, setSending] = useState(false);
   const active =
     gallery?.job?.status === "queued" || gallery?.job?.status === "running";
 
-  useEffect(() => {
-    let alive = true;
-    api<Gallery>("/api/engine/gallery/" + listing.id)
-      .then((g) => {
-        if (!alive) return;
-        setGallery(g);
-        setError("");
-      })
-      .catch((e) => alive && setError(e.message));
-    return () => {
-      alive = false;
-    };
-  }, [listing.id, listing.updated_at, settingsKey, tick]);
-
-  useEffect(() => {
-    if (!active) return;
-    const t = setTimeout(() => setTick((x) => x + 1), 1500);
-    return () => clearTimeout(t);
-  }, [active, gallery]);
-
   const act = (path: string, body?: unknown) => {
+    setError("");
     setSending(true);
     api(path, "POST", body)
-      .then(() => setTick((x) => x + 1))
+      .then(onRefresh)
       .catch((e) => setError(e.message))
+      .finally(() => setSending(false));
+  };
+
+  const analyze = () => {
+    onVisualize(replayable);
+    if (replayable) return;
+    setSending(true);
+    setError("");
+    api<{ job: { id: string } }>("/api/simulations", "POST", {
+      listing_id: listing.id,
+    })
+      .then(({ job }) => {
+        onJob(listing.id, job.id);
+        onRefresh();
+      })
+      .catch((e) => {
+        setError(e.message);
+        onAnalysisError();
+      })
       .finally(() => setSending(false));
   };
 
@@ -65,6 +73,8 @@ export default function SpikingPanel({
     job = g?.job,
     worker = g?.engine.worker.alive,
     current = photoIndex >= 0 ? g?.photos[photoIndex] : undefined;
+  const replayable =
+    !!g?.total && g.photos.every((p) => p.status === "ready" && p.replay_key);
 
   return (
     <div className="spiking-panel">
@@ -92,7 +102,9 @@ export default function SpikingPanel({
                 title={`Photo ${p.position + 1} · ${labels[p.status]}${p.error ? " · " + p.error : ""}`}
                 aria-label={`Photo ${p.position + 1}, ${labels[p.status]}`}
                 aria-pressed={p.position === photoIndex}
-                disabled={p.position >= (listing.vision?.per_photo?.length || 0)}
+                disabled={
+                  p.position >= (listing.vision?.per_photo?.length || 0)
+                }
                 onClick={() => onPhoto(p.position)}
               >
                 <img src={p.photo} alt="" loading="lazy" />
@@ -117,13 +129,15 @@ export default function SpikingPanel({
             ) : (
               <button
                 className="spiking-action primary-run"
-                disabled={sending || ready === g.total}
-                onClick={() =>
-                  act("/api/simulations", { listing_id: listing.id })
-                }
+                disabled={sending || !g.total}
+                onClick={analyze}
               >
                 <Play size={11} />
-                {ready === g.total ? "Up to date" : "Run the model"}
+                {sending
+                  ? "Preparing analysis…"
+                  : replayable
+                    ? "Replay analysis"
+                    : "Analyze in 3D"}
               </button>
             )}
           </div>
@@ -139,7 +153,9 @@ export default function SpikingPanel({
               <small>
                 {job.status === "queued"
                   ? "Waiting for the engine"
-                  : `${job.done} / ${job.total} photos`}
+                  : g.live
+                    ? `Photo ${g.live.position + 1} · ${g.live.bins * g.live.bin_ms} / 500 ms`
+                    : `${job.done} / ${job.total} photos`}
                 {job.cached ? ` · ${job.cached} from cache` : ""}
               </small>
             </div>
@@ -152,9 +168,7 @@ export default function SpikingPanel({
               <div className="spiking-result">
                 <div>
                   <span>Kenyon cells active</span>
-                  <b>
-                    {(current.result.kc_active_fraction * 100).toFixed(1)}%
-                  </b>
+                  <b>{(current.result.kc_active_fraction * 100).toFixed(1)}%</b>
                 </div>
                 <div>
                   <span>MBON spikes</span>
@@ -179,12 +193,14 @@ export default function SpikingPanel({
             )
           ) : (
             <p className="spiking-note">
-              Select a photo to read its mushroom-body response.
+              Analyze in 3D to follow each photo through the spiking brain.
             </p>
           )}
         </>
       )}
-      {error && <p className="spiking-error">{error}</p>}
+      {(error || galleryError) && (
+        <p className="spiking-error">{error || galleryError}</p>
+      )}
     </div>
   );
 }

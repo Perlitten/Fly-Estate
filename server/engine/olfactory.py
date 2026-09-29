@@ -18,6 +18,7 @@ import numpy as np
 from . import subgraph
 from .base import Checkpoint, EpisodeResult, SimulationEngine, Stimulus, digest
 from .lif import DT_MS, LifNetwork
+from ..replay import BIN_MS, pack
 
 VERSION = "olfactory-mb-lif-1"
 
@@ -81,7 +82,7 @@ class OlfactoryMBEngine(SimulationEngine):
         return self._fingerprint
 
     def run_episode(self, stimulus: Stimulus, *, reward: bool = False, seed: int | None = None,
-                    carry_state: bool = False) -> EpisodeResult:
+                    carry_state: bool = False, record: bool = False, on_progress=None) -> EpisodeResult:
         """One episode.
 
         Default (`carry_state=False`) is a fresh trial: all dynamic state is
@@ -109,7 +110,16 @@ class OlfactoryMBEngine(SimulationEngine):
         rates_arr = np.concatenate(rates) if rates else np.empty(0)
 
         started = time.perf_counter()
-        counts = net.run(round(p.epi_ms / DT_MS), targets_arr, rates_arr, rng)
+        steps, bin_steps = round(p.epi_ms / DT_MS), round(BIN_MS / DT_MS)
+        bins = np.zeros(((steps + bin_steps - 1) // bin_steps, net.n), dtype=np.uint16) if record else None
+
+        def progress(completed):
+            # Publish real completed bins every 100 ms of simulated time.
+            if on_progress and (completed % 4 == 0 or completed == len(bins)):
+                on_progress(pack(bins[:completed], self.root_ids_sha, p.epi_ms))
+
+        counts = net.run(steps, targets_arr, rates_arr, rng, spike_bins=bins,
+                         bin_steps=bin_steps, on_bin=progress if record else None)
         if carry_state and p.washout_ms > 0:
             net.run(round(p.washout_ms / DT_MS), np.empty(0, dtype=np.int64), np.empty(0), rng)
         wall = time.perf_counter() - started
@@ -131,13 +141,17 @@ class OlfactoryMBEngine(SimulationEngine):
             kc_active=int(len(active)), kc_active_fraction=float(len(active) / len(kc)),
             pam_hz=pam_hz, total_spikes=int(counts.sum()), wall_seconds=wall,
             plasticity_applied=applied, changed_synapses=changed, checkpoint=self.fingerprint(),
-            kc_active_ids=[int(x) for x in active])
+            kc_active_ids=[int(x) for x in active],
+            replay=pack(bins, self.root_ids_sha, p.epi_ms) if record else None)
         if reward:
             self.history.append({"stimulus": stimulus.key(), "codec": stimulus.codec, "reward": True,
                                  "applied": applied, "changed_synapses": changed,
                                  "kc_active": result.kc_active, "pam_hz": round(pam_hz, 3),
                                  "checkpoint": result.checkpoint})
         return result
+
+    def run_visual_episode(self, stimulus: Stimulus, *, seed: int, on_progress) -> EpisodeResult:
+        return self.run_episode(stimulus, seed=seed, record=True, on_progress=on_progress)
 
     def weight_summary(self) -> dict:
         current = self.net.graph.data[self.plastic]

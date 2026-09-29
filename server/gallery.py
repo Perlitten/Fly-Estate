@@ -96,14 +96,20 @@ def gallery(queue: Queue, listing: dict, settings: dict, hashes: PhotoHashes) ->
         if version and fingerprint and channels:
             found = queue.get_activity(stimuli.cache_key(sha, stimulus, mode, version, fingerprint, center))
             if found:
-                entry.update(status="ready", result=_summary(found["result"]), checkpoint=found["checkpoint"])
+                entry.update(status="ready", result=_summary(found["result"]), checkpoint=found["checkpoint"],
+                             replay_key=found["cache_key"] if found["result"].get("replay") else None)
+                item = items.get(position)
+                if not entry["replay_key"] and latest and latest["status"] in ACTIVE and item and item["status"] == "pending":
+                    entry["status"] = "running" if position == running_position else "queued"
                 results[position] = found["result"]
                 continue
         item = items.get(position)
         if latest and latest["status"] in ACTIVE and item and item["status"] == "pending":
             entry["status"] = "running" if position == running_position else "queued"
         elif position in previous:
-            entry.update(status="stale", result=_summary(previous[position]["result"]))
+            old = previous[position]
+            entry.update(status="stale", result=_summary(old["result"]),
+                         replay_key=old["cache_key"] if old["result"].get("replay") else None)
         elif item and item["status"] == "error":
             entry.update(status="error", error=item["error"])
 
@@ -112,9 +118,16 @@ def gallery(queue: Queue, listing: dict, settings: dict, hashes: PhotoHashes) ->
         counts[entry["status"]] = counts.get(entry["status"], 0) + 1
     summary = readout.listing_readout(listing, results, len(photos))
     summary.pop("vector")
+    live = json.loads(queue.state("live_replay") or "null")
+    if (not latest or latest["status"] != "running" or not live
+            or live["job_id"] != latest["id"] or live["params"] != params):
+        live = None
+    elif live:
+        live = {"job_id": live["job_id"], "position": live["position"],
+                "bins": live["trace"]["bins"], "bin_ms": live["trace"]["bin_ms"]}
     return {"listing_id": listing["id"], "mode": mode, "codec": stimuli.CODECS[mode], "params": params,
             "context": stimuli.context_signals(listing, brief), "photos": photos, "counts": counts,
-            "total": len(photos), "job": latest, "readout": summary,
+            "total": len(photos), "job": latest, "readout": summary, "live": live,
             "engine": {"version": version, "fingerprint": fingerprint, "worker": queue.worker_status()}}
 
 

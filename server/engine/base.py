@@ -38,6 +38,7 @@ class EpisodeResult:
     changed_synapses: int = 0
     checkpoint: str = ""
     kc_active_ids: list[int] = field(default_factory=list, repr=False)
+    replay: dict | None = field(default=None, repr=False)
 
     def to_json(self, ids: bool = False) -> dict:
         row = asdict(self)
@@ -78,3 +79,7 @@ class SimulationEngine(ABC):
 
     def describe(self) -> dict:
         return {"name": self.name, "version": self.version, "fingerprint": self.fingerprint()}
+
+    def run_visual_episode(self, stimulus: Stimulus, *, seed: int, on_progress) -> EpisodeResult:
+        """Optional recording capability; engines without it retain normal behavior."""
+        return self.run_episode(stimulus, seed=seed)
