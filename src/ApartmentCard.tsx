@@ -11,6 +11,7 @@ import {
   Minus,
   ThumbsDown,
   Fence,
+  ArrowRight,
 } from "lucide-react";
 import type { Listing } from "./types";
 import { money } from "./api";
@@ -31,12 +32,22 @@ export function RatingButtons({
   onRate: (id: string, v: number | null) => void;
 }) {
   return (
-    <div className="rating-buttons">
+    <div
+      className="rating-buttons"
+      role="group"
+      aria-label="Your view of this apartment"
+    >
       <button
         disabled={busy}
         className={listing.rating === 1 ? "chosen love" : "love"}
         onClick={() => onRate(listing.id, listing.rating === 1 ? null : 1)}
         aria-label="Would visit"
+        aria-pressed={listing.rating === 1}
+        title={
+          listing.rating === 1
+            ? "Select again to clear your rating"
+            : "Would visit"
+        }
       >
         <Heart size={18} />
         Would visit
@@ -46,6 +57,10 @@ export function RatingButtons({
         className={listing.rating === 0 ? "chosen neutral" : "neutral"}
         onClick={() => onRate(listing.id, listing.rating === 0 ? null : 0)}
         aria-label="Maybe"
+        aria-pressed={listing.rating === 0}
+        title={
+          listing.rating === 0 ? "Select again to clear your rating" : "Maybe"
+        }
       >
         <Minus size={18} />
         Maybe
@@ -55,6 +70,12 @@ export function RatingButtons({
         className={listing.rating === -1 ? "chosen nope" : "nope"}
         onClick={() => onRate(listing.id, listing.rating === -1 ? null : -1)}
         aria-label="Not for me"
+        aria-pressed={listing.rating === -1}
+        title={
+          listing.rating === -1
+            ? "Select again to clear your rating"
+            : "Not for me"
+        }
       >
         <ThumbsDown size={18} />
         Not for me
@@ -79,17 +100,33 @@ export default function ApartmentCard({
 }) {
   const [photo, setPhoto] = useState(0);
   const l = listing;
+  const canInspect = !!onSelect && !l.filter_reasons.length && !!l.vision;
   return (
     <article
       className={`apartment-card ${compact ? "compact" : ""} ${selected ? "selected" : ""} ${l.filter_reasons.length ? "filtered" : ""}`}
     >
       <div className="photo-wrap">
         {l.photos.length ? (
-          <img
-            src={l.photos[photo % l.photos.length]}
-            alt={`${l.title} — photo ${photo + 1}`}
-            loading="lazy"
-          />
+          onSelect ? (
+            <button
+              className="photo-inspect"
+              onClick={() => onSelect(l.id)}
+              disabled={!canInspect}
+              aria-label={`Inspect ${l.title} in the brain`}
+            >
+              <img
+                src={l.photos[photo % l.photos.length]}
+                alt={`${l.title} — photo ${photo + 1}`}
+                loading="lazy"
+              />
+            </button>
+          ) : (
+            <img
+              src={l.photos[photo % l.photos.length]}
+              alt={`${l.title} — photo ${photo + 1}`}
+              loading="lazy"
+            />
+          )
         ) : (
           <div className="no-photo">No photos yet</div>
         )}
@@ -136,7 +173,7 @@ export default function ApartmentCard({
         <button
           className="card-title"
           onClick={() => onSelect?.(l.id)}
-          disabled={!onSelect}
+          disabled={!canInspect}
         >
           {l.title}
         </button>
@@ -175,15 +212,24 @@ export default function ApartmentCard({
         {l.photo_downloads?.some((photo) => photo.status !== "available") && (
           <details className="photo-download-status">
             <summary>
-              {l.photo_downloads.filter((photo) => photo.status === "unavailable").length} unavailable photos
-              {l.photo_downloads.some((photo) => photo.status === "cached") && " · cached copies used"}
+              {
+                l.photo_downloads.filter(
+                  (photo) => photo.status === "unavailable",
+                ).length
+              }{" "}
+              unavailable photos
+              {l.photo_downloads.some((photo) => photo.status === "cached") &&
+                " · cached copies used"}
             </summary>
             <ul>
-              {l.photo_downloads.filter((photo) => photo.status !== "available").map((photo) => (
-                <li key={photo.url}>
-                  {photo.status === "cached" ? "Cached" : "Unavailable"}: {photo.error || "Download failed"}
-                </li>
-              ))}
+              {l.photo_downloads
+                .filter((photo) => photo.status !== "available")
+                .map((photo) => (
+                  <li key={photo.url}>
+                    {photo.status === "cached" ? "Cached" : "Unavailable"}:{" "}
+                    {photo.error || "Download failed"}
+                  </li>
+                ))}
             </ul>
           </details>
         )}
@@ -202,6 +248,20 @@ export default function ApartmentCard({
         </div>
         {onRate && !l.filter_reasons.length && l.vision && (
           <RatingButtons listing={l} busy={busy} onRate={onRate} />
+        )}
+        {onSelect && (
+          <button
+            className="card-inspect"
+            disabled={!canInspect}
+            onClick={() => onSelect(l.id)}
+          >
+            {l.filter_reasons.length
+              ? "Outside your brief"
+              : !l.vision
+                ? "Photos needed"
+                : "Inspect in brain"}
+            <ArrowRight size={16} />
+          </button>
         )}
       </div>
     </article>

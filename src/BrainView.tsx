@@ -22,6 +22,9 @@ import {
   RotateCcw,
   Scan,
   ArrowRight,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   Info,
 } from "lucide-react";
 import type { Data, Listing, SpikingReplay } from "./types";
@@ -395,15 +398,18 @@ export default function BrainView({
   data,
   selected,
   onSelect,
+  onBrowse,
   onRate,
   busy,
 }: {
   data: Data;
   selected: Listing | undefined;
   onSelect: (id: string) => void;
+  onBrowse: () => void;
   onRate: (id: string, v: number | null) => void;
   busy: boolean;
 }) {
+  const brainStageRef = useRef<HTMLElement>(null);
   const [geometry, setGeometry] = useState<Geometry>(),
     [frames, setFrames] = useState<Uint8Array>(),
     [shell, setShell] = useState<ShellMesh>(),
@@ -703,6 +709,8 @@ export default function BrainView({
   };
   const visualize = (replayOnly: boolean) => {
     if (!selected) return;
+    if (window.matchMedia("(max-width: 850px)").matches)
+      brainStageRef.current?.scrollIntoView({ block: "start" });
     setSource("spikes");
     setPhotoSelection({ id: selected.id, index: 0 });
     playlist.current = replayOnly ? selected.id : null;
@@ -735,6 +743,8 @@ export default function BrainView({
     eligible = data.listings.filter(
       (x) => !x.filter_reasons.length && x.vision,
     );
+  const selectedIndex = eligible.findIndex((x) => x.id === l?.id);
+  const photoCount = l?.vision?.per_photo?.length || 0;
   const attributes = photoSignal?.attributes || {};
   const signals = [
     ["Natural light", attributes.natural_light],
@@ -746,7 +756,14 @@ export default function BrainView({
   ] as const;
   return (
     <div className="brain-layout">
-      <section className="brain-stage">
+      <a className="mobile-inspection-jump" href="#apartment-inspection">
+        Apartment & analysis <ArrowRight size={16} />
+      </a>
+      <section
+        className="brain-stage"
+        id="brain-connectome"
+        ref={brainStageRef}
+      >
         <div className="stage-top">
           <div>
             <span className="eyebrow">LIVE CONNECTOME / v783</span>
@@ -994,10 +1011,48 @@ export default function BrainView({
         </div>
         {error && geometry && <p className="inline-error">{error}</p>}
       </section>
-      <aside className="brain-sidebar">
+      <aside className="brain-sidebar" id="apartment-inspection">
         <div className="side-heading">
-          <span className="eyebrow">STIMULUS → RESPONSE</span>
-          <h3>The listing, as your agent sees it</h3>
+          <span className="eyebrow">APARTMENT INSPECTION</span>
+          <h3>
+            {l
+              ? `${l.area} · ${l.bedrooms} ${l.bedrooms === 1 ? "bedroom" : "bedrooms"}`
+              : "Your agent’s inspection"}
+          </h3>
+          <a className="mobile-brain-return" href="#brain-connectome">
+            View brain <ArrowRight size={15} />
+          </a>
+        </div>
+        <div className="listing-browse">
+          <button
+            aria-label="Previous apartment"
+            disabled={eligible.length < 2}
+            onClick={() =>
+              onSelect(
+                eligible[
+                  (Math.max(selectedIndex, 0) - 1 + eligible.length) %
+                    eligible.length
+                ].id,
+              )
+            }
+          >
+            <ChevronLeft size={17} />
+          </button>
+          <span aria-live="polite">
+            {selectedIndex >= 0 ? selectedIndex + 1 : 0} / {eligible.length}
+          </span>
+          <button
+            aria-label="Next apartment"
+            disabled={eligible.length < 2}
+            onClick={() =>
+              onSelect(eligible[(selectedIndex + 1) % eligible.length].id)
+            }
+          >
+            <ChevronRight size={17} />
+          </button>
+          <button className="browse-portfolio" onClick={onBrowse}>
+            Browse portfolio
+          </button>
         </div>
         <label className="select-label">
           Current listing
@@ -1030,120 +1085,61 @@ export default function BrainView({
             <div className="photo-brain-controls">
               <button
                 className={photoIndex === -1 ? "active" : ""}
+                aria-pressed={photoIndex === -1}
                 onClick={() => choosePhoto(-1, false)}
               >
                 All {l.vision?.photos_analyzed || 0} photos
               </button>
               <button
-                className={photoIndex >= 0 ? "active" : ""}
-                aria-pressed={photoIndex >= 0}
-                disabled={!l.vision?.per_photo?.length}
+                className="photo-step"
+                aria-label="Previous apartment photo"
+                disabled={photoCount < 2}
                 onClick={() =>
-                  choosePhoto((Math.max(photoIndex, -1) + 1) % l.photos.length)
+                  choosePhoto(
+                    (Math.max(photoIndex, 0) - 1 + photoCount) % photoCount,
+                  )
                 }
               >
+                <ChevronLeft size={16} />
+              </button>
+              <span aria-live="polite">
                 {photoIndex < 0
-                  ? "One at a time →"
-                  : `Photo ${photoIndex + 1} / ${l.photos.length} →`}
+                  ? "Gallery"
+                  : `${photoIndex + 1} / ${photoCount}`}
+              </span>
+              <button
+                className="photo-step"
+                aria-label="Next apartment photo"
+                disabled={photoCount < 2}
+                onClick={() => choosePhoto((photoIndex + 1) % photoCount)}
+              >
+                <ChevronRight size={16} />
               </button>
             </div>
             <p className="photo-coverage">
-              Processed {l.vision?.photos_analyzed || 0} of{" "}
-              {Math.max(l.photo_urls.length, l.photos.length)} photos
+              {l.vision?.photos_analyzed || 0} of{" "}
+              {Math.max(l.photo_urls.length, l.photos.length)} photos ready
               {l.import_warnings.length > 0
                 ? " · some photos unavailable"
-                : " · every photo passed through the brain"}
+                : " for inspection"}
             </p>
             <p className="stimulus-address">
-              {l.bedrooms} bedrooms · {l.size} m² · {l.area}
+              {l.bedrooms} {l.bedrooms === 1 ? "bedroom" : "bedrooms"} ·{" "}
+              {l.size} m² · {l.area}
             </p>
-            <div className="signal-heading">
-              <span>01</span>
-              <b>
-                {data.settings.mode === "cyborg"
-                  ? "Image signals"
-                  : "Light → retina"}
-              </b>
-              <small>
-                {data.settings.mode === "cyborg" ? "CLIP" : "8 × 8 RGB"}
-              </small>
-            </div>
-            {data.settings.mode === "cyborg" ? (
-              <div className="signal-bars">
-                {signals.map(([name, val]) => (
-                  <div key={name}>
-                    <span>{name}</span>
-                    <div>
-                      <i
-                        style={{
-                          width: `${Math.max(0, Math.min(1, val || 0)) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-                <small>Photo–text similarity · unverified properties</small>
-              </div>
-            ) : (
-              <div className="retina-grid">
-                {(photoSignal?.retina || [])
-                  .filter((_, i) => i % 3 === 0)
-                  .map((_, i) => (
-                    <i
-                      key={i}
-                      style={{
-                        background: `rgb(${photoSignal!.retina
-                          .slice(i * 3, i * 3 + 3)
-                          .map((x) => Math.round(x * 255))
-                          .join(",")})`,
-                      }}
-                    />
-                  ))}
-              </div>
+            {l.url && (
+              <a
+                className="listing-source"
+                href={l.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open original listing <ArrowUpRight size={14} />
+              </a>
             )}
-            <div className="space-signals">
-              <div>
-                <span>Floor area</span>
-                <b>+ {l.size} m²</b>
-              </div>
-              <div>
-                <span>Balcony / loggia</span>
-                <b>{l.balcony ? "+ available" : "Unconfirmed"}</b>
-              </div>
-              {l.balcony && (
-                <small>
-                  {l.balcony_size
-                    ? "Stated area: " + l.balcony_size + " m²"
-                    : "Area unspecified"}
-                  {l.balcony_covered ? " · shelter available" : ""}
-                </small>
-              )}
-            </div>
-            <div className="sensory-factors">
-              <div>
-                <span>02</span>
-                <b>Price</b>
-                <small>{money(data.settings.budget)} target</small>
-                <strong
-                  className={l.price > data.settings.budget ? "price-over" : ""}
-                >
-                  {l.price > data.settings.budget ? "+" : ""}
-                  {Math.round((l.price / data.settings.budget - 1) * 100)}%
-                </strong>
-              </div>
-              <div>
-                <span>03</span>
-                <b>Location</b>
-                <small>Straight-line distance from your preferred point</small>
-                <strong>
-                  {l.prediction.distance !== null
-                    ? "≈ " + l.prediction.distance + " km"
-                    : "Not set"}
-                </strong>
-              </div>
-            </div>
             {l.vision?.per_photo?.length ? (
               <SpikingPanel
+                key={l.id}
                 listing={l}
                 photoIndex={photoIndex}
                 onPhoto={(index) => choosePhoto(index, true)}
@@ -1162,7 +1158,7 @@ export default function BrainView({
             <div className={`fly-reaction ${l.prediction.decision}`}>
               <Fly />
               <div>
-                <span className="eyebrow">VERDICT · MBON + CX OUTPUT</span>
+                <span className="eyebrow">AGENT’S VIEW · RATE MODEL</span>
                 <strong>
                   <Decrypt
                     text={
@@ -1181,8 +1177,106 @@ export default function BrainView({
               </div>
             </div>
             {!l.filter_reasons.length && l.vision && (
-              <RatingButtons listing={l} onRate={onRate} busy={busy} />
+              <div className="inspection-feedback">
+                <p className="feedback-heading">Your view</p>
+                <RatingButtons listing={l} onRate={onRate} busy={busy} />
+                <p className="feedback-help">
+                  Your choice briefs the agent. Select again to clear it.
+                </p>
+              </div>
             )}
+            <details className="sensory-details">
+              <summary>How the apartment becomes a stimulus</summary>
+              <div className="signal-heading">
+                <span>01</span>
+                <b>
+                  {data.settings.mode === "cyborg"
+                    ? "Image signals"
+                    : "Light → retina"}
+                </b>
+                <small>
+                  {data.settings.mode === "cyborg" ? "CLIP" : "8 × 8 RGB"}
+                </small>
+              </div>
+              {data.settings.mode === "cyborg" ? (
+                <div className="signal-bars">
+                  {signals.map(([name, val]) => (
+                    <div key={name}>
+                      <span>{name}</span>
+                      <div>
+                        <i
+                          style={{
+                            width: `${Math.max(0, Math.min(1, val || 0)) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <small>Photo–text similarity · unverified properties</small>
+                </div>
+              ) : (
+                <div className="retina-grid">
+                  {(photoSignal?.retina || [])
+                    .filter((_, i) => i % 3 === 0)
+                    .map((_, i) => (
+                      <i
+                        key={i}
+                        style={{
+                          background: `rgb(${photoSignal!.retina
+                            .slice(i * 3, i * 3 + 3)
+                            .map((x) => Math.round(x * 255))
+                            .join(",")})`,
+                        }}
+                      />
+                    ))}
+                </div>
+              )}
+              <div className="space-signals">
+                <div>
+                  <span>Floor area</span>
+                  <b>+ {l.size} m²</b>
+                </div>
+                <div>
+                  <span>Balcony / loggia</span>
+                  <b>{l.balcony ? "+ available" : "Unconfirmed"}</b>
+                </div>
+                {l.balcony && (
+                  <small>
+                    {l.balcony_size
+                      ? "Stated area: " + l.balcony_size + " m²"
+                      : "Area unspecified"}
+                    {l.balcony_covered ? " · shelter available" : ""}
+                  </small>
+                )}
+              </div>
+              <div className="sensory-factors">
+                <div>
+                  <span>02</span>
+                  <b>Price</b>
+                  <small>{money(data.settings.budget)} target</small>
+                  <strong
+                    className={
+                      l.price > data.settings.budget ? "price-over" : ""
+                    }
+                  >
+                    {l.price > data.settings.budget ? "+" : ""}
+                    {Math.round((l.price / data.settings.budget - 1) * 100)}%
+                  </strong>
+                </div>
+                <div>
+                  <span>03</span>
+                  <b>Location</b>
+                  <small>
+                    Straight-line distance from your preferred point
+                  </small>
+                  <strong>
+                    {l.prediction.distance !== null
+                      ? "≈ " + l.prediction.distance + " km"
+                      : "Not set"}
+                  </strong>
+                </div>
+              </div>
+            </details>
           </>
         ) : (
           <div className="empty-stimulus">
