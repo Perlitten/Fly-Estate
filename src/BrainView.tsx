@@ -7,7 +7,12 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import {
+  Canvas,
+  useFrame,
+  useThree,
+  type ThreeEvent,
+} from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import {
@@ -19,7 +24,9 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
-import type { Data, Listing } from "./types";
+import type { Data, Listing, SpikingReplay } from "./types";
+import { useSpikingGallery } from "./useSpikingGallery";
+import { decodeReplay, type ReplayFrames } from "./brainReplay";
 import { api, count, money } from "./api";
 import { token } from "./tokens";
 import Fly from "./Fly";
@@ -182,8 +189,18 @@ function Shell({ mesh }: { mesh: ShellMesh }) {
   );
   return (
     <>
-      <mesh geometry={geo} material={back} renderOrder={0} raycast={noRaycast} />
-      <mesh geometry={geo} material={front} renderOrder={1} raycast={noRaycast} />
+      <mesh
+        geometry={geo}
+        material={back}
+        renderOrder={0}
+        raycast={noRaycast}
+      />
+      <mesh
+        geometry={geo}
+        material={front}
+        renderOrder={1}
+        raycast={noRaycast}
+      />
     </>
   );
 }
@@ -210,6 +227,8 @@ class SceneBoundary extends Component<
 function Cloud({
   geometry,
   frames,
+  replay,
+  spiking,
   head,
   group,
   palette,
@@ -218,6 +237,8 @@ function Cloud({
 }: {
   geometry: Geometry;
   frames: Uint8Array | undefined;
+  replay: ReplayFrames | undefined;
+  spiking: boolean;
   head: RefObject<Playhead>;
   group: number;
   palette: Float32Array;
@@ -232,6 +253,10 @@ function Cloud({
       new THREE.BufferAttribute(geometry.positions, 3),
     );
     g.setAttribute("kind", new THREE.BufferAttribute(geometry.groups, 1));
+    g.setAttribute(
+      "inModel",
+      new THREE.BufferAttribute(new Uint8Array(geometry.n), 1, true),
+    );
     // Two frames on the GPU; the shader blends them, so playback uploads only on step changes.
     for (const name of ["actA", "actB"])
       g.setAttribute(
@@ -256,10 +281,12 @@ function Cloud({
           focus: { value: 0 },
           blend: { value: 0 },
           scale: { value: 4.5 },
+          spiking: { value: false },
           palette: { value: palette },
         },
         vertexShader: `
- attribute float kind; attribute float actA; attribute float actB;
+ attribute float kind; attribute float actA; attribute float actB; attribute float inModel;
+ uniform bool spiking;
  uniform float focus; uniform float blend; uniform float scale; uniform vec3 palette[7];
  varying vec3 tint; varying float power;
  void main(){
@@ -272,7 +299,9 @@ function Cloud({
  float gain=other?.28:rare?.45:.66;
  float selected=focus<.5||abs(kind-focus)<.1?1.:.05;
  power=min(1.,base+act*gain)*selected;
+ if(spiking) power=(inModel>.5 ? .045+act*.95 : .015)*selected;
  float size=(other?1.3:rare?4.2:1.9)+act*(other?2.:rare?3.:4.);
+ if(spiking && inModel<.5) size*=.65;
  vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;
  gl_PointSize=clamp(size*scale/-p.z,1.,16.);
  }`,
@@ -290,6 +319,13 @@ function Cloud({
   useEffect(() => {
     material.uniforms.scale.value = 4.5 * dpr;
   }, [dpr, material]);
+  useEffect(() => {
+    material.uniforms.spiking.value = spiking;
+    const mask = geo.getAttribute("inModel") as THREE.BufferAttribute;
+    (mask.array as Uint8Array).fill(0);
+    if (replay) (mask.array as Uint8Array).set(replay.scope);
+    mask.needsUpdate = true;
+  }, [spiking, replay, geo, material]);
   // Which frame pair is on the GPU; -2 forces a reload after new frames arrive.
   const loaded = useRef(-2);
   const zeros = useMemo(() => new Uint8Array(geometry.n), [geometry]);
@@ -300,12 +336,17 @@ function Cloud({
     const h = head.current;
     if (!h) return;
     if (h.playing && frames) {
-      h.u = Math.min(1, h.u + delta / PLAY_SECONDS);
+      const seconds =
+        spiking && replay
+          ? ((replay.info.bins * replay.info.bin_ms) / 1000) * 4
+          : PLAY_SECONDS;
+      h.u = Math.min(1, h.u + delta / seconds);
       if (h.u >= 1) h.playing = false;
       onTick(h.u, !h.playing);
     }
-    const f = frames ? frameAt(h.u) : -1;
-    const s = Math.min(FRAMES - 2, Math.floor(f));
+    const frameCount = spiking && replay ? replay.info.bins : FRAMES;
+    const f = frames ? (spiking ? h.u * frameCount - 1 : frameAt(h.u)) : -1;
+    const s = Math.min(frameCount - 2, Math.floor(f));
     if (s !== loaded.current) {
       const a = geo.getAttribute("actA") as THREE.BufferAttribute,
         b = geo.getAttribute("actB") as THREE.BufferAttribute,
@@ -334,7 +375,7 @@ function Cloud({
         <lineBasicMaterial
           color={lineColour}
           transparent
-          opacity={0.04}
+          opacity={spiking ? 0.015 : 0.04}
           depthWrite={false}
         />
       </lineSegments>
@@ -380,6 +421,32 @@ export default function BrainView({
       outgoing: number;
     }>(),
     [reset, setReset] = useState(0);
+  const [source, setSource] = useState<"rate" | "spikes">("rate"),
+    [replay, setReplay] = useState<ReplayFrames>(),
+    [replayRevision, setReplayRevision] = useState(0),
+    [following, setFollowing] = useState<{ id: string; job: string | null }>();
+  const playlist = useRef<string | null>(null);
+  const settingsKey = JSON.stringify(data.settings);
+  const {
+    gallery,
+    error: galleryError,
+    refresh,
+  } = useSpikingGallery(selected, settingsKey);
+  const [photoSelection, setPhotoSelection] = useState({ id: "", index: -1 });
+  const photoIndex =
+    photoSelection.id === selected?.id &&
+    photoSelection.index < (selected?.vision?.per_photo?.length || 0)
+      ? photoSelection.index
+      : source === "spikes"
+        ? 0
+        : -1;
+  const displayedReplay =
+    replay &&
+    replay.info.listing_id === selected?.id &&
+    replay.info.position === photoIndex
+      ? replay
+      : undefined;
+  const displayFrames = source === "spikes" ? displayedReplay?.frames : frames;
   const selectionSequence = useRef(0);
   // Playback lives in a ref and is advanced inside the render loop; React only
   // hears about stage changes and the end, the slider is moved through its ref.
@@ -397,7 +464,10 @@ export default function BrainView({
   );
   const sync = (u: number) => {
     if (slider.current) slider.current.value = String(Math.round(u * 1000));
-    const s = stageAt(frameAt(u));
+    const s =
+      source === "spikes"
+        ? Math.floor(u * (displayedReplay?.info.bins || 20) - 1)
+        : stageAt(frameAt(u));
     if (s !== stageRef.current) {
       stageRef.current = s;
       setStage(s);
@@ -405,7 +475,17 @@ export default function BrainView({
   };
   const onTick = (u: number, ended: boolean) => {
     sync(u);
-    if (ended) setPlaying(false);
+    if (ended) {
+      setPlaying(false);
+      if (source === "spikes" && playlist.current === selected?.id) {
+        const next = gallery?.photos.find(
+          (p) => p.position > photoIndex && p.replay_key,
+        );
+        if (next && !reducedMotion)
+          setPhotoSelection({ id: selected!.id, index: next.position });
+        else playlist.current = null;
+      }
+    }
   };
   const play = (from?: number) => {
     const h = head.current;
@@ -418,12 +498,6 @@ export default function BrainView({
     head.current.playing = false;
     setPlaying(false);
   };
-  const [photoSelection, setPhotoSelection] = useState({ id: "", index: -1 });
-  const photoIndex =
-    photoSelection.id === selected?.id &&
-    photoSelection.index < (selected?.vision?.per_photo?.length || 0)
-      ? photoSelection.index
-      : -1;
   const photoSignal =
     photoIndex >= 0
       ? selected?.vision?.per_photo?.[photoIndex]
@@ -456,7 +530,13 @@ export default function BrainView({
         let k = 0;
         for (const code of [-1, ...DRAW_ORDER])
           for (let i = 0; i < n; i++) if (kinds[i] === code) order[k++] = i;
-        setGeometry({ positions: pos, groups: kinds, lines: segments, order, n });
+        setGeometry({
+          positions: pos,
+          groups: kinds,
+          lines: segments,
+          order,
+          n,
+        });
       })
       .catch((e) => {
         if (e.name !== "AbortError") setError(e.message);
@@ -474,13 +554,18 @@ export default function BrainView({
       controller.abort();
     };
   }, []);
-  const settingsKey = JSON.stringify(data.settings);
   useEffect(() => {
     pause();
     setFrames(undefined);
     setNeuron(undefined);
     setError("");
-    if (!selected?.vision || selected.filter_reasons.length) return;
+    setLoading(false);
+    if (
+      source !== "rate" ||
+      !selected?.vision ||
+      selected.filter_reasons.length
+    )
+      return;
     const c = new AbortController();
     setLoading(true);
     fetch(
@@ -512,7 +597,118 @@ export default function BrainView({
         }
       });
     return () => c.abort();
-  }, [selected?.id, selected?.updated_at, settingsKey, photoIndex]);
+  }, [selected?.id, selected?.updated_at, settingsKey, photoIndex, source]);
+
+  const follow = following?.id === selected?.id;
+  useEffect(() => {
+    playlist.current = null;
+    setFollowing(undefined);
+  }, [selected?.id, settingsKey]);
+  useEffect(() => {
+    if (!follow || !gallery?.job) return;
+    const job = gallery.job;
+    if (job.status === "running" || job.status === "queued") {
+      if (following?.job !== job.id)
+        setFollowing({ id: gallery.listing_id, job: job.id });
+      if (gallery.live)
+        setPhotoSelection({
+          id: gallery.listing_id,
+          index: gallery.live.position,
+        });
+    } else if (following?.job === job.id) {
+      setFollowing(undefined);
+      setReplayRevision((x) => x + 1);
+      const last = [...gallery.photos].reverse().find((p) => p.replay_key);
+      if (last)
+        setPhotoSelection({ id: gallery.listing_id, index: last.position });
+    }
+  }, [gallery, follow, following?.job]);
+
+  const live =
+    follow && gallery?.live?.position === photoIndex ? gallery.live : undefined;
+  const replayKey = gallery?.photos[photoIndex]?.replay_key;
+  const replayPath = live
+    ? `/api/engine/live/${live.job_id}?photo=${photoIndex}`
+    : replayKey
+      ? `/api/engine/replay/${replayKey}`
+      : undefined;
+  const liveBins = live?.bins;
+  useEffect(() => {
+    if (source !== "spikes" || !geometry || !selected) return;
+    pause();
+    setError("");
+    setReplay((current) =>
+      live &&
+      current?.info.listing_id === selected?.id &&
+      current?.info.position === photoIndex
+        ? current
+        : undefined,
+    );
+    setLoading(!!replayPath && !live);
+    if (!replayPath) return;
+    const controller = new AbortController();
+    fetch(replayPath, { signal: controller.signal })
+      .then(async (r) => {
+        const result = await r.json();
+        if (!r.ok)
+          throw Error(result.detail || "Could not load the recorded spikes");
+        return result as SpikingReplay | { available: false };
+      })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        if (!result.available) {
+          setLoading(false);
+          return;
+        }
+        // A cached stimulus can be shared by duplicate photos or listings.
+        // The gallery validates its key; playback belongs to this selection.
+        setReplay(
+          decodeReplay(
+            { ...result, listing_id: selected.id, position: photoIndex },
+            geometry.n,
+          ),
+        );
+        setLoading(false);
+        if (result.live || reducedMotion) {
+          head.current.u = 1;
+          stageRef.current = result.bins - 1;
+          setStage(result.bins - 1);
+          if (slider.current) slider.current.value = "1000";
+        } else play(0);
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") {
+          setError(e.message);
+          setLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [
+    source,
+    selected?.id,
+    photoIndex,
+    settingsKey,
+    geometry?.n,
+    replayPath,
+    liveBins,
+    replayRevision,
+  ]);
+
+  const choosePhoto = (index: number, spiking = source === "spikes") => {
+    playlist.current = null;
+    setFollowing(undefined);
+    setSource(spiking ? "spikes" : "rate");
+    if (selected) setPhotoSelection({ id: selected.id, index });
+    setReplayRevision((x) => x + 1);
+  };
+  const visualize = (replayOnly: boolean) => {
+    if (!selected) return;
+    setSource("spikes");
+    setPhotoSelection({ id: selected.id, index: 0 });
+    playlist.current = replayOnly ? selected.id : null;
+    setFollowing(replayOnly ? undefined : { id: selected.id, job: null });
+    setReplayRevision((x) => x + 1);
+  };
   const inspect = async (i: number) => {
     const seq = ++selectionSequence.current;
     try {
@@ -528,11 +724,13 @@ export default function BrainView({
       setError((e as Error).message);
     }
   };
-  const stageInfo = stages[stage];
+  const stageInfo = stages[Math.max(0, Math.min(stage, stages.length - 1))];
   const stageName =
-    "cyborg" in stageInfo && data.settings.mode === "cyborg"
-      ? stageInfo.cyborg
-      : stageInfo.pure;
+    source === "spikes"
+      ? `Photo ${photoIndex + 1} · ${Math.max(0, stage + 1) * (displayedReplay?.info.bin_ms || 25)} / ${displayedReplay?.info.duration_ms || 500} ms`
+      : "cyborg" in stageInfo && data.settings.mode === "cyborg"
+        ? stageInfo.cyborg
+        : stageInfo.pure;
   const l = selected,
     eligible = data.listings.filter(
       (x) => !x.filter_reasons.length && x.vision,
@@ -558,7 +756,18 @@ export default function BrainView({
           </div>
           <span className="simulation-badge">
             <span className="live-dot" />
-            Computed activity
+            {source === "spikes"
+              ? live
+                ? `Live spikes · Photo ${photoIndex + 1}`
+                : displayedReplay
+                  ? displayedReplay.info.bins * displayedReplay.info.bin_ms <
+                    displayedReplay.info.duration_ms
+                    ? "Partial recording"
+                    : "Recorded spikes"
+                  : follow
+                    ? "Analyzing photos"
+                    : "Spiking analysis"
+              : "Rate response"}
           </span>
         </div>
         <div className="brain-canvas" aria-label="Interactive 3D fly brain">
@@ -582,7 +791,9 @@ export default function BrainView({
                 {shell && showShell && <Shell mesh={shell} />}
                 <Cloud
                   geometry={geometry}
-                  frames={frames}
+                  frames={displayFrames}
+                  replay={displayedReplay}
+                  spiking={source === "spikes"}
                   head={head}
                   group={group}
                   palette={palette}
@@ -657,17 +868,55 @@ export default function BrainView({
             Shell
           </button>
         </div>
+        <div
+          className="response-source"
+          role="group"
+          aria-label="Brain response source"
+        >
+          <button
+            className={source === "rate" ? "active" : ""}
+            aria-pressed={source === "rate"}
+            onClick={() => {
+              playlist.current = null;
+              setFollowing(undefined);
+              setSource("rate");
+            }}
+          >
+            Rate overview
+          </button>
+          <button
+            className={source === "spikes" ? "active" : ""}
+            aria-pressed={source === "spikes"}
+            onClick={() => choosePhoto(Math.max(0, photoIndex), true)}
+          >
+            Spiking analysis
+          </button>
+          {source === "spikes" && (
+            <small>
+              {displayedReplay
+                ? count(displayedReplay.info.simulated_neurons)
+                : "8,991"}{" "}
+              simulated neurons · other anatomy dimmed
+            </small>
+          )}
+        </div>
         <div className="timeline">
           <button
-            disabled={!frames}
-            onClick={() => (playing ? pause() : play())}
+            disabled={!displayFrames || !!live}
+            onClick={() => {
+              playlist.current = null;
+              playing ? pause() : play();
+            }}
             aria-label={playing ? "Pause replay" : "Play replay"}
           >
             {playing ? <Pause size={17} /> : <Play size={17} />}
           </button>
           <button
-            disabled={!frames}
-            onClick={() => play(0)}
+            disabled={!displayFrames || !!live}
+            onClick={() => {
+              playlist.current = null;
+              play(0);
+            }}
             aria-label="Replay from the start"
             title="Replay from the start"
           >
@@ -677,40 +926,53 @@ export default function BrainView({
             <div className="timeline-label">
               <b aria-live="polite">
                 {loading
-                  ? "Propagating signals…"
-                  : frames
+                  ? source === "spikes"
+                    ? "Loading recorded spikes…"
+                    : "Propagating signals…"
+                  : displayFrames
                     ? stageName
-                    : l?.filter_reasons.length
-                      ? "Apartment excluded by filters"
-                      : "Select an apartment with photos"}
+                    : source === "spikes" && follow
+                      ? "Waiting for the first recorded spikes…"
+                      : source === "spikes"
+                        ? "Analyze in 3D to record this photo’s spikes"
+                        : l?.filter_reasons.length
+                          ? "Apartment excluded by filters"
+                          : "Select an apartment with photos"}
               </b>
-              {frames && !loading && (
+              {displayFrames && !loading && (
                 <span>
-                  {stage + 1} / {stages.length}
+                  {source === "spikes"
+                    ? live
+                      ? "LIVE"
+                      : "REPLAY · 4× slower"
+                    : `${stage + 1} / ${stages.length}`}
                 </span>
               )}
             </div>
             <input
               ref={slider}
               aria-label="Replay position"
-              aria-valuetext={frames ? stageName : undefined}
+              aria-valuetext={displayFrames ? stageName : undefined}
               type="range"
               min="0"
               max="1000"
               step="1"
               defaultValue="1000"
-              disabled={!frames}
+              disabled={!displayFrames || !!live}
               onInput={(e) => {
                 pause();
+                playlist.current = null;
                 head.current.u = +e.currentTarget.value / 1000;
                 sync(head.current.u);
               }}
             />
             <p className="timeline-note">
-              {photoIndex >= 0
-                ? `Replay how photo ${photoIndex + 1} spreads through the brain.`
-                : "Replay how this listing’s photos spread through the brain."}{" "}
-              Drag to inspect any moment.
+              {source === "spikes"
+                ? `Actual spikes in 25 ms bins${live ? " · following the worker" : " · drag to inspect"}.`
+                : photoIndex >= 0
+                  ? `Replay how photo ${photoIndex + 1} spreads through the brain.`
+                  : "Replay how this listing’s photos spread through the brain."}{" "}
+              {source === "rate" && " Drag to inspect any moment."}
             </p>
           </div>
           <Activity size={20} />
@@ -718,9 +980,9 @@ export default function BrainView({
         <div className="brain-source">
           <Info size={14} />
           <span>
-            Real FlyWire positions and connections. Points are neuron locations;
-            lines show a subset of connections. Brightness is our model’s
-            activity, normalized within each step.
+            {source === "spikes"
+              ? `Recorded LIF spikes mapped by FlyWire neuron ID. Brightness: square root of spikes / 20 per 25 ms bin, clipped at 20. ${gallery?.photos[photoIndex]?.status === "stale" ? "Earlier weights or brief. " : ""}${displayedReplay?.info.checkpoint ? "Checkpoint " + displayedReplay.info.checkpoint.slice(0, 12) + "." : ""}`
+              : "Real FlyWire positions and connections. Points are neuron locations; lines show a subset of connections. Brightness is our model’s activity, normalized within each step."}
           </span>
           <a
             href="https://zenodo.org/records/10676866"
@@ -768,7 +1030,7 @@ export default function BrainView({
             <div className="photo-brain-controls">
               <button
                 className={photoIndex === -1 ? "active" : ""}
-                onClick={() => setPhotoSelection({ id: l.id, index: -1 })}
+                onClick={() => choosePhoto(-1, false)}
               >
                 All {l.vision?.photos_analyzed || 0} photos
               </button>
@@ -777,10 +1039,7 @@ export default function BrainView({
                 aria-pressed={photoIndex >= 0}
                 disabled={!l.vision?.per_photo?.length}
                 onClick={() =>
-                  setPhotoSelection({
-                    id: l.id,
-                    index: (Math.max(photoIndex, -1) + 1) % l.photos.length,
-                  })
+                  choosePhoto((Math.max(photoIndex, -1) + 1) % l.photos.length)
                 }
               >
                 {photoIndex < 0
@@ -886,9 +1145,18 @@ export default function BrainView({
             {l.vision?.per_photo?.length ? (
               <SpikingPanel
                 listing={l}
-                settingsKey={settingsKey}
                 photoIndex={photoIndex}
-                onPhoto={(index) => setPhotoSelection({ id: l.id, index })}
+                onPhoto={(index) => choosePhoto(index, true)}
+                gallery={gallery}
+                galleryError={galleryError}
+                onRefresh={refresh}
+                onVisualize={visualize}
+                onJob={(id, job) =>
+                  setFollowing((current) =>
+                    current?.id === id ? { id, job } : current,
+                  )
+                }
+                onAnalysisError={() => setFollowing(undefined)}
               />
             ) : null}
             <div className={`fly-reaction ${l.prediction.decision}`}>

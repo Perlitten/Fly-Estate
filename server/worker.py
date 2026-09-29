@@ -63,6 +63,7 @@ class Worker:
         self.queue.set_state("current_fingerprint", self.engine.fingerprint())
         self.queue.set_state("engine_version", self.engine.version)
         self.queue.set_state("channels", json.dumps(self.engine.channels()))
+        self.queue.set_state("live_replay", "null")
         requeued = self.queue.requeue_orphans()
         if requeued:
             log.info("Requeued %d interrupted job(s).", requeued)
@@ -114,6 +115,8 @@ class Worker:
         except Exception as error:
             log.exception("Simulation job %s failed", job_id)
             self.queue.complete(job_id, "error", str(error))
+        finally:
+            self.queue.set_state("live_replay", "null")
 
     def _photo(self, job: dict, item: dict, listing: dict, per_photo: list, channels: list[str]) -> None:
         position = item["position"]
@@ -131,10 +134,17 @@ class Worker:
             stimulus, provenance = stimuli.encode(mode, per_photo[position], listing, brief, channels,
                                                   embedding, center)
             key = stimuli.cache_key(photo_sha, stimulus, mode, self.engine.version, self.engine.fingerprint(), center)
-            if self.queue.get_activity(key):
+            cached = self.queue.get_activity(key)
+            if cached and cached["result"].get("replay"):
                 self.queue.finish_item(job["id"], position, "cached", key)
                 return
-            result = self.engine.run_episode(stimulus, seed=int(key[:8], 16))
+
+            def publish(trace):
+                self.queue.set_state("live_replay", json.dumps({"job_id": job["id"],
+                    "listing_id": listing["id"], "position": position, "params": job["params"],
+                    "fingerprint": self.engine.fingerprint(), "trace": trace}))
+
+            result = self.engine.run_visual_episode(stimulus, seed=int(key[:8], 16), on_progress=publish)
             self.queue.put_activity(key, listing_id=job["listing_id"], position=position, photo=item["photo"],
                                     photo_sha256=photo_sha, codec=stimulus.codec, engine_version=self.engine.version,
                                     fingerprint=self.engine.fingerprint(), checkpoint=self.checkpoint,

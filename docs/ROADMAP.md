@@ -82,7 +82,7 @@ Status: Bazaraki access implemented; the other D1 items are open. `server/bazara
 
 ### R2 — engine interface and durable queue
 
-Status: implemented; not yet connected to the interface or to scores. `OlfactoryMBEngine` reimplements the R1 LIF model in NumPy on the edited 8,991-neuron olfactory→MB subgraph, with one persistent worker (R1 resource profile). With identical scripted drive it produced exactly the same spikes as the pinned Brian2 kernel (80,463 and 85,975 spikes over 300 ms; 0 differing neurons). The [parity replay](../reports/results/engine_parity.json) of the R1 conditioning protocol selects identical odors and plastic synapses and matches R1 within stated tolerances: odor A suppression 98.9% (R1 98.9%), odor B change −3.8% (R1 −6.5%), 5,482 changed synapses (R1 5,483), pre-conditioning MBON spikes 3,732 (R1 3,764). Episode 0.75 s mean including washout; startup 0.1 s. Worker restart after a forced kill resumed an interrupted job without recomputing finished photos. The photo stimulus `photo-orn-v0` is provisional until R3.
+Status: implemented; connected to per-photo analysis and 3D spike playback, while the main verdict retains the rate readout. `OlfactoryMBEngine` reimplements the R1 LIF model in NumPy on the edited 8,991-neuron olfactory→MB subgraph, with one persistent worker (R1 resource profile). With identical scripted drive it produced exactly the same spikes as the pinned Brian2 kernel (80,463 and 85,975 spikes over 300 ms; 0 differing neurons). The [parity replay](../reports/results/engine_parity.json) of the R1 conditioning protocol selects identical odors and plastic synapses and matches R1 within stated tolerances: odor A suppression 98.9% (R1 98.9%), odor B change −3.8% (R1 −6.5%), 5,482 changed synapses (R1 5,483), pre-conditioning MBON spikes 3,732 (R1 3,764). Episode 0.75 s mean including washout; startup 0.1 s. Worker restart after a forced kill resumed an interrupted job without recomputing finished photos. The photo stimulus `photo-orn-v0` is provisional until R3.
 
 - Introduce `SimulationEngine` for running episodes, reading activity, reinforcement and checkpoints. Encapsulate actual upstream calls in an adapter.
 - Persist jobs: queue, per-photo progress, cancellation, completion and recovery after restart.
@@ -121,6 +121,8 @@ Status: partially implemented. Both codecs replace `photo-orn-v0` and share one 
 - Publish measured results and compute costs. Select an interactive mode based on quality and resources.
 
 ### R6 — visual quality and traceability
+
+Status: photo analysis and spike playback implemented. **Analyze in 3D** follows the worker across every photo using actual LIF spike counts in 25 ms bins. **Replay analysis** plays saved recordings in order, with pause, scrub and photo selection. FlyWire IDs map the 8,991 simulated neurons onto the anatomical view; other neurons stay dim. Rate overview remains a separate source, and recordings show simulation time, fixed brightness scale, checkpoint and stale status. Taste history, changed synapses, before/after learning comparisons and memory export remain open.
 
 - Preserve the application’s current design and add a taste history: photo, stimulus, active KC/DAN/MBON neurons, changed connections and before/after learning responses.
 - Distinguish anatomical graph, simulated subgraph, spikes and activity rates in 3D. Frames expose time, units, checkpoint and cache status.

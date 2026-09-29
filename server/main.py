@@ -17,6 +17,7 @@ from .jobs import Queue
 from .checkpoints import CheckpointStore
 from .engine import subgraph
 from .gallery import PhotoHashes, gallery, job_params, portfolio
+from .replay import project as project_replay
 
 store=Store()
 brain=None
@@ -351,6 +352,30 @@ def engine_gallery(id:str):
 def engine_activity(id:str):
     """Latest spiking result per photo; `stale` marks results produced with other weights."""
     return engine_queue.listing_activity(id)
+
+def replay_display(trace):
+    try:
+        return project_replay(trace, brain.nodes["ids"], subgraph.OUTPUT)
+    except (ValueError, OSError) as error:
+        raise HTTPException(409,str(error))
+
+@app.get("/api/engine/replay/{key}")
+def engine_replay(key:str):
+    result=engine_queue.get_activity(key)
+    if not result: raise HTTPException(404,"Spiking response not found.")
+    trace=result["result"].get("replay")
+    if not trace: raise HTTPException(409,"Run the model to record its spikes for the brain view.")
+    return {**replay_display(trace),"position":result["position"],"listing_id":result["listing_id"],
+            "checkpoint":result["checkpoint"],"fingerprint":result["fingerprint"],"live":False}
+
+@app.get("/api/engine/live/{job_id}")
+def engine_live(job_id:str,photo:int=Query(ge=0)):
+    live=json.loads(engine_queue.state("live_replay") or "null")
+    job=engine_queue.get(job_id,items=False)
+    if not live or not job or job["status"]!="running" or live["job_id"]!=job_id or live["position"]!=photo:
+        return {"available":False}
+    return {**replay_display(live["trace"]),"position":photo,"listing_id":live["listing_id"],
+            "fingerprint":live["fingerprint"],"checkpoint":job["checkpoint"],"live":True}
 
 @app.get("/api/brain/geometry")
 def geometry_data(): return Response(geometry.tobytes(),media_type="application/octet-stream")

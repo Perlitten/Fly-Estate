@@ -1,5 +1,31 @@
 /* Brain view: group chips, shell toggle and the replay timeline. Tokens only. */
 
+.response-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 2px;
+}
+.response-source button {
+  padding: 5px 9px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--night-line);
+  color: var(--night-muted);
+  background: transparent;
+  font-size: var(--fs-xs);
+}
+.response-source button.active {
+  color: var(--night-text);
+  background: var(--night-2);
+  border-color: var(--leaf);
+}
+.response-source small {
+  color: var(--night-muted);
+  font-size: var(--fs-micro);
+  margin-left: auto;
+}
+
 .brain-groups i {
   width: 6px;
   height: 6px;
