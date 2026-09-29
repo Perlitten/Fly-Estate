@@ -1,0 +1,190 @@
+/*
+ * Заставка загрузки (Preloader.tsx). Ночная сцена мозга, цвета и длительности — только из
+ * tokens.css. Бесконечные циклы здесь разрешены тем же правилом, что --dur-scan/--dur-sheen:
+ * они идут, только пока агент ждёт ответа сервера, и исчезают вместе с заставкой.
+ */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  padding: 24px 16px;
+  background: radial-gradient(
+      ellipse at 50% 42%,
+      var(--night-2) 0%,
+      var(--night) 62%
+    )
+    var(--night);
+  color: var(--night-text);
+  transition:
+    opacity var(--dur-settle) var(--ease-exit),
+    transform var(--dur-settle) var(--ease-exit);
+}
+.preloader.leave {
+  opacity: 0;
+  transform: translateY(calc(var(--dart-distance) * -3));
+  pointer-events: none;
+}
+
+.preloader-stage {
+  position: relative;
+  width: min(248px, 64vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.preloader-net {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.preloader-orbit {
+  fill: none;
+  stroke: var(--night-line);
+  stroke-width: 0.6;
+  stroke-dasharray: 1.5 3.5;
+}
+
+/* 22 входных канала: волна спайков обходит кольцо за --dur-scan. */
+.preloader .orn {
+  fill: var(--night-line);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: preloader-spike var(--dur-scan) var(--ease-standard) infinite;
+}
+@keyframes preloader-spike {
+  0% {
+    fill: var(--lime);
+    transform: scale(1.7);
+  }
+  22% {
+    fill: var(--leaf);
+    transform: scale(1);
+  }
+  60%,
+  100% {
+    fill: var(--night-line);
+    transform: scale(1);
+  }
+}
+
+/* Клетки Кеньона: разреженное мерцание, как 5 % активных KC. */
+.preloader .kc {
+  fill: var(--night-muted);
+  opacity: 0.28;
+  animation: preloader-sparse var(--dur-sheen) linear infinite;
+}
+@keyframes preloader-sparse {
+  0%,
+  86%,
+  100% {
+    opacity: 0.28;
+  }
+  90% {
+    opacity: 1;
+    fill: var(--lime-soft);
+  }
+}
+
+/* Муха зависла: крылья бьют по --dur-wingbeat, тело чуть покачивается. */
+.preloader-fly {
+  position: relative;
+  color: var(--night-text);
+  animation: preloader-hover var(--dur-sheen) var(--ease-standard) infinite
+    alternate;
+}
+.preloader-fly .stripe {
+  stroke: var(--night-2);
+}
+.preloader-fly .wing-l {
+  animation: fly-beat-l var(--dur-wingbeat) linear infinite alternate;
+}
+.preloader-fly .wing-r {
+  animation: fly-beat-r var(--dur-wingbeat) linear infinite alternate;
+}
+@keyframes preloader-hover {
+  from {
+    transform: translateY(2px);
+  }
+  to {
+    transform: translateY(-3px);
+  }
+}
+.preloader.done .preloader-fly .wing {
+  animation-play-state: paused;
+}
+
+.preloader-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.preloader-copy strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-2xl);
+  letter-spacing: var(--track-tight);
+  line-height: 1;
+}
+.preloader-step {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--night-muted);
+  animation: dart-in var(--dur-move) var(--ease-dart);
+}
+.preloader-bar {
+  position: relative;
+  width: 168px;
+  height: 1px;
+  background: var(--night-line);
+  overflow: hidden;
+}
+.preloader-bar > span {
+  position: absolute;
+  inset: 0;
+  background: var(--lime);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 3200ms var(--ease-dart);
+}
+.preloader.go .preloader-bar > span {
+  transform: scaleX(0.86);
+}
+.preloader.done .preloader-bar > span,
+.preloader.leave .preloader-bar > span {
+  transform: scaleX(1);
+  transition-duration: var(--dur-move);
+}
+.preloader-copy small {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--night-muted);
+  opacity: 0.7;
+}
+.preloader-error {
+  font-size: var(--fs-base);
+  color: var(--clay-muted);
+  max-width: 36ch;
+}
+.preloader-copy button {
+  border: 1px solid var(--night-line);
+  color: var(--night-text);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader *,
+  .preloader {
+    animation: none !important;
+  }
+}

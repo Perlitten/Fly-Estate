@@ -4,7 +4,9 @@ A personal apartment fly for Limassol. Photos, budget and location become inputs
 
 Spiking dynamics, dopamine learning and upcoming work: **[roadmap](docs/ROADMAP.md)**.
 
-Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. The application still uses its rate engine; the reproduced LIF experiments run separately.
+Voice, colour, type, motion and media rules: **[brand kit](docs/BRAND_KIT.md)** (live version at `/brand.html` in `pnpm dev`).
+
+Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. Scores and the 3D brain still use the rate engine. The spiking LIF engine from R2 runs in its own worker and records per-photo activity, which does not yet affect scores (see [spiking engine](#spiking-engine-and-worker)).
 
 ## Getting started
 
@@ -87,6 +89,37 @@ Each image is computed independently using the same apartment metadata. Batch si
 - Brightness shows activity magnitude using `sqrt(abs(a)/max(abs(a)))`, normalized separately in each frame. Brightness cannot be compared between frames as an absolute firing rate.
 - The fly marker’s movement on the map visualizes a result. It does not simulate a motor system or a real travel route.
 
+## Spiking engine and worker
+
+`server/engine/` contains the R2 engine: the `SimulationEngine` interface and `OlfactoryMBEngine`, a NumPy LIF implementation of the edited 8,991-neuron olfactory→mushroom-body subgraph from R1 (Shiu v783 weights, 0.1 ms step, 1.8 ms delay, 2.2 ms refractory period, dopamine-gated KC→MBON depression). It does not require Brian2. An exact-drive check against the pinned Brian2 kernel produced identical spikes; the [parity replay](reports/results/engine_parity.json) of the R1 conditioning protocol matches R1 within its stated tolerances. An episode takes about 0.75 s including the 150 ms washout.
+
+Prepare the subgraph once, after `pnpm setup`:
+
+```sh
+.venv/bin/python -m research.bootstrap        # pinned upstream data, ~200 MB, verified by SHA256
+.venv/bin/python -m server.engine.subgraph    # writes data/engine/olfactory_mb_v783.npz
+```
+
+`pnpm dev` then starts one engine worker next to the API (`python -m server.worker`; `--once` processes the queue and exits). Only one worker can hold the lease in `data/engine/engine.sqlite`; a second worker exits with code 3. The HTTP server only enqueues and reads, so the interface stays responsive during computation.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/engine` | engine, subgraph, worker heartbeat, current checkpoint and queue counts |
+| `POST /api/simulations` `{listing_id}` | queue every photo of a listing; repeated requests return the active job |
+| `GET /api/simulations[?listing_id=]`, `GET /api/simulations/{id}` | job status and per-photo progress |
+| `POST /api/simulations/{id}/cancel` | cancel a queued job, or stop a running one before its next photo |
+| `GET /api/engine/activity/{listing_id}` | latest activity per photo; `stale` marks results produced with older weights |
+
+Jobs, items and activity are stored in SQLite (WAL). After a crash or restart, the worker requeues interrupted jobs and keeps finished photos. Results are cached by photo SHA256, stimulus, codec settings, engine version and weight fingerprint. Checkpoints are written atomically to `data/engine/checkpoints/<sha256>.npz` and contain plastic weights, network state, seed, parameters, root-ID checksum, RNG state and episode history; restoring validates all of them.
+
+The photo stimulus (`photo-orn-v0`) is a provisional, artificial mapping of brightness and ten CLIP signals onto the first eleven ORN channels. It is not an odor and not a model of vision; R3 replaces it.
+
+Tests use a synthetic circuit and, when the prepared subgraph exists, the real one:
+
+```sh
+.venv/bin/python -m unittest discover -s tests -t . -v
+```
+
 ## Sources and versions
 
 - Connections: [FlyWire public release 783, Zenodo 10676866](https://zenodo.org/records/10676866), `proofread_connections_783.feather`. The download script verifies the published MD5. Metadata and the CC BY 4.0 license are recorded in `data/provenance.json`.
@@ -103,7 +136,23 @@ SQLite at `data/state.sqlite` stores local listings, rules and ratings. `data/ph
 
 Export downloads portable JSON containing listings, settings, ratings and pairwise choices. It excludes local photo paths and encoder tensors. Paste it into import to restore settings and ratings for successfully imported apartments. Images are downloaded again from their original URLs; manually uploaded photos must be added again. This export is not a complete image backup.
 
-Direct URLs are accepted only from RentSpot, Fox, Bazaraki and INDEX. Supporting a URL does not guarantee that its source will return data without a browser. Bazaraki presented a Cloudflare check during development, so direct collection from it is unavailable. Use an open page with the bookmark button, JSON/HTML or the manual form for such sources.
+Direct URLs are accepted only from RentSpot, Fox, Bazaraki and INDEX. Supporting a URL does not guarantee that its source will return data without a browser; for such pages, use an open page with the bookmark button, JSON/HTML or the manual form. Bazaraki adverts are read directly by the connector below.
+
+### Bazaraki connector
+
+`server/bazaraki.py` reads the Limassol apartment rentals on [Bazaraki](https://www.bazaraki.com) the way a visitor's browser would, and the area map's "Search Bazaraki" panel drives it.
+
+- **robots.txt.** It requests only pages that robots.txt allows: public search pages (`/real-estate-to-rent/apartments-flats/lemesos-district-limassol/`), the public map page (`/map/...`) and advert pages (`/adv/<id>_<slug>/`). It never calls `/api` and never uses `attrs_*` filters, both of which are disallowed. The brief's ceiling goes in `price_max`; bedrooms are checked locally.
+- **Pace.** Requests are sequential, with a 0.8 s pause between them, and carry the tool's User-Agent. A market snapshot is cached for 15 minutes per brief, so reopening the map does not read the site again.
+- **Data.** Pages are Next.js; the connector decodes the React flight payload (`self.__next_f.push`) instead of scraping markup. Search pages give price, bedrooms, size, area, date and the first photo. An advert page gives the stated features, the description, every photo and the advert's own coordinates, flagged when Bazaraki marks them approximate. The seller's name and profile are not kept.
+- **Locations.** Exact points come from the map page, which lists about 100 adverts, or from the advert page on import. Offers that Bazaraki places automatically, and the rest, sit at their area centre from `data/areas.json`; offers from unknown areas stay off the map. The map draws exact points as dots and area centres as dashed rings with a count.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/sources/bazaraki[?pages=N]` | market snapshot under the brief: offers, counts, which are already on file and which fall in excluded areas |
+| `POST /api/sources/bazaraki/sync` `{limit, pages}` | import up to `limit` new offers that fit the brief; returns the import job and how many remain |
+| `POST /api/import` `{urls}` | import particular adverts, for example one offer from the map |
+| `GET /api/jobs`, `GET /api/jobs/{id}` | running and recent import jobs, and one job's progress |
 
 The server restricts sources to supported sites and public HTTPS addresses, checks redirects and enforces size limits. The application is intended for one person running it locally. Public deployment requires authentication, separate user storage and resource limits.
 
@@ -114,6 +163,9 @@ Each ordinary import accepts up to 100 listings; a version 1 backup accepts up t
 ```text
 src/                     React, 3D brain, map, cards and import
 server/                  FastAPI, graph, CLIP, SQLite and import
+server/engine/           LIF engine interface, subgraph and photo stimuli
+server/worker.py         single engine worker, durable queue and checkpoints
+tests/                   engine, queue and worker tests (unittest)
 scripts/                 reproducible preparation and startup
 data/listings.json       public fields of the initial catalogue
 data/areas.json          approximate area coordinates
@@ -121,5 +173,6 @@ data/provenance.json     versions, sources and checksums
 research/                pinned LIF reproduction and separate dependency lock
 reports/                 measured results, resource profile and figures
 docs/ROADMAP.md          stages, acceptance criteria and GitHub tasks
+docs/BRAND_KIT.md        brand rules; src/tokens.css holds the values
 .github/workflows/       frontend build and Python syntax checks
 ```

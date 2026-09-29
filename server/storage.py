@@ -46,10 +46,12 @@ class Store:
 
     def connect(self): return sqlite3.connect(self.path,timeout=30)
 
-    def get(self):
+    def get(self, archived=False):
+        """Current state. Archived listings (kept, e.g. an earlier source) are left out unless asked for."""
         with self.lock, self.connect() as db:
+            listings=[json.loads(r[0]) for r in db.execute("SELECT data FROM listings ORDER BY id")]
             return {"settings":json.loads(db.execute("SELECT data FROM settings WHERE id=1").fetchone()[0]),
-                    "listings":[json.loads(r[0]) for r in db.execute("SELECT data FROM listings ORDER BY id")],
+                    "listings":[l for l in listings if archived or not l.get("archived")],
                     "ratings":dict(db.execute("SELECT id,value FROM ratings")),
                     "comparisons":[dict(zip(["a","b","choice"],r)) for r in db.execute("SELECT a,b,choice FROM comparisons")]}
 

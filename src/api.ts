@@ -18,7 +18,7 @@ export async function api<T = Record<string, unknown>>(
     let detail =
       result.detail || result.error || "Could not complete the action";
     if (Array.isArray(detail)) detail = detail.map((x) => x.msg).join("; ");
-    throw new Error(detail);
+    throw Object.assign(new Error(detail), { status: response.status });
   }
   return result;
 }

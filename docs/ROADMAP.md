@@ -72,6 +72,8 @@ Status: complete as an exploratory reproduction; three taste trials per conditio
 
 ### D1 — catalogue and sources
 
+Status: Bazaraki access implemented; the other D1 items are open. `server/bazaraki.py` reads the public search, map and advert pages that robots.txt allows (never `/api` or `attrs_*` filters), sequentially with a 0.8 s pause and a 15-minute market cache, and decodes their Next.js page data. The area map shows the live market under the brief and imports new offers ("Search Bazaraki", or one advert from its popup). Exact points come from the map page or the advert; the rest sit at area centres and are drawn as such. The XML feed and official export were not investigated, and connector status does not yet report blocking separately from other read errors. See the README section "Bazaraki connector".
+
 - Merge duplicate listings and identical photos; retain source, date, gallery version and the download outcome for each URL.
 - Store known area semantics: internal/total/unknown. Balcony size and shelter are separate fields with source references.
 - For Bazaraki, first establish an available reading method and the purpose of its XML feed. Add official access/export when available; use the existing import for open pages. Show source blocking in connector status.
@@ -80,6 +82,8 @@ Status: complete as an exploratory reproduction; three taste trials per conditio
 
 ### R2 — engine interface and durable queue
 
+Status: implemented; not yet connected to the interface or to scores. `OlfactoryMBEngine` reimplements the R1 LIF model in NumPy on the edited 8,991-neuron olfactory→MB subgraph, with one persistent worker (R1 resource profile). With identical scripted drive it produced exactly the same spikes as the pinned Brian2 kernel (80,463 and 85,975 spikes over 300 ms; 0 differing neurons). The [parity replay](../reports/results/engine_parity.json) of the R1 conditioning protocol selects identical odors and plastic synapses and matches R1 within stated tolerances: odor A suppression 98.9% (R1 98.9%), odor B change −3.8% (R1 −6.5%), 5,482 changed synapses (R1 5,483), pre-conditioning MBON spikes 3,732 (R1 3,764). Episode 0.75 s mean including washout; startup 0.1 s. Worker restart after a forced kill resumed an interrupted job without recomputing finished photos. The photo stimulus `photo-orn-v0` is provisional until R3.
+
 - Introduce `SimulationEngine` for running episodes, reading activity, reinforcement and checkpoints. Encapsulate actual upstream calls in an adapter.
 - Persist jobs: queue, per-photo progress, cancellation, completion and recovery after restart.
 - Separate the HTTP server, CLIP and Brian2 worker; limit workers according to R1. Keep the interface accessible during computation.
@@ -87,6 +91,8 @@ Status: complete as an exploratory reproduction; three taste trials per conditio
 - Save atomically. Checkpoints contain weights, seed, parameters, IDs and episode history. Compare restored outputs using identical stimuli.
 
 ### R3 — photos, space and balconies
+
+Status: partially implemented. Both codecs replace `photo-orn-v0` and share one layout on the 22 ORN classes: channels 0–15 carry the photo, 16–21 the listing (price ÷ hard limit, closeness to the preferred point, stated floor area, balcony, its stated size and shelter; unknown values drive 0 Hz and are marked unknown). `photo-pure-v1` pools the 8 × 8 retina into a 4 × 4 Rec. 709 luminance grid; `photo-cyborg-v2` subtracts a frozen centre (mean of 1,168 stored CLIP embeddings, identified by SHA-256 and part of the cache key) from the full L2-normalised 512-d CLIP image embedding, renormalises it and projects it through a fixed Gaussian matrix (seed 783). Embeddings are stored per photo SHA; the centre is frozen on the first cyborg run or by `python -m server.embeddings` and replaced only with `--refresh-center`. Every run snapshots codec and brief; the gallery endpoint rebuilds each photo's stimulus and cache key and reports `ready`, `stale`, `queued`, `running`, `error`, `missing` or `unavailable`. The brain sidebar shows per-photo readiness, run/stop, progress and the selected photo's KC, MBON and PAM response. A live cyborg run of 14 photos took about 20 s. Without centring (v1) the shared CLIP component dominated: photo signals of one listing correlated at 0.77; with v2 at 0.02. Mean Jaccard overlap of the active KC sets between that listing's 14 photos: v1 0.80, v2 0.63, Pure 0.87; the same stimulus under five seeds overlaps at 0.975, so the differences come from the photos (the six listing channels are shared by design). Open: aggregation across photos and the connection to scores.
 
 - **Every available photo** has its own stimulus and neural result. Recompute against the current checkpoint after memory changes; show gallery readiness.
 - Pure: define the visual input grid/sampling, IDs, frequencies and duration. Cyborg: add the complete CLIP embedding with a fixed projection into selected input channels. Document both adapters as artificial.

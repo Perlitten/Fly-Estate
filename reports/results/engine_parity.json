@@ -1,0 +1,318 @@
+{
+  "reference": "reports/results/learning_g20_s0.json",
+  "engine": {
+    "name": "olfactory-mb",
+    "version": "olfactory-mb-lif-1",
+    "fingerprint": "bb41c3fd66f2baea393ada2e975bd46a80cbf101226f620220319b6bfab3f6f5",
+    "neurons": 8991,
+    "channels": 22,
+    "params": {
+      "kcmbon_gain": 20.0,
+      "epi_ms": 500.0,
+      "washout_ms": 150.0,
+      "dan_hz": 60.0,
+      "kc_thresh": 1,
+      "pam_gate_hz": 1.0,
+      "eta": 0.5
+    },
+    "plastic_synapses": 62261,
+    "changed_synapses": 5482,
+    "weight_fraction": 0.9324807717777025
+  },
+  "params": {
+    "kcmbon_gain": 20.0,
+    "epi_ms": 500.0,
+    "washout_ms": 150.0,
+    "dan_hz": 60.0,
+    "kc_thresh": 1,
+    "pam_gate_hz": 1.0,
+    "eta": 0.5
+  },
+  "odors": {
+    "A": [
+      "ORN_VA1v",
+      "ORN_DL3",
+      "ORN_DA1",
+      "ORN_DL1",
+      "ORN_DL4",
+      "ORN_DM2"
+    ],
+    "B": [
+      "ORN_VA2",
+      "ORN_DM3",
+      "ORN_VL1",
+      "ORN_VM4",
+      "ORN_VA6",
+      "ORN_V"
+    ],
+    "fresh": [
+      "ORN_VL2a",
+      "ORN_VM5d",
+      "ORN_DL5",
+      "ORN_DM1",
+      "ORN_VA1d",
+      "ORN_DM6"
+    ],
+    "probe_ks": [
+      4,
+      3,
+      2,
+      0
+    ]
+  },
+  "effects": {
+    "engine": {
+      "pre_A_mbon": 3732.5,
+      "post_A_mbon": 40.5,
+      "pre_B_mbon": 4192.5,
+      "post_B_mbon": 4035.0,
+      "A_suppression": 0.9891493636972538,
+      "B_change": -0.03756708407871201,
+      "pre_A0_kc_active": 488
+    },
+    "r1_brian2": {
+      "pre_A_mbon": 3764.0,
+      "post_A_mbon": 41.0,
+      "pre_B_mbon": 4274.0,
+      "post_B_mbon": 3998.0,
+      "A_suppression": 0.9891073326248672,
+      "B_change": -0.0645765091249415,
+      "pre_A0_kc_active": 467
+    }
+  },
+  "first_episode_spikes": {
+    "engine": 134976,
+    "r1_brian2": 134721
+  },
+  "weights": {
+    "plastic_synapses": 62261,
+    "changed_synapses": 5482,
+    "weight_fraction": 0.9324807717777025,
+    "r1_changed_synapses": 5483
+  },
+  "runtime": {
+    "startup_s": 0.09,
+    "episode_mean_s": 0.748,
+    "episode_max_s": 0.918,
+    "episodes": 22,
+    "note": "episode wall time includes the 150 ms washout"
+  },
+  "environment": {
+    "python": "3.13.14",
+    "numpy": "2.5.3",
+    "os": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+  },
+  "checks": {
+    "odor_sets_identical": true,
+    "plastic_synapses_identical": true,
+    "first_episode_spikes_within_5pct": true,
+    "pre_A_kc_active_within_10pct": true,
+    "pre_A_mbon_within_10pct": true,
+    "A_suppression_at_least_90pct": true,
+    "B_change_within_15pct": true,
+    "changed_synapses_within_15pct": true,
+    "changes_only_kc_mbon": true
+  },
+  "passed": true,
+  "episodes": [
+    {
+      "episode": "pre_A0",
+      "kc_active": 488,
+      "pam_hz": 0.27,
+      "mbon_spk": 3770,
+      "total_spikes": 134976,
+      "plast": false,
+      "wall_s": 0.725
+    },
+    {
+      "episode": "pre_B0",
+      "kc_active": 493,
+      "pam_hz": 0.26,
+      "mbon_spk": 4266,
+      "total_spikes": 120921,
+      "plast": false,
+      "wall_s": 0.754
+    },
+    {
+      "episode": "pre_A1",
+      "kc_active": 474,
+      "pam_hz": 0.25,
+      "mbon_spk": 3695,
+      "total_spikes": 135330,
+      "plast": false,
+      "wall_s": 0.777
+    },
+    {
+      "episode": "pre_B1",
+      "kc_active": 482,
+      "pam_hz": 0.23,
+      "mbon_spk": 4119,
+      "total_spikes": 120522,
+      "plast": false,
+      "wall_s": 0.708
+    },
+    {
+      "episode": "train0_A+US",
+      "kc_active": 477,
+      "pam_hz": 59.58,
+      "mbon_spk": 3722,
+      "total_spikes": 144315,
+      "plast": true,
+      "wall_s": 0.768
+    },
+    {
+      "episode": "train0_B",
+      "kc_active": 489,
+      "pam_hz": 0.25,
+      "mbon_spk": 4183,
+      "total_spikes": 120894,
+      "plast": false,
+      "wall_s": 0.728
+    },
+    {
+      "episode": "train1_A+US",
+      "kc_active": 381,
+      "pam_hz": 58.93,
+      "mbon_spk": 2125,
+      "total_spikes": 140815,
+      "plast": true,
+      "wall_s": 0.743
+    },
+    {
+      "episode": "train1_B",
+      "kc_active": 484,
+      "pam_hz": 0.23,
+      "mbon_spk": 4079,
+      "total_spikes": 120552,
+      "plast": false,
+      "wall_s": 0.723
+    },
+    {
+      "episode": "train2_A+US",
+      "kc_active": 292,
+      "pam_hz": 59.91,
+      "mbon_spk": 954,
+      "total_spikes": 138496,
+      "plast": true,
+      "wall_s": 0.719
+    },
+    {
+      "episode": "train2_B",
+      "kc_active": 473,
+      "pam_hz": 0.22,
+      "mbon_spk": 4068,
+      "total_spikes": 120304,
+      "plast": false,
+      "wall_s": 0.739
+    },
+    {
+      "episode": "train3_A+US",
+      "kc_active": 258,
+      "pam_hz": 59.26,
+      "mbon_spk": 249,
+      "total_spikes": 137292,
+      "plast": true,
+      "wall_s": 0.723
+    },
+    {
+      "episode": "train3_B",
+      "kc_active": 488,
+      "pam_hz": 0.2,
+      "mbon_spk": 3971,
+      "total_spikes": 120643,
+      "plast": false,
+      "wall_s": 0.73
+    },
+    {
+      "episode": "train4_A+US",
+      "kc_active": 162,
+      "pam_hz": 59.86,
+      "mbon_spk": 43,
+      "total_spikes": 136793,
+      "plast": true,
+      "wall_s": 0.797
+    },
+    {
+      "episode": "train4_B",
+      "kc_active": 491,
+      "pam_hz": 0.28,
+      "mbon_spk": 4100,
+      "total_spikes": 120845,
+      "plast": false,
+      "wall_s": 0.709
+    },
+    {
+      "episode": "post_A0",
+      "kc_active": 161,
+      "pam_hz": 0.0,
+      "mbon_spk": 40,
+      "total_spikes": 127779,
+      "plast": false,
+      "wall_s": 0.711
+    },
+    {
+      "episode": "post_B0",
+      "kc_active": 488,
+      "pam_hz": 0.27,
+      "mbon_spk": 4111,
+      "total_spikes": 120532,
+      "plast": false,
+      "wall_s": 0.764
+    },
+    {
+      "episode": "post_A1",
+      "kc_active": 165,
+      "pam_hz": 0.0,
+      "mbon_spk": 41,
+      "total_spikes": 127431,
+      "plast": false,
+      "wall_s": 0.723
+    },
+    {
+      "episode": "post_B1",
+      "kc_active": 477,
+      "pam_hz": 0.23,
+      "mbon_spk": 3959,
+      "total_spikes": 120308,
+      "plast": false,
+      "wall_s": 0.744
+    },
+    {
+      "episode": "probe_4",
+      "kc_active": 401,
+      "pam_hz": 0.03,
+      "mbon_spk": 1878,
+      "total_spikes": 142237,
+      "plast": false,
+      "wall_s": 0.918
+    },
+    {
+      "episode": "probe_3",
+      "kc_active": 487,
+      "pam_hz": 0.27,
+      "mbon_spk": 3447,
+      "total_spikes": 138452,
+      "plast": false,
+      "wall_s": 0.743
+    },
+    {
+      "episode": "probe_2",
+      "kc_active": 554,
+      "pam_hz": 0.25,
+      "mbon_spk": 4155,
+      "total_spikes": 127007,
+      "plast": false,
+      "wall_s": 0.743
+    },
+    {
+      "episode": "probe_0",
+      "kc_active": 581,
+      "pam_hz": 0.25,
+      "mbon_spk": 4340,
+      "total_spikes": 122160,
+      "plast": false,
+      "wall_s": 0.758
+    }
+  ]
+}

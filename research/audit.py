@@ -81,10 +81,10 @@ def main() -> None:
             row["learning_subgraph_pairs"] = int((np.isin(pre, keep) & np.isin(post, keep)).sum())
         report["versions"][str(version)] = row
         print(f"v{version}: {len(ids):,} neurons, {len(con):,} pairs, {counts.sum():,} synapses", flush=True)
-    report["application_graph"] = json.loads((ROOT / "data/brain/summary.json").read_text())
+    report["application_graph"] = json.loads((ROOT / "data/brain/summary.json").read_text(encoding="utf-8"))
     path = ROOT / "reports/results/connectome-audit.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2) + "\n")
+    path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(path.relative_to(ROOT), flush=True)
 
 

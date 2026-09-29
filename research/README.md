@@ -16,6 +16,8 @@ python3.12 -m venv .cache/research/venv
 .cache/research/venv/bin/python -m research.bootstrap
 ```
 
+On Windows, use `.cache/research/venv/Scripts/python.exe` in place of `.cache/research/venv/bin/python`. Bootstrap uses only the standard library, so the application's `.venv` can also run it when only the engine subgraph is needed.
+
 The research environment pins NumPy 1.26.4 and Brian2 2.9.0. Keep it separate from `.venv`: Brian2 failed with the application’s NumPy 2.5.3. The full dependency lock is the measured environment; [requirements.txt](requirements.txt) lists the direct dependencies.
 
 Bootstrap downloads 18 source/data files from two fixed Git commits, verifies SHA256 values against [upstream-manifest.json](upstream-manifest.json), and keeps the files unmodified in `.cache/research/upstream`. It downloads roughly 200 MB in addition to the application data. Raw data, compiled kernels, logs and weight snapshots are excluded from Git.
@@ -72,6 +74,16 @@ Run individual experiments with explicit parameters:
 
 Runtime instrumentation replaces the learning driver’s machine-specific annotation path, sets deterministic seeds, profiles network calls and includes silent taste trials in reported rates. Upstream equations, constants and cached source files stay unchanged. The learning protocol’s structural edits and artificial gain are recorded explicitly. Learned apartment preferences are not used in these experiments.
 
-The report’s integration decision selects one persistent worker for the edited olfactory subgraph. Queue recovery, application checkpoints, photo stimuli and dopamine-dependent apartment memory remain R2–R4 work in the [roadmap](../docs/ROADMAP.md).
+The report’s integration decision selects one persistent worker for the edited olfactory subgraph. R2 implements it as the application engine (`server/engine/`); photo stimuli and dopamine-dependent apartment memory remain R3–R4 work in the [roadmap](../docs/ROADMAP.md).
+
+## Application engine parity
+
+`research.engine_parity` replays the R1 conditioning protocol (seed 0, gain 20) on the application's NumPy engine and compares it with `reports/results/learning_g20_s0.json`. It needs only the application `.venv` and the prepared subgraph (`python -m server.engine.subgraph`), not Brian2:
+
+```sh
+.venv/bin/python -m research.engine_parity
+```
+
+Poisson draws differ from Brian2, so odor selection and plastic synapses must match exactly and activity and learning effects within the tolerances listed in the output's `checks`. The result is written to `reports/results/engine_parity.json`; the command exits non-zero if any check fails.
 
 Upstream source attribution and licenses: [NOTICE.md](NOTICE.md). Public FlyWire data and annotation citations: [application provenance](../README.md#sources-and-versions).

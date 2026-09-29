@@ -1,0 +1,159 @@
+/*
+ * Фирменная муха (FlyLive.tsx / Fly.tsx) — рисунок и движение. Цвета и длительности только из
+ * tokens.css. Файл импортирует сам компонент, поэтому муха одинакова в приложении и брендбуке.
+ */
+/*
+ * Живой знак в шапке (FlyLive.tsx). Исключение из «только статичная муха», согласованное
+ * владельцем: короткие эпизоды — муха чистит передние лапки или коротко жужжит, — затем
+ * несколько секунд полной неподвижности. Бесконечного цикла нет, эпизоды запускает компонент.
+ */
+.fly-live {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+.fly-live * {
+  transform-box: view-box;
+}
+.fly-live .legs path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fly-live .abdomen,
+.fly-live .thorax,
+.fly-live .head > ellipse:first-child {
+  fill: currentColor;
+}
+.fly-live .stripe {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.fly-live .eye {
+  fill: var(--clay);
+}
+.fly-live .wing > path:first-child {
+  fill: var(--lime);
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.fly-live .vein {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.9;
+  opacity: 0.45;
+}
+.fly-live .wing-l {
+  transform-origin: 37.5px 34px;
+}
+.fly-live .wing-r {
+  transform-origin: 42.5px 34px;
+}
+.fly-live .femur-l {
+  transform-origin: 36px 31px;
+}
+.fly-live .femur-r {
+  transform-origin: 44px 31px;
+}
+.fly-live .tibia-l {
+  transform-origin: 28px 25px;
+}
+.fly-live .tibia-r {
+  transform-origin: 52px 25px;
+}
+.fly-live .head {
+  transform-origin: 40px 28px;
+}
+
+/* Жужжание: крылья поднимаются и бьют 18 раз по --dur-wingbeat, тело приподнимается на 1 px. */
+.fly-live.buzz .wing {
+  animation: fly-beat-l var(--dur-wingbeat) linear 18 alternate;
+}
+.fly-live.buzz .wing-r {
+  animation-name: fly-beat-r;
+}
+.fly-live.buzz .fly-body {
+  animation: fly-lift calc(var(--dur-wingbeat) * 18) var(--ease-standard);
+}
+@keyframes fly-beat-l {
+  from {
+    transform: rotate(14deg);
+    opacity: 0.9;
+  }
+  to {
+    transform: rotate(58deg);
+    opacity: 0.55;
+  }
+}
+@keyframes fly-beat-r {
+  from {
+    transform: rotate(-14deg);
+    opacity: 0.9;
+  }
+  to {
+    transform: rotate(-58deg);
+    opacity: 0.55;
+  }
+}
+@keyframes fly-lift {
+  20%,
+  80% {
+    transform: translateY(-1.5px);
+  }
+}
+
+/* Чистка лапок: передние бёдра сводятся к голове, голени трутся в противофазе, затем всё на место. */
+.fly-live.rub .femur-l {
+  animation: fly-rub-l var(--dur-groom) var(--ease-standard);
+}
+.fly-live.rub .femur-r {
+  animation: fly-rub-r var(--dur-groom) var(--ease-standard);
+}
+.fly-live.rub .tibia-l {
+  animation: fly-scrub-l var(--dur-groom) linear;
+}
+.fly-live.rub .tibia-r {
+  animation: fly-scrub-r var(--dur-groom) linear;
+}
+.fly-live.rub .head {
+  animation: fly-nod var(--dur-groom) var(--ease-standard);
+}
+@keyframes fly-rub-l {
+  12%,
+  88% {
+    transform: rotate(32deg);
+  }
+}
+@keyframes fly-rub-r {
+  12%,
+  88% {
+    transform: rotate(-32deg);
+  }
+}
+@keyframes fly-scrub-l {
+  0%, 14%, 86%, 100% { transform: rotate(0); }
+  20%, 32%, 44%, 56%, 68%, 80% { transform: rotate(14deg); }
+  26%, 38%, 50%, 62%, 74% { transform: rotate(-6deg); }
+}
+@keyframes fly-scrub-r {
+  0%, 14%, 86%, 100% { transform: rotate(0); }
+  20%, 32%, 44%, 56%, 68%, 80% { transform: rotate(6deg); }
+  26%, 38%, 50%, 62%, 74% { transform: rotate(-14deg); }
+}
+@keyframes fly-nod {
+  14%,
+  86% {
+    transform: translateY(1px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fly-live * {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "question": "Mean of all photos versus mean plus the strongest outdoor photo (R3).",
+  "label": "listing field `balcony` (true = stated by source; false = not stated)",
+  "features": "photo-only CLIP attributes ['brightness', 'modern', 'spacious', 'clutter', 'large_windows', 'old_furniture', 'renovated', 'natural_light', 'balcony', 'large_balcony', 'sheltered_balcony']; spiking responses excluded (label leak)",
+  "outdoor_evidence": "CLIP attribute `balcony`",
+  "listings": 116,
+  "groups": 102,
+  "positives": 94,
+  "unaggregated_auc": {
+    "mean": 0.618,
+    "max": 0.486
+  },
+  "photos_with_outdoor_evidence_above_0_5": {
+    "balcony_stated": {
+      "median": 3.0,
+      "zero": 7,
+      "listings": 94
+    },
+    "balcony_not_stated": {
+      "median": 2.0,
+      "zero": 3,
+      "listings": 22
+    }
+  },
+  "selected": "mean-v1",
+  "reason": "Kept the mean: no validated advantage.",
+  "labelled": 116,
+  "folds": 5,
+  "seeds": [
+    783,
+    802
+  ],
+  "results": {
+    "mean-v1": {
+      "auc_mean": 0.6954,
+      "auc_sd": 0.1175,
+      "splits": 100
+    },
+    "outdoor-v1": {
+      "auc_mean": 0.6293,
+      "auc_sd": 0.1404,
+      "splits": 100
+    },
+    "difference": {
+      "mean": -0.0661,
+      "sd": 0.1132,
+      "outdoor_better": 27,
+      "splits": 100
+    }
+  }
+}

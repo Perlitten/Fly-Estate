@@ -39,6 +39,13 @@ export type Listing = {
   coord_kind: string;
   photos: string[];
   photo_urls: string[];
+  photo_downloads?: {
+    url: string;
+    status: "available" | "cached" | "unavailable";
+    path?: string;
+    error?: string;
+    captured_at: string;
+  }[];
   captured_at: string;
   updated_at: string;
   published_at: string;
@@ -91,4 +98,84 @@ export type Job = {
   errors: string[];
   warnings: string[];
   error?: string;
+  source?: "import" | "bazaraki";
+  started_at?: string;
+};
+export type SpikingSummary = {
+  kc_active: number;
+  kc_active_fraction: number;
+  mbon_spikes: number;
+  pam_hz: number;
+  total_spikes: number;
+  wall_seconds: number;
+};
+export type PhotoReadiness =
+  | "ready"
+  | "stale"
+  | "queued"
+  | "running"
+  | "error"
+  | "missing"
+  | "unavailable";
+export type SimulationJob = {
+  id: string;
+  listing_id: string;
+  status: "queued" | "running" | "done" | "error" | "cancelled";
+  total: number;
+  done: number;
+  cached: number;
+  failed: number;
+  error: string | null;
+  cancel_requested: number;
+};
+export type Gallery = {
+  listing_id: string;
+  mode: "pure" | "cyborg";
+  codec: string;
+  photos: {
+    position: number;
+    photo: string;
+    status: PhotoReadiness;
+    signals: number[] | null;
+    result: SpikingSummary | null;
+    error?: string;
+  }[];
+  counts: Partial<Record<PhotoReadiness, number>>;
+  total: number;
+  job: SimulationJob | null;
+  engine: {
+    version: string | null;
+    fingerprint: string | null;
+    worker: { alive: boolean; heartbeat_age_s?: number };
+  };
+};
+export type MarketOffer = {
+  id: string;
+  url: string;
+  title: string;
+  price: number | null;
+  bedrooms: number | null;
+  size: number | null;
+  city: string;
+  area: string;
+  published: string | null;
+  photos: number | null;
+  thumb: string | null;
+  coords: [number, number] | null;
+  coord_kind: "source" | "area" | "unknown";
+  listing_id: string | null;
+  excluded_area: boolean;
+};
+export type Market = {
+  source: string;
+  fetched_at: string;
+  search: string;
+  pages: number;
+  total_pages: number | null;
+  listed: number | null;
+  scanned: number;
+  exact_coords: number;
+  imported: number;
+  new: number;
+  offers: MarketOffer[];
 };

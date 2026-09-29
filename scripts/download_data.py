@@ -43,5 +43,5 @@ manifest = {"dataset": "FAFB v783", "record": "https://zenodo.org/records/106768
             "annotations": annotation_url, "annotation_version": "v3.1.0",
             "license": record["metadata"].get("license"),
             "method": "Real topology; artificial input encoding, rate dynamics and learned decision readout."}
-(ROOT / "data/provenance.json").write_text(json.dumps(manifest, indent=2))
+(ROOT / "data/provenance.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
 print("Data downloaded and checksum verified.", flush=True)

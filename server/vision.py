@@ -1,7 +1,6 @@
 from pathlib import Path
 import json
 import numpy as np
-from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_ID = "openai/clip-vit-base-patch32"
@@ -36,11 +35,14 @@ class Vision:
         self.model = CLIPModel.from_pretrained(MODEL_ID, revision=REVISION, cache_dir=ROOT / "data/models",
                                               use_safetensors=False).eval()
 
-    def encode(self, paths):
+    def encode(self, paths, on_embedding=None):
+        """Attribute signals for every photo; `on_embedding(path, vector)` receives each
+        L2-normalised CLIP image embedding (stored by content hash, not in the listing)."""
         if not paths:
             return None
         self.load()
         import torch
+        from PIL import Image, ImageOps
         texts = [s for pair in ATTRIBUTES.values() for s in pair]
         per_photo=[]
         # Bound memory by encoding four images at a time, while processing every photo.
@@ -51,7 +53,11 @@ class Vision:
                     images.append(ImageOps.exif_transpose(im).convert("RGB").copy())
             inputs = self.processor(text=texts, images=images, return_tensors="pt", padding=True)
             with torch.inference_mode():
-                logits = self.model(**inputs).logits_per_image
+                output = self.model(**inputs)
+                logits = output.logits_per_image
+                if on_embedding:
+                    for p, vector in zip(paths[start:start+4], output.image_embeds.numpy()):
+                        on_embedding(p, vector)
                 signals = logits.reshape(len(images), len(ATTRIBUTES), 2).softmax(dim=-1)[:, :, 0].numpy()
             for im,signal in zip(images,signals):
                 retina=np.asarray(im.resize((8,8)),np.float32).ravel()/255
@@ -65,6 +71,25 @@ class Vision:
                 "semantic":list(attributes.values()), "attributes": attributes,"per_photo":per_photo,
                 "encoder": MODEL_ID, "revision": REVISION, "algorithm":"all-photos-v2", "photos_analyzed":len(paths),
                 "note": "CLIP similarity signals, not verified property attributes or calibrated probabilities."}
+
+    def embed(self, paths):
+        """L2-normalised CLIP image embeddings, identical to those produced by `encode`."""
+        self.load()
+        import torch
+        from PIL import Image, ImageOps
+        vectors = []
+        for start in range(0, len(paths), 8):
+            images = []
+            for p in paths[start:start+8]:
+                with Image.open(ROOT / p.removeprefix("/")) as im:
+                    images.append(ImageOps.exif_transpose(im).convert("RGB").copy())
+            inputs = self.processor(images=images, return_tensors="pt")
+            with torch.inference_mode():
+                features = self.model.get_image_features(**inputs)
+                # transformers ≥ 5 returns model output with the projection in pooler_output.
+                features = getattr(features, "pooler_output", features)
+                vectors.extend((features / features.norm(dim=-1, keepdim=True)).numpy())
+        return vectors
 
 if __name__ == "__main__":
     Vision().load()
