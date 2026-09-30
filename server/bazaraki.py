@@ -40,6 +40,9 @@ ADVERT = re.compile(r"^/adv/(\d+)_[\w-]+/?$")
 _cache: dict[tuple, tuple[float, dict]] = {}
 _lock = threading.Lock()
 _last = [0.0]
+_status = {"state":"idle", "last_checked":None, "last_success":None, "error":None}
+
+def connector_status(): return dict(_status)
 
 
 def _get(url: str) -> str:
@@ -49,7 +52,14 @@ def _get(url: str) -> str:
         if wait > 0:
             time.sleep(wait)
         try:
-            return importers.fetch(url, importers.ALLOWED_SOURCES, PAGE_LIMIT).decode("utf8", errors="replace")
+            _status.update(state="reading",last_checked=time.strftime("%Y-%m-%dT%H:%M:%S%z"),error=None)
+            result=importers.fetch(url, importers.ALLOWED_SOURCES, PAGE_LIMIT).decode("utf8", errors="replace")
+            _status.update(state="ready",last_success=_status["last_checked"])
+            return result
+        except importers.SourceBlocked as error:
+            _status.update(state="blocked",error=str(error)); raise
+        except Exception as error:
+            _status.update(state="read_error",error=str(error)); raise
         finally:
             _last[0] = time.monotonic()
 
@@ -57,6 +67,7 @@ def _get(url: str) -> str:
 def flight(html: str) -> str:
     chunks = re.findall(r'self\.__next_f\.push\(\[1,"(.*?)"\]\)</script>', html, re.S)
     if not chunks:
+        _status.update(state="layout_changed",error="No Next.js page data found.")
         raise ValueError("Bazaraki page layout changed: no page data found.")
     return "".join(json.loads('"' + c + '"') for c in chunks)
 
@@ -115,11 +126,11 @@ def _offer(raw: dict, known: dict) -> dict | None:
             "coords": centre, "coord_kind": "area" if centre else "unknown"}
 
 
-def market(ceiling: float, min_bedrooms: int, pages: int = PAGES) -> dict:
+def market(ceiling: float, min_bedrooms: int, pages: int = PAGES, force: bool = False) -> dict:
     """Offers under the hard limit with at least `min_bedrooms`, newest search order."""
     key = (int(ceiling), int(min_bedrooms), pages)
     cached = _cache.get(key)
-    if cached and time.time() - cached[0] < TTL:
+    if not force and cached and time.time() - cached[0] < TTL:
         return cached[1]
     known, offers, total_pages, count = _areas(), {}, None, None
     for page in range(1, pages + 1):
@@ -179,7 +190,7 @@ def advert(url: str) -> dict:
     item = {"url": f"{BASE}{parsed.path}", "title": str(schema.get("name") or "").strip() or "Apartment",
             "price": _price((schema.get("offers") or {}).get("price")),
             "bedrooms": bedrooms_of(features.get("Bedrooms", "")),
-            "size": float(size.group(1)) if size else None, "area": area, "city": city,
+            "size": float(size.group(1)) if size else None, "size_kind":"unknown", "area": area, "city": city,
             "parking": {"covered": "covered", "uncovered": "uncovered", "no": "none"}.get(parking, "unknown"),
             "balcony": any(w in included for w in ("balcony", "veranda", "terrace")) or bool(
                 re.search(r"\b(?:balcony|balconies|veranda|terrace)\b", description, re.I)),

@@ -1,6 +1,6 @@
 # Reproducing the LIF research baseline
 
-This optional environment reproduces the pinned Shiu/fly-api experiments separately from the apartment application. Read the [measured report](../reports/lif-baseline.md) before integrating the model. The application currently uses its existing rate engine.
+This optional environment reproduces the pinned Shiu/fly-api experiments separately from the apartment application. Read the [measured report](../reports/lif-baseline.md). The application integrates an edited olfactory→MB LIF subgraph through its own NumPy engine and retains the rate baseline as a labelled fallback.
 
 ## Environment
 
@@ -48,11 +48,11 @@ mv reports/results .cache/research/published-results
 
 The suite runs one worker at a time:
 
-| Protocol | Data | Configuration |
-| --- | --- | --- |
-| Original taste response | Shiu v630 full graph | 3 one-second trials per condition, seed 0 |
-| Olfactory→MB conditioning | v783, 8,991 matched neurons | Gain 20, seeds 0/1/2; gain 1, seed 0 |
-| Idle/input/washout | v783 full graph and olfactory subgraph | Full unedited, subgraph unedited, subgraph with four structural edits |
+| Protocol                  | Data                                   | Configuration                                                         |
+| ------------------------- | -------------------------------------- | --------------------------------------------------------------------- |
+| Original taste response   | Shiu v630 full graph                   | 3 one-second trials per condition, seed 0                             |
+| Olfactory→MB conditioning | v783, 8,991 matched neurons            | Gain 20, seeds 0/1/2; gain 1, seed 0                                  |
+| Idle/input/washout        | v783 full graph and olfactory subgraph | Full unedited, subgraph unedited, subgraph with four structural edits |
 
 The original taste protocol took about 15 minutes on the measured M4 Pro. Later experiments took seconds, with different compilation cache conditions. Peak worker memory was roughly 1.7–2.7 GiB; this excludes the desktop and the apartment application. Actual runtime and memory depend on your computer and compiler cache. Three taste trials are an exploratory reproduction, not a full statistical replication of the paper.
 
@@ -74,7 +74,17 @@ Run individual experiments with explicit parameters:
 
 Runtime instrumentation replaces the learning driver’s machine-specific annotation path, sets deterministic seeds, profiles network calls and includes silent taste trials in reported rates. Upstream equations, constants and cached source files stay unchanged. The learning protocol’s structural edits and artificial gain are recorded explicitly. Learned apartment preferences are not used in these experiments.
 
-The report’s integration decision selects one persistent worker for the edited olfactory subgraph. R2 implements it as the application engine (`server/engine/`); photo stimuli and dopamine-dependent apartment memory remain R3–R4 work in the [roadmap](../docs/ROADMAP.md).
+The report’s integration decision selects one persistent worker for the edited olfactory subgraph. R2 implements it as the application engine (`server/engine/`); R3 adds artificial photo/listing codecs, and R4 adds positive dopamine-dependent apartment memory. These application adapters are distinct from the reproduced biological odor protocol. Aversive polarity and a larger prospective quality measurement remain open in the [roadmap](../docs/ROADMAP.md).
+
+## Isolated photo-conditioning controls
+
+`research.memory_controls` compares the same A/B presentation sequence without reward, reward paired with photo A and temporally unpaired PAM-only reward over several seeds. It starts from the immutable application base, uses stored source photos and reports KC/PAM/MBON activity, actual changed weights and a checkpoint encode/decode probe. It never publishes weights or fabricated personal ratings.
+
+```sh
+.venv/bin/python -m research.memory_controls --a STORED_APARTMENT_ID_A --b STORED_APARTMENT_ID_B --seeds 0 1 2 --trials 3
+```
+
+Select distinct first photos and keep the codec/brief fixed. Output defaults to `.cache/research/photo-memory-controls.json` because it includes personal catalogue provenance. The [September 30 three-seed measurement](../reports/photo-memory-controls.md) found positive plasticity only for paired reward, zero changes outside plastic connections and exact checkpoint probe restoration. A and B were both suppressed by about 10%, showing broad generalization. This does not establish selective preference, aversive polarity or improved apartment recommendations.
 
 ## Application engine parity
 

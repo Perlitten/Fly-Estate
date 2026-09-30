@@ -160,17 +160,18 @@ def current_results(queue: Queue, listings: list[dict], settings: dict, hashes: 
                 stimulus, _ = stimuli.encode(mode, per_photo[position], listing, brief, channels, embedding, center)
             except (LookupError, OSError, ValueError):
                 continue
-            keys[stimuli.cache_key(sha, stimulus, mode, version, fingerprint, center)] = (listing["id"], position)
+            key = stimuli.cache_key(sha, stimulus, mode, version, fingerprint, center)
+            keys.setdefault(key, []).append((listing["id"], position))
     found = queue.get_activities(keys)
     out = {l["id"]: {} for l in listings}
     for key, result in found.items():
-        listing_id, position = keys[key]
-        out[listing_id][position] = result
+        for listing_id, position in keys[key]:
+            out[listing_id][position] = result
     return out
 
 
 def portfolio(queue: Queue, listings: list[dict], settings: dict, ratings: dict, comparisons: list,
-              hashes: PhotoHashes, fallback: dict | None = None) -> dict:
+              hashes: PhotoHashes, fallback: dict | None = None, normalization_ids=None) -> dict:
     """Spiking score of every fully simulated listing (R3).
 
     Only listings whose every photo has a current result are scored. The
@@ -192,12 +193,13 @@ def portfolio(queue: Queue, listings: list[dict], settings: dict, ratings: dict,
             selection = {"source": "ratings", **validated}
     aggregator = selection["selected"]
     info, scores = {"ready": False, "ratings": 0, "comparisons": 0}, {}
-    if complete:
+    if complete and (normalization_ids is None or any(l["id"] in normalization_ids for l in complete)):
         x = np.array([readout.listing_readout(l, results[l["id"]], len(l["photos"]), aggregator)["vector"]
                       for l in complete])
         ids = {l["id"] for l in complete}
         probability, info = Brain.fit(x, complete, {k: v for k, v in ratings.items() if k in ids},
-                                      [p for p in comparisons if p["a"] in ids and p["b"] in ids])
+                                      [p for p in comparisons if p["a"] in ids and p["b"] in ids],
+                                      normalization_ids=[i for i in normalization_ids if i in ids] if normalization_ids is not None else None)
         if info.get("ready"):
             scores = {l["id"]: round(float(p), 5) for l, p in zip(complete, probability)}
     return {"aggregator": aggregator, "selection": selection, "eligible": len(listings), "complete": len(complete),

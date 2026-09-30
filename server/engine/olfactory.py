@@ -82,7 +82,8 @@ class OlfactoryMBEngine(SimulationEngine):
         return self._fingerprint
 
     def run_episode(self, stimulus: Stimulus, *, reward: bool = False, seed: int | None = None,
-                    carry_state: bool = False, record: bool = False, on_progress=None) -> EpisodeResult:
+                    carry_state: bool = False, record: bool = False, on_progress=None,
+                    learning_rate: float | None = None) -> EpisodeResult:
         """One episode.
 
         Default (`carry_state=False`) is a fresh trial: all dynamic state is
@@ -91,6 +92,8 @@ class OlfactoryMBEngine(SimulationEngine):
         and resets only v and g, as the upstream driver does between episodes.
         """
         p, net = self.params, self.net
+        eta = p.eta if learning_rate is None else float(learning_rate)
+        if not 0 <= eta <= 1: raise ValueError("learning_rate must be between zero and one")
         unknown = [name for name, _ in stimulus.rates_hz if name not in self.orn_by_type]
         if unknown:
             raise ValueError(f"unknown input channels: {unknown}")
@@ -131,7 +134,7 @@ class OlfactoryMBEngine(SimulationEngine):
         if reward and pam_hz >= p.pam_gate_hz and len(active):
             hot = self.plastic[np.isin(self.plastic_pre, active)]
             before = net.graph.data[hot].copy()
-            net.graph.data[hot] *= 1 - p.eta
+            net.graph.data[hot] *= 1 - eta
             changed = int(np.count_nonzero(net.graph.data[hot] != before))
             applied = True
             self._fingerprint = None
@@ -145,7 +148,7 @@ class OlfactoryMBEngine(SimulationEngine):
             replay=pack(bins, self.root_ids_sha, p.epi_ms) if record else None)
         if reward:
             self.history.append({"stimulus": stimulus.key(), "codec": stimulus.codec, "reward": True,
-                                 "applied": applied, "changed_synapses": changed,
+                                 "applied": applied, "changed_synapses": changed, "learning_rate": eta,
                                  "kc_active": result.kc_active, "pam_hz": round(pam_hz, 3),
                                  "checkpoint": result.checkpoint})
         return result

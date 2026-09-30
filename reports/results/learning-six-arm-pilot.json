@@ -1,0 +1,184 @@
+{
+  "protocol": "group-holdout-v2",
+  "design": {
+    "server/engine/base.py": "6eb4eb0150aac8419637eac1f8d4baaeb950013c2aee6ff68e3ba7c1b3abbd74",
+    "server/engine/lif.py": "b5b21d0638ab7b355ceb2c0b908e32d8e149596390ec8a70ed2574fa6b23999e",
+    "server/engine/olfactory.py": "fdce2cc83f250924b987ff1cff8bc380b22bdede8620387440cb68f9a6161b80",
+    "server/engine/stimuli.py": "b4c49a0f11f66a0a57c2f18e9081915c1da22c2e736d8e54f52e487e36320b6a",
+    "server/engine/subgraph.py": "8d92efd90f93805d0c8de7a153bf8f0137f0cdb768660c26c86af214be0b9cc4",
+    "server/brain.py": "0e940e888f877ff42e553bbe84e326eb67f43280f44716dca0aaf47edbd1d47d",
+    "server/vision.py": "e8070c489531d2615fad5b01c69b69cf3eca80fb8bae711478f9830f4ece70d2",
+    "server/readout.py": "7dc5c5708bf9999f81a9ee563570e1d24dddfd745a4ecfeb2e431073f8c2dcd1",
+    "server/learning.py": "1d16c2e45f4b10521ce00e7b7f34002ba15002e47196a85d3cf1bfd4176c78e1",
+    "server/evaluation.py": "b13e7f8556646b9c772f0a80ac0dd61351424b630ca4b766e6d06293c5d3efd4",
+    "server/gallery.py": "3db77e1baedcf75bf6d808ff3c2c9f96a94801101293dabb9afd793c72bcf9df",
+    "server/prospective.py": "8d7590c8cd681fdd5944da7d52c54d53ed9ef17eca89fc3960333d2774c7738b",
+    "server/storage.py": "5363f4c323a164b12e7db9b1d1e22ce399e076937b2ac16ecaf3f36acdb43c34",
+    "server/catalogue.py": "a0a761f50e58c020723dada6662bd4e164300a23013df80582c728697a4afe2f",
+    "server/protocol.py": "68c34a2d9f2af4a09726181ebc73b2a98e31ca0da04a41f5de8ebca702bdfda7",
+    "requirements.txt": "4b275e0b9f53661e33fe39f3a9daff3112341bcb9156a5015ba585d55210d537"
+  },
+  "seed": 784,
+  "revision": 15,
+  "train_apartments": 13,
+  "test_apartments": 3,
+  "train_choices": 12,
+  "test_choices": 3,
+  "held_groups": 3,
+  "reinforced_events": 12,
+  "photo_coverage": 1.0,
+  "models": {
+    "rate_readout": {
+      "pairwise_accuracy": 0.3333333333333333,
+      "pairs": 3,
+      "correct": 1,
+      "wilson_95": [
+        0.0615,
+        0.7923
+      ],
+      "ties": 0,
+      "tie_agreement": null,
+      "auc": null,
+      "rated_apartments": 0,
+      "independent_components": 1,
+      "cluster_95": null,
+      "precision_at_k": null,
+      "ranking_k": 0,
+      "ranking_groups": 0,
+      "conflicting_rated_groups": 0
+    },
+    "clip_readout": {
+      "pairwise_accuracy": 0.3333333333333333,
+      "pairs": 3,
+      "correct": 1,
+      "wilson_95": [
+        0.0615,
+        0.7923
+      ],
+      "ties": 0,
+      "tie_agreement": null,
+      "auc": null,
+      "rated_apartments": 0,
+      "independent_components": 1,
+      "cluster_95": null,
+      "precision_at_k": null,
+      "ranking_k": 0,
+      "ranking_groups": 0,
+      "conflicting_rated_groups": 0
+    },
+    "spiking_fixed": {
+      "pairwise_accuracy": 0.3333333333333333,
+      "pairs": 3,
+      "correct": 1,
+      "wilson_95": [
+        0.0615,
+        0.7923
+      ],
+      "ties": 0,
+      "tie_agreement": null,
+      "auc": null,
+      "rated_apartments": 0,
+      "independent_components": 1,
+      "cluster_95": null,
+      "precision_at_k": null,
+      "ranking_k": 0,
+      "ranking_groups": 0,
+      "conflicting_rated_groups": 0
+    },
+    "spiking_memory": {
+      "pairwise_accuracy": 0.3333333333333333,
+      "pairs": 3,
+      "correct": 1,
+      "wilson_95": [
+        0.0615,
+        0.7923
+      ],
+      "ties": 0,
+      "tie_agreement": null,
+      "auc": null,
+      "rated_apartments": 0,
+      "independent_components": 1,
+      "cluster_95": null,
+      "precision_at_k": null,
+      "ranking_k": 0,
+      "ranking_groups": 0,
+      "conflicting_rated_groups": 0
+    },
+    "spiking_rewired": {
+      "pairwise_accuracy": 0.3333333333333333,
+      "pairs": 3,
+      "correct": 1,
+      "wilson_95": [
+        0.0615,
+        0.7923
+      ],
+      "ties": 0,
+      "tie_agreement": null,
+      "auc": null,
+      "rated_apartments": 0,
+      "independent_components": 1,
+      "cluster_95": null,
+      "precision_at_k": null,
+      "ranking_k": 0,
+      "ranking_groups": 0,
+      "conflicting_rated_groups": 0
+    },
+    "price_distance": {
+      "pairwise_accuracy": 0.3333333333333333,
+      "pairs": 3,
+      "correct": 1,
+      "wilson_95": [
+        0.0615,
+        0.7923
+      ],
+      "ties": 0,
+      "tie_agreement": null,
+      "auc": null,
+      "rated_apartments": 0,
+      "independent_components": 1,
+      "cluster_95": null,
+      "precision_at_k": null,
+      "ranking_k": 0,
+      "ranking_groups": 0,
+      "conflicting_rated_groups": 0
+    }
+  },
+  "seconds": 512.59,
+  "plasticity_delta": 0.0,
+  "plasticity_cluster_95": null,
+  "independent_components": 1,
+  "latency": {
+    "spiking_fixed": {
+      "photos": 202,
+      "mean_photo_seconds": 0.8308,
+      "p95_photo_seconds": 1.2737
+    },
+    "spiking_memory": {
+      "photos": 202,
+      "mean_photo_seconds": 0.5463,
+      "p95_photo_seconds": 0.8006
+    },
+    "spiking_rewired": {
+      "photos": 202,
+      "mean_photo_seconds": 0.6658,
+      "p95_photo_seconds": 1.1355
+    }
+  },
+  "worker_peak_rss_mb": 128.4,
+  "rss_scope": "worker lifetime high-water mark, not evaluation-only",
+  "control": {
+    "protocol": "kc-mbon-rewire-v1",
+    "swaps": 384220,
+    "post_sha256": "9beb53e59e017ca50fd6c03b597b423347cc8de376523bac82f8c935903f7b82",
+    "seed": 783,
+    "preserves": "KC out-degree, MBON in-degree and per-KC weight multiset; other connections unchanged"
+  },
+  "conclusion": "Retrospective held-out pilot. Repeated runs do not add independent evidence; improvement is not established.",
+  "sensory": {
+    "evaluation_mode": "pure",
+    "memory_training_modes": [
+      "cyborg"
+    ]
+  },
+  "data_provenance": "15 saved real human comparisons. Apartment identifiers, galleries and labels excluded."
+}

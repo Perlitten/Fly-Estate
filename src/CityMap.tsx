@@ -137,7 +137,10 @@ const MarketLayer = memo(function MarketLayer({
   const running = job?.status === "running";
   // Keep the popup clear of the map tools on the right and the legend below.
   const room = useMap().getSize().x - 96,
-    popupWidth = { minWidth: Math.min(250, room), maxWidth: Math.min(290, room) };
+    popupWidth = {
+      minWidth: Math.min(250, room),
+      maxWidth: Math.min(290, room),
+    };
   return (
     <>
       {groups.map(({ k, g, approx, title, icon }) => (
@@ -208,7 +211,7 @@ const MarketLayer = memo(function MarketLayer({
                           onClick={() => onAdd(o.url)}
                         >
                           <Plus size={13} />
-                          Add to the file
+                          Analyze this apartment
                         </button>
                       )}
                       {failed?.url === o.url && (
@@ -488,6 +491,49 @@ export default function CityMap({
             : "Dots: advert map pins · straight-line distance"
           : "Area locations are approximate · straight-line distance"}
       </div>
+      {selected?.stimulus_context && (
+        <details className="map-stimulus">
+          <summary>Inputs for {selected.area}</summary>
+          <p>
+            Engineered stimulus magnitudes, not causal recommendation
+            contributions.
+          </p>
+          {(
+            [
+              ["price", "Price / hard limit"],
+              ["proximity", "Closeness"],
+              ["floor_area", "Stated floor area"],
+              ["balcony", "Balcony"],
+              ["balcony_size", "Balcony size"],
+            ] as const
+          ).map(([key, label]) => {
+            const signal = selected.stimulus_context![key];
+            return (
+              <div key={key} className="map-stimulus-row">
+                <span>{label}</span>
+                <progress max={1} value={signal.value || 0} />
+                <b>
+                  {signal.value == null
+                    ? "unknown"
+                    : `${Math.round(signal.value * 100)}%`}
+                </b>
+              </div>
+            );
+          })}
+          <small>
+            Distance uses{" "}
+            {selected.coord_kind === "source"
+              ? "source coordinates"
+              : "an approximate area centre"}
+            . Floor area type: {selected.size_kind || "unknown"}. The fly marker
+            illustrates the{" "}
+            {selected.prediction.source === "spiking-memory"
+              ? "spiking readout"
+              : "rate readout"}
+            ; it is not a motor simulation or travel route.
+          </small>
+        </details>
+      )}
     </div>
   );
 }

@@ -24,6 +24,9 @@ from .engine import stimuli
 from .engine.base import SimulationEngine
 from .jobs import ROOT, Queue
 from .vision import MODEL_ID, REVISION
+from .learning import Memory
+from .storage import Store
+from . import evaluation
 
 log = logging.getLogger("fly-estate.worker")
 
@@ -47,6 +50,7 @@ class Worker:
         self.id = worker_id or f"worker-{uuid.uuid4().hex[:8]}"
         self.checkpoint: str | None = None
         self.stopping = False
+        self.memory = Memory(self, Store(root / "data/state.sqlite"))
 
     def start(self) -> None:
         if not self.queue.acquire_lease(self.id, {"engine": self.engine.version}):
@@ -57,6 +61,8 @@ class Worker:
                 self.engine.restore(self.checkpoints.load(current["hash"]))
                 self.checkpoint = current["hash"]
             except (ValueError, OSError) as error:
+                if int(self.queue.state("memory_revision") or 0):
+                    raise RuntimeError("Saved learned checkpoint could not be restored; preserved it for recovery.") from error
                 log.warning("Current checkpoint not restored (%s); starting from base weights.", error)
         if self.checkpoint is None:
             self.checkpoint = self.checkpoints.save(self.engine.checkpoint(), label="base")
@@ -65,6 +71,10 @@ class Worker:
         self.queue.set_state("channels", json.dumps(self.engine.channels()))
         self.queue.set_state("live_replay", "null")
         requeued = self.queue.requeue_orphans()
+        with self.queue.connect() as db:
+            db.execute("UPDATE learning_evaluations SET status='queued' WHERE status='running'")
+        self.queue.set_state("memory_progress", "null")
+        self.queue.set_state("evaluation_progress", "null")
         if requeued:
             log.info("Requeued %d interrupted job(s).", requeued)
 
@@ -77,6 +87,11 @@ class Worker:
 
     def run_once(self) -> bool:
         self.heartbeat(job=None)
+        if self.memory.run_once():
+            return True
+        if evaluation.run_once(self):
+            return True
+        if self.stopping: return False
         job = self.queue.claim(self.id)
         if not job:
             return False
@@ -85,8 +100,11 @@ class Worker:
 
     def serve(self, poll: float = 1.0) -> None:
         while not self.stopping:
-            if not self.run_once():
-                time.sleep(poll)
+            try:
+                if not self.run_once():
+                    time.sleep(poll)
+            except InterruptedError:
+                if not self.stopping: raise
 
     def process(self, job: dict) -> None:
         job_id = job["id"]
@@ -100,6 +118,13 @@ class Worker:
                 raise ValueError("This job has no codec or brief (queued before R3); run the listing again.")
             per_photo = (listing.get("vision") or {}).get("per_photo") or []
             channels = self.engine.channels()
+            if params["mode"] == "cyborg" and int(self.queue.state("memory_revision") or 0):
+                # Memory queues reviewed winners and alternatives directly,
+                # including legacy galleries that never ran the HTTP encoder.
+                photos = listing.get("photos") or []
+                hashes = [stimuli.file_sha256(self.root / p.lstrip("/"))
+                          if (self.root / p.lstrip("/")).exists() else None for p in photos]
+                self.memory.ensure_embeddings(photos, hashes)
             for item in self.queue.pending_items(job_id):
                 if self.stopping:
                     return  # the job stays running and is requeued at the next start

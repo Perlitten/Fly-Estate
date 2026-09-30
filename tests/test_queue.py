@@ -9,7 +9,7 @@ from server.checkpoints import CheckpointStore
 from server.engine.base import Stimulus
 from server.engine.olfactory import OlfactoryMBEngine, Params
 from server.engine import stimuli
-from server.gallery import PhotoHashes, gallery, job_params
+from server.gallery import PhotoHashes, gallery, job_params, current_results
 from server.jobs import Queue
 from server.vision import MODEL_ID, REVISION
 from server.worker import Worker
@@ -104,6 +104,23 @@ class WorkerEndToEnd(Temp):
         w = Worker(self.queue, self.checkpoints, engine, self.listings.get, root=self.dir, worker_id=name)
         w.start()
         return w
+
+    def test_shared_photo_cache_keeps_every_position_and_listing(self):
+        listing = self.listings["L1"]
+        listing["photos"] = [self.photos[0], self.photos[0]]
+        first = listing["vision"]["per_photo"][0]
+        listing["vision"] = {"per_photo": [first, first]}
+        self.listings["L2"] = {**listing, "id": "L2", "photos": [self.photos[0]], "vision": {"per_photo": [first]}}
+        w = self.worker("duplicates")
+        for id in ("L1", "L2"):
+            self.queue.enqueue(id, self.listings[id]["photos"], PURE)
+            w.run_once()
+        results = current_results(self.queue, list(self.listings.values()), BRIEF, self.hashes)
+        self.assertEqual(set(results["L1"]), {0, 1})
+        self.assertEqual(set(results["L2"]), {0})
+        self.assertEqual(results["L1"][0], results["L1"][1])
+        self.assertEqual(results["L1"][0], results["L2"][0])
+        w.close()
 
     def test_job_runs_every_photo_then_hits_cache(self):
         w = self.worker("w1")

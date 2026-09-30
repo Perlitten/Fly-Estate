@@ -89,20 +89,6 @@
     top: 368px;
     right: 20px;
   }
-  .training-strip {
-    gap: 15px;
-    padding: 20px;
-  }
-  .training-progress {
-    min-width: 125px;
-    padding: 0;
-  }
-  .training-strip h3 {
-    font-size: var(--fs-base);
-  }
-  .training-strip p {
-    font-size: var(--fs-xs);
-  }
   .control-strip nav button {
     padding: 10px 11px;
     font-size: var(--fs-xs);
@@ -234,9 +220,6 @@
     padding-left: 0;
     border-left: 0;
   }
-  .training-progress {
-    display: none;
-  }
   .listing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -324,7 +307,8 @@
     padding-bottom: 10px;
   }
   .control-strip nav {
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 2px;
   }
   .control-strip nav button {
@@ -478,32 +462,6 @@
   }
   .brain-sidebar .rating-buttons button svg {
     width: 14px;
-  }
-  .training-strip {
-    margin-top: 18px;
-    padding: 18px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .training-strip > div:nth-child(2) {
-    flex: 1;
-    min-width: 150px;
-  }
-  .training-strip .eyebrow {
-    font-size: var(--fs-micro);
-    letter-spacing: var(--track-label);
-  }
-  .training-strip h3 {
-    font-size: var(--fs-sm);
-    line-height: 1.5;
-    margin: 6px 0;
-  }
-  .training-strip p {
-    font-size: var(--fs-micro);
-  }
-  .training-strip > .text-button {
-    font-size: var(--fs-xs);
-    margin-left: 54px;
   }
   footer {
     padding: 22px 0;

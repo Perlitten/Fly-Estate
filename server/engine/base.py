@@ -64,7 +64,8 @@ class SimulationEngine(ABC):
         """Input channel names a stimulus may drive."""
 
     @abstractmethod
-    def run_episode(self, stimulus: Stimulus, *, reward: bool = False, seed: int | None = None) -> EpisodeResult:
+    def run_episode(self, stimulus: Stimulus, *, reward: bool = False, seed: int | None = None,
+                    learning_rate: float | None = None) -> EpisodeResult:
         """Simulate one episode; with `reward`, apply the engine's reinforcement rule."""
 
     @abstractmethod

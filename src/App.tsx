@@ -9,7 +9,7 @@ import {
 } from "react";
 import {
   Brain,
-  Map,
+  Map as MapIcon,
   Heart,
   GitCompareArrows,
   Plus,
@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import type { Data, Settings } from "./types";
 import { api, count, money } from "./api";
-import Fly from "./Fly";
 import FlyLive from "./FlyLive";
 import { CountUp, useIndicator, useSpotlight } from "./effects";
 const BrainView = lazy(() => import("./BrainView"));
@@ -34,6 +33,7 @@ import Preloader from "./Preloader";
 import ApartmentCard from "./ApartmentCard";
 import { ImportDialog, SettingsDialog } from "./Dialogs";
 import MarketPanel, { useAgentSearch } from "./Market";
+import LearningView, { useLearning } from "./Learning";
 import "./inspection-ux.css";
 
 const reviewFilters = [
@@ -46,9 +46,10 @@ type ReviewFilter = (typeof reviewFilters)[number][0];
 
 const views = [
   ["brain", "Agent's brain", Brain],
-  ["map", "Area map", Map],
+  ["map", "Area map", MapIcon],
   ["learn", "Portfolio", Heart],
   ["duel", "Side by side", GitCompareArrows],
+  ["learning", "Learning", Sparkles],
 ] as const;
 export default function App() {
   const [data, setData] = useState<Data>(),
@@ -67,11 +68,14 @@ export default function App() {
     [scrolled, setScrolled] = useState(false),
     [booting, setBooting] = useState(true);
   const endBoot = useCallback(() => setBooting(false), []);
+  const { memory, error: memoryError } = useLearning();
+  const [memoryRevision, setMemoryRevision] = useState<number>();
+  const memoryStamp = useRef("");
   const load = useCallback(async () => {
     const result = await api<Data>("/api/state");
     setData(result);
     setSelected((id) =>
-      result.listings.some((x) => x.id === id && !x.filter_reasons.length)
+      result.listings.some((x) => x.id === id)
         ? id
         : result.listings.find((x) => !x.filter_reasons.length && x.vision)
             ?.id || "",
@@ -81,10 +85,21 @@ export default function App() {
     load().catch((e) => setError(e.message));
   }, [load]);
   useEffect(() => {
+    if (!memory) return;
+    const stamp = `${memory.revision}:${JSON.stringify(memory.analysis_stamp)}:${JSON.stringify(memory.feedback_counts)}`;
+    const previous = memoryStamp.current;
+    memoryStamp.current = stamp;
+    if (previous && previous !== stamp)
+      load().catch((e) => setError(e.message));
+  }, [memory?.revision, memory?.analysis_stamp, memory?.feedback_counts, load]);
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [view]);
   // The agent's Bazaraki search: market snapshot (read when the map opens) and import progress.
-  const agent = useAgentSearch(view === "map", load);
+  const agent = useAgentSearch(view === "map", load, (id) => {
+    setSelected(id);
+    setView("brain");
+  });
   // A save that takes longer than a moment says why the buttons are waiting.
   useEffect(() => {
     if (!busy) return setSlow(false);
@@ -124,11 +139,18 @@ export default function App() {
     }
   };
   const rate = (id: string, value: number | null) => {
+    const held = data?.listings.find((l) => l.id === id)?.evaluation_only;
     mutate(
       "/api/rating",
       "POST",
       { id, value },
-      value === null ? "Removed from your file" : "Noted in your file",
+      held
+        ? "Choice saved for evaluation · training unchanged"
+        : value === null
+          ? "Choice cleared · memory update queued"
+          : value === 1
+            ? "Choice saved · reinforcement queued"
+            : "Choice saved · readout updated",
     ).catch(() => {});
   };
   const save = async (s: Settings) => {
@@ -141,11 +163,42 @@ export default function App() {
   );
   const pairs = useMemo(() => {
     const result: [string, string][] = [];
+    const exposure = new Map<string, number>();
+    for (const choice of data?.comparisons || [])
+      for (const id of [choice.a, choice.b])
+        exposure.set(id, (exposure.get(id) || 0) + 1);
     for (let i = 0; i < eligible.length; i++)
       for (let j = i + 1; j < eligible.length; j++)
-        result.push([eligible[i].id, eligible[j].id]);
+        if (
+          eligible[i].apartment_group == null ||
+          eligible[i].apartment_group !== eligible[j].apartment_group
+        )
+          result.push([eligible[i].id, eligible[j].id]);
+    const byId = new Map(eligible.map((l) => [l.id, l]));
+    const utility = ([a, b]: [string, string]) => {
+      const x = byId.get(a)!,
+        y = byId.get(b)!;
+      const coverage = (exposure.get(a) || 0) + (exposure.get(b) || 0);
+      const contrast = Math.abs(
+        x.prediction.probability - y.prediction.probability,
+      );
+      const diverse =
+        (x.area !== y.area ? 0.4 : 0) +
+        (Math.abs(x.price - y.price) > 400 ? 0.2 : 0) +
+        (x.bedrooms !== y.bedrooms ? 0.2 : 0);
+      return (
+        coverage +
+        (data && data.training.ratings + data.training.comparisons < 20
+          ? -contrast
+          : contrast) -
+        diverse
+      );
+    };
+    result.sort(
+      (a, b) => utility(a) - utility(b) || a.join().localeCompare(b.join()),
+    );
     return result;
-  }, [eligible]);
+  }, [eligible, data]);
   const nextPair = useCallback(() => {
     const compared = new Set(
       data?.comparisons.map((x) => [x.a, x.b].sort().join("|")),
@@ -236,8 +289,7 @@ export default function App() {
   );
   // Заставка стоит первым ребёнком фрагмента в обеих ветках — React сохраняет её состояние.
   if (!data) return <>{preloader}</>;
-  const selected = data.listings.find((l) => l.id === selectedId),
-    done = data.training.ratings + data.training.comparisons;
+  const selected = data.listings.find((l) => l.id === selectedId);
   const a = eligible.find((l) => l.id === pair[0]),
     b = eligible.find((l) => l.id === pair[1]);
   const brief = data.settings,
@@ -246,8 +298,7 @@ export default function App() {
       `${brief.min_bedrooms}+ bd`,
       `${+brief.radius.toFixed(1)} km`,
     ];
-  const selectedForBrain =
-    selected && !selected.filter_reasons.length ? selected : eligible[0];
+  const selectedForBrain = selected || eligible[0];
   return (
     <>
       {preloader}
@@ -405,8 +456,28 @@ export default function App() {
                 onRate={rate}
                 busy={busy}
                 onBrowse={() => setView("learn")}
+                memory={memory}
+                memoryRevision={memoryRevision}
+                onLearning={() => setView("learning")}
+                onReload={load}
               />
             </Suspense>
+          )}
+          {view === "learning" && (
+            <LearningView
+              memory={memory}
+              error={memoryError}
+              choices={
+                Object.keys(data.ratings).length + data.comparisons.length
+              }
+              listings={data.listings}
+              onReview={() => setView("learn")}
+              onInspect={(id, revision) => {
+                setSelected(id);
+                setMemoryRevision(revision);
+                setView("brain");
+              }}
+            />
           )}
           {view === "map" && (
             <div className="map-layout">
@@ -441,7 +512,7 @@ export default function App() {
                     <p>
                       {data.listings.length
                         ? "Select a listing on the map."
-                        : "No listings on file yet. Search Bazaraki and your agent adds them here as it reads."}
+                        : "No listings on file yet. Browse the Bazaraki map and choose an apartment to analyze."}
                     </p>
                   </div>
                 )}
@@ -606,7 +677,11 @@ export default function App() {
             <section className="duel-section">
               <span className="eyebrow">SIDE BY SIDE · FOR THE RECORD</span>
               <h2>Which apartment would you visit?</h2>
-              <p>Pick one. Your agent takes note, even when both look good.</p>
+              <p>
+                {a?.evaluation_only || b?.evaluation_only
+                  ? "This pair includes a reserved apartment. Your choice is saved for evaluation and does not train memory."
+                  : "Pairs balance new areas and price ranges with informative contrasts. Repeated apartments and duplicate galleries are kept apart."}
+              </p>
               {a && b ? (
                 <>
                   <div className="duel-grid">
@@ -659,45 +734,6 @@ export default function App() {
               )}
             </section>
           )}
-          <section className="training-strip">
-            <div className="training-fly">
-              <Fly size={22} />
-            </div>
-            <div>
-              <span className="eyebrow">
-                CLIENT FILE · {data.training.ready ? "ACTIVE" : "OPENING"}
-              </span>
-              <h3>
-                {data.training.ready
-                  ? "Your agent knows your taste"
-                  : "A few ratings, and your agent takes it from here"}
-              </h3>
-              <p>
-                {data.training.next} · {eligible.length} apartments with photos
-                match your rules.
-              </p>
-            </div>
-            <div className="training-progress">
-              <div>
-                <b>
-                  <CountUp value={done} format={(v) => String(Math.round(v))} />
-                </b>
-                <small>ratings and comparisons</small>
-              </div>
-              <div className="progress-dots">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <i
-                    key={i}
-                    className={i < Math.min(done, 10) ? "filled" : ""}
-                  />
-                ))}
-              </div>
-            </div>
-            <button className="text-button" onClick={() => setView("learn")}>
-              Brief your agent
-              <ArrowRight size={17} />
-            </button>
-          </section>
           <footer>
             <span>
               Fly Estate{" "}
@@ -722,7 +758,11 @@ export default function App() {
           />
         )}
         {dialog === "import" && (
-          <ImportDialog onDone={load} onClose={() => setDialog("")} />
+          <ImportDialog
+            data={data}
+            onDone={load}
+            onClose={() => setDialog("")}
+          />
         )}
         {slow && !toast && (
           <div className="toast waiting" role="status">
