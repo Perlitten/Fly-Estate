@@ -6,7 +6,7 @@ Spiking dynamics, dopamine learning and upcoming work: **[roadmap](docs/ROADMAP.
 
 Voice, colour, type, motion and media rules: **[brand kit](docs/BRAND_KIT.md)** (live version at `/brand.html` in `pnpm dev`).
 
-Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. The 3D brain offers the rate overview and actual per-photo LIF spikes from the worker. The main apartment verdict still uses the rate readout; spiking results have their own experimental readout (see [spiking engine](#spiking-engine-and-worker)).
+Completed research: **[R1 measurements and results](reports/lif-baseline.md)** and **[research setup](research/README.md)**. The 3D brain offers the rate overview and actual per-photo LIF spikes from the worker. Positive choices now update saved KC→MBON memory. Fully simulated apartments use the learned spiking readout when it has enough choices; other apartments retain the labelled rate baseline. Inspect changes and held-out measurements in **Learning** (see [learning protocol](docs/LEARNING.md)).
 
 ## Getting started
 
@@ -20,7 +20,7 @@ pnpm dev
 
 Open **http://127.0.0.1:5176**. The Python API runs on `127.0.0.1:8000`. Both servers listen on localhost only. No API key is required.
 
-The first setup downloads approximately 2 GB of public data and model weights, prepares the graph and imports the catalogue. Internet access and several GB of free space are required. Subsequent runs reuse cached files and skip apartments already imported. `pnpm setup --no-seed` prepares the brain without importing apartments. Set `FLY_PYTHON` to choose the Python used to create the environment.
+The first setup downloads public connectome data and model weights (approximately 2 GB, plus the pinned research inputs), prepares the anatomical/rate graph and the LIF subgraph. Internet access and several GB of free space are required. It does not import an apartment catalogue by default. Browse the Bazaraki map, then choose an apartment to download and analyze its gallery. Subsequent setup runs reuse cached files. `pnpm setup --seed` explicitly imports the archived public catalogue with its available galleries; `--no-seed` remains accepted. Set `FLY_PYTHON` to choose the Python used to create the environment.
 
 `pnpm build` builds the frontend and checks TypeScript. To preview the production build, start the API separately (`.venv/bin/python -m uvicorn server.main:app --host 127.0.0.1 --port 8000`), then run `pnpm preview`. On Windows, Python is located at `.venv/Scripts/python.exe`.
 
@@ -36,19 +36,30 @@ pnpm setup
 pnpm dev
 ```
 
-`main` contains the code, English interface and documentation, public catalogue, roadmap and measured research results. Setup downloads datasets, models and available source photos on the new computer; those large caches are regenerated locally.
+The repository contains the English interface, public catalogue snapshot, roadmap and measured research results. Setup regenerates large model/data caches on the new computer. Personal state is local and excluded from Git.
 
-To carry your personal preferences over, click **Export** on the old computer and transfer the JSON file privately. On the new computer, open **Import**, paste the JSON and start import. A version 1 backup supports up to 1,000 listings and restores settings, ratings and pairwise choices for successfully imported apartments. Photos and encoder outputs are rebuilt, so importing can take several minutes. Manually uploaded photos must be added again. Personal state is stored locally and is excluded from this public repository.
+To transfer exact saved memory, use **Client brief → Download full session** (also available in Learning). Transfer the ZIP privately. After setup on the second computer, stop the application and restore with compatible model code:
+
+```sh
+.venv/bin/python -m server.session restore /absolute/path/fly-estate-session.zip
+pnpm dev
+```
+
+The archive includes photos, settings, choices, journal, checkpoints, embeddings, recordings and evaluation cohorts. Checksums and model hashes are validated before replacing local state; the previous session is retained under `.cache/session-restores/`. A different model design is rejected. See the [release and transfer procedure](docs/RELEASE.md).
+
+The smaller **Download my listings and ratings** JSON remains available. Paste it into Import to restore source fields and choices for successfully imported apartments; photos are fetched again and manually uploaded images must be supplied again. This reconstructs choices, rather than transferring exact checkpointed memory.
 
 To continue development, create a branch with `git switch -c codex/your-change`. Run `git pull --ff-only` on `main` before starting new work.
 
 ## Available features
 
 - **Fly brain:** 139,248 annotated neurons in 3D. Rotate, zoom, highlight groups and select a neuron to inspect it. **Rate overview** shows 16 computed steps for a gallery or photo. **Analyze in 3D** follows the worker through every photo, showing actual LIF spikes on the 8,991 simulated neurons while the remaining anatomy stays dim. **Replay analysis** plays the saved photos in order; pause, scrub or select a photo to inspect it.
-- **Interest map:** OpenStreetMap, price markers, grouped apartments at shared coordinates, a preferred area and a draggable center. The fly marker shows the model’s interest in the selected apartment.
+- **Interest map:** lightweight Bazaraki search/map summaries, source links, price markers, grouped locations, approximate-coordinate labels and a draggable preferred point. Search refreshes the map without downloading galleries. **Analyze this apartment** imports just that apartment and opens it in the brain. A disclosure shows the selected listing's engineered stimulus inputs and their provenance.
 - **Portfolio:** search by area or apartment name, filter by your review status and sort by interest, price or distance. Open an apartment through its cover or **Inspect in brain**. Returning to the portfolio keeps the search and review filter.
 - **Apartment inspection:** previous/next apartment and photo controls, a prominent start/replay action, an optional photo gallery and expandable neural/sensory details. The agent’s rate-model view is labelled separately from recorded spiking responses. On a phone, jump between the apartment and connectome; starting or replaying analysis brings the brain into view.
-- **Learning:** “Would visit”, “Maybe” and “Not for me”, with an option to remove a rating. A new rating replaces the previous one.
+- **Learning:** “Would visit” and pairwise winners reinforce every unique photo in the chosen gallery. “Maybe”, “Not for me” and ties train the readout without a positive dopamine pulse. Choices and a durable feedback journal commit together. Repeated requests are idempotent; editing or clearing a choice rebuilds memory from the original checkpoint.
+- **Assistant teaching:** explicit agent labels from a [versioned brief](docs/TEACHER_BRIEF.md), per-photo inspection notes, checked highway pins and curated shortlist. Human ratings take priority and are counted separately. The first [assistant pilot](reports/assistant-teaching-pilot.md) saved actual reinforcement but did not establish a quality gain.
+- **Learning evidence:** anatomical changes, matched before/after probes, revision history and measured pilots. Reserve unseen groups before feedback and evaluate a frozen checkpoint/design. The evaluator includes price/distance, direct CLIP, rate, fixed LIF, learned LIF and a degree-preserving KC→MBON rewired control, with grouping, uncertainty, ranking and resource measurements. Reserved feedback cannot train memory or readouts. The [six-arm retrospective report](reports/learning-six-arm-pilot.md) and [positive photo controls](reports/photo-memory-controls.md) are measured; neither establishes improved taste. New prospective human feedback is still needed.
 - **Apartment duels:** choose A, B or a tie. Each pair is stored once, regardless of its order.
 - **Rules:** target budget, hard price limit, bedroom count, covered parking and excluded areas. Listings are filtered before computation and learning.
 - **Pure Fly:** photos become an 8×8 RGB grid projected onto selected visual inputs.
@@ -85,7 +96,7 @@ Each image is computed independently using the same apartment metadata. Batch si
 - RGB-to-neuron mapping is a deterministic artificial adapter, not reconstructed retinotopy. Pretrained FlyVis is not connected.
 - ALPNs are not “price neurons”. Numeric features are projected onto them artificially. CX receives an artificial direction and distance signal.
 - The rate engine does not reconstruct excitatory/inhibitory signs, delays, biophysics or receptor specificity. The LIF worker uses the explicit assumptions and structural edits documented in R1.
-- The main verdict trains a separate MBON/CX readout. The LIF engine supports the R1 dopamine-gated KC→MBON depression rule; analyzing photos does not apply reinforcement or change weights. Taste-history and before/after learning visualization remain planned.
+- The final verdict is an artificial learned readout, labelled by its source. The LIF engine applies the R1 dopamine-gated KC→MBON depression rule only to positive human choices; analyzing photos does not reinforce memory. Reduced MBON activity demonstrates an effect of plasticity, not a biological valence or improved recommendation quality. Negative dopamine plasticity remains open.
 - CLIP signals are photo–text similarities, not verified housing properties or calibrated probabilities. The final score is not a probability that you will like an apartment in real life.
 - Points represent annotated neuron locations, not neurite morphologies. Lines display a subset of real connections. The complete prepared graph is used for computation.
 - **Rate overview** brightness uses `sqrt(abs(a)/max(abs(a)))`, normalized separately in each frame, so it is not an absolute firing rate. **Spiking analysis** uses actual counts in 25 ms bins and a fixed square-root scale, clipped at 20 spikes per bin. Frames interpolate for display; the underlying count bins stay lossless. The timeline shows simulation time, and replay runs four times slower than the recorded episode.
@@ -106,20 +117,20 @@ Prepare the subgraph once, after `pnpm setup`:
 
 In the brain sidebar, **Analyze in 3D** queues every photo and follows the running photo. The worker publishes completed spike bins every 100 ms of simulated time; the interface polls progress and maps those counts by FlyWire root ID. Only the prepared subgraph receives activity. Saved recordings expose the checkpoint, photo coverage and simulation time. Cached results without a recording are recomputed with the same deterministic seed to add it. Once every photo has a current recording, **Replay analysis** reuses the cache and plays the gallery in order. **Stop** finishes the current photo before stopping the job. Selecting a photo leaves automatic following and opens that photo’s recording; stale recordings are labelled as earlier weights or brief.
 
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /api/engine` | engine, subgraph, worker heartbeat, current checkpoint and queue counts |
-| `POST /api/simulations` `{listing_id}` | queue every photo of a listing; repeated requests return the active job |
-| `GET /api/simulations[?listing_id=]`, `GET /api/simulations/{id}` | job status and per-photo progress |
-| `POST /api/simulations/{id}/cancel` | cancel a queued job, or stop a running one before its next photo |
-| `GET /api/engine/activity/{listing_id}` | latest activity per photo; `stale` marks results produced with older weights |
-| `GET /api/engine/gallery/{listing_id}` | current photo readiness, recording keys and live progress under the active brief |
-| `GET /api/engine/replay/{cache_key}` | saved spike bins projected by neuron ID onto the anatomical view |
-| `GET /api/engine/live/{job_id}?photo={position}` | completed bins of the currently running photo, or `available: false` between photos |
+| Endpoint                                                          | Purpose                                                                             |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /api/engine`                                                 | engine, subgraph, worker heartbeat, current checkpoint and queue counts             |
+| `POST /api/simulations` `{listing_id}`                            | queue every photo of a listing; repeated requests return the active job             |
+| `GET /api/simulations[?listing_id=]`, `GET /api/simulations/{id}` | job status and per-photo progress                                                   |
+| `POST /api/simulations/{id}/cancel`                               | cancel a queued job, or stop a running one before its next photo                    |
+| `GET /api/engine/activity/{listing_id}`                           | latest activity per photo; `stale` marks results produced with older weights        |
+| `GET /api/engine/gallery/{listing_id}`                            | current photo readiness, recording keys and live progress under the active brief    |
+| `GET /api/engine/replay/{cache_key}`                              | saved spike bins projected by neuron ID onto the anatomical view                    |
+| `GET /api/engine/live/{job_id}?photo={position}`                  | completed bins of the currently running photo, or `available: false` between photos |
 
 Jobs, items and activity are stored in SQLite (WAL). After a crash or restart, the worker requeues interrupted jobs and keeps finished photos. Results are cached by photo SHA256, stimulus, codec settings, engine version and weight fingerprint. Checkpoints are written atomically to `data/engine/checkpoints/<sha256>.npz` and contain plastic weights, network state, seed, parameters, root-ID checksum, RNG state and episode history; restoring validates all of them.
 
-The photo stimulus (`photo-orn-v0`) is a provisional, artificial mapping of brightness and ten CLIP signals onto the first eleven ORN channels. It is not an odor and not a model of vision; R3 replaces it.
+The current codecs are `photo-pure-v1` (8×8 RGB → 4×4 luminance → 16 ORN channels) and `photo-cyborg-v2` (full 512-d CLIP embedding → frozen centre → fixed 16-channel projection). Six additional channels carry listing context. These are artificial sensory adapters to an olfactory subgraph; the 8×8 grid is our implementation choice, not a measured limit of fly vision. See the [R3 specification](docs/ROADMAP.md#r3--photos-space-and-balconies).
 
 Tests use a synthetic circuit and, when the prepared subgraph exists, the real one:
 
@@ -141,25 +152,31 @@ The [annotation citation guidelines](https://github.com/flyconnectome/flywire_an
 
 SQLite at `data/state.sqlite` stores local listings, rules and ratings. `data/photos` stores photos. These files, downloaded models and large raw datasets are excluded from Git.
 
-Export downloads portable JSON containing listings, settings, ratings and pairwise choices. It excludes local photo paths and encoder tensors. Paste it into import to restore settings and ratings for successfully imported apartments. Images are downloaded again from their original URLs; manually uploaded photos must be added again. This export is not a complete image backup.
+Lightweight JSON export transfers source fields and choices and refetches photos on import. Full-session ZIP export transfers exact local memory and images, with offline restoration. [Session protocol](docs/RELEASE.md#transfer-a-complete-session).
 
 Direct URLs are accepted only from RentSpot, Fox, Bazaraki and INDEX. Supporting a URL does not guarantee that its source will return data without a browser; for such pages, use an open page with the bookmark button, JSON/HTML or the manual form. Bazaraki adverts are read directly by the connector below.
 
 ### Bazaraki connector
 
-`server/bazaraki.py` reads the Limassol apartment rentals on [Bazaraki](https://www.bazaraki.com) the way a visitor's browser would, and the area map's "Search Bazaraki" panel drives it.
+`server/bazaraki.py` reads public Limassol apartment search/map/advert pages on [Bazaraki](https://www.bazaraki.com). The area map reads prices, first-photo thumbnails and locations without bulk gallery import. Choose **Analyze this apartment** to import one gallery.
 
 - **robots.txt.** It requests only pages that robots.txt allows: public search pages (`/real-estate-to-rent/apartments-flats/lemesos-district-limassol/`), the public map page (`/map/...`) and advert pages (`/adv/<id>_<slug>/`). It never calls `/api` and never uses `attrs_*` filters, both of which are disallowed. The brief's ceiling goes in `price_max`; bedrooms are checked locally.
-- **Pace.** Requests are sequential, with a 0.8 s pause between them, and carry the tool's User-Agent. A market snapshot is cached for 15 minutes per brief, so reopening the map does not read the site again.
+- **Pace.** Requests are sequential, with a 0.8 s pause between them, and carry the tool's User-Agent. A market snapshot is cached for 15 minutes per brief. **Refresh Bazaraki map** requests a fresh snapshot. HTTP 403/429, missing page structure and other read errors are distinguished in source status; there is no blocking bypass.
 - **Data.** Pages are Next.js; the connector decodes the React flight payload (`self.__next_f.push`) instead of scraping markup. Search pages give price, bedrooms, size, area, date and the first photo. An advert page gives the stated features, the description, every photo and the advert's own coordinates, flagged when Bazaraki marks them approximate. The seller's name and profile are not kept.
 - **Locations.** Exact points come from the map page, which lists about 100 adverts, or from the advert page on import. Offers that Bazaraki places automatically, and the rest, sit at their area centre from `data/areas.json`; offers from unknown areas stay off the map. The map draws exact points as dots and area centres as dashed rings with a count.
 
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /api/sources/bazaraki[?pages=N]` | market snapshot under the brief: offers, counts, which are already on file and which fall in excluded areas |
-| `POST /api/sources/bazaraki/sync` `{limit, pages}` | import up to `limit` new offers that fit the brief; returns the import job and how many remain |
-| `POST /api/import` `{urls}` | import particular adverts, for example one offer from the map |
-| `GET /api/jobs`, `GET /api/jobs/{id}` | running and recent import jobs, and one job's progress |
+| Endpoint                                               | Purpose                                                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/sources/bazaraki[?pages=N&force=true]`       | lightweight market snapshot under the brief; `force` explicitly refreshes it                            |
+| `POST /api/sources/bazaraki/sync` `{limit, pages}`     | explicit bulk-import API; ordinary map search does not call it                                          |
+| `POST /api/import` `{urls}`                            | import particular adverts, for example one offer from the map                                           |
+| `GET /api/jobs`, `GET /api/jobs/{id}`                  | running and recent import jobs, and one job's progress                                                  |
+| `GET /api/sources/status`, `GET /api/catalogue/status` | connector access state, stale/removed listings and download problems                                    |
+| `POST /api/catalogue/refresh/{listing_id}`             | reread one source/gallery, keep its canonical ID and choices, record price/availability/gallery changes |
+| `POST /api/learning/reserve`                           | reserve unseen groups and freeze memory, training data and design before labels                         |
+| `POST /api/learning/evaluate-prospective`              | queue the frozen six-arm report, or reopen/retry its existing snapshot                                  |
+| `GET /api/learning/report`                             | download the selected measured report as JSON                                                           |
+| `GET /api/session/export`                              | full local session ZIP, including exact memory and photos                                               |
 
 The server restricts sources to supported sites and public HTTPS addresses, checks redirects and enforces size limits. The application is intended for one person running it locally. Public deployment requires authentication, separate user storage and resource limits.
 

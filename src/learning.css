@@ -1,0 +1,61 @@
+.learning-note,
+.memory-details small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+.learning-table {
+  overflow-x: auto;
+}
+.learning-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.learning-table th,
+.learning-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.learning-table td {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.memory-details {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 18px;
+}
+.memory-details summary {
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  line-height: 1.6;
+}
+.memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.memory-actions button,
+.memory-link {
+  font-size: var(--fs-xs);
+}
+.memory-link {
+  min-height: 44px;
+  margin-top: 12px;
+  text-align: left;
+}
+.memory-overlay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 24px;
+  padding: 10px 0;
+  color: var(--night-text);
+  font-size: var(--fs-xs);
+}
+.memory-overlay button {
+  color: inherit;
+  min-height: 44px;
+  margin-left: auto;
+}

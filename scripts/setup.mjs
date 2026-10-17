@@ -44,9 +44,14 @@ run(venv, ["-m", "pip", "install", "-r", "requirements.txt"]);
 run(venv, ["scripts/download_data.py"]);
 run(venv, ["scripts/prepare_brain.py"]);
 run(venv, ["-m", "server.vision"]);
+run(venv, ["-m", "research.bootstrap"]);
+run(venv, ["-m", "server.engine.subgraph"]);
 if (
   existsSync(path.join(root, "data/listings.json")) &&
+  process.argv.includes("--seed") &&
   !process.argv.includes("--no-seed")
 )
   run(venv, ["scripts/seed_catalogue.py"]);
-console.log("Ready. Start with: pnpm dev");
+console.log(
+  "Ready. Start with: pnpm dev. Browse Bazaraki on the map; galleries load only for apartments you choose. Use --seed to import the archived catalogue explicitly.",
+);

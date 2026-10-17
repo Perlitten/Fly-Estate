@@ -8,7 +8,6 @@ import "./market.css";
 const JOB_KEY = "fly-estate-job";
 /** Refresh the file after this many new listings, so markers appear while the agent reads. */
 const REFRESH_EVERY = 3;
-const SEARCH_LIMIT = 20;
 
 type HttpError = Error & { status?: number };
 export type MarketStatus =
@@ -16,6 +15,7 @@ export type MarketStatus =
   | "loading"
   | "ready"
   | "error"
+  | "blocked"
   | "unavailable";
 export type AgentSearch = {
   market?: Market;
@@ -27,7 +27,7 @@ export type AgentSearch = {
   starting: boolean;
   notice: string;
   failed?: { url: string; message: string };
-  fetchMarket: (quiet?: boolean) => Promise<void>;
+  fetchMarket: (quiet?: boolean, force?: boolean) => Promise<void>;
   search: () => Promise<void>;
   add: (url: string) => Promise<void>;
 };
@@ -44,6 +44,7 @@ const statusOf = (e: unknown) => (e as HttpError).status;
 export function useAgentSearch(
   open: boolean,
   onListings: () => Promise<void>,
+  onInspect?: (id: string) => void,
 ): AgentSearch {
   const [market, setMarket] = useState<Market>(),
     [status, setStatus] = useState<MarketStatus>("idle"),
@@ -61,14 +62,19 @@ export function useAgentSearch(
     remaining = useRef(0),
     marketSeq = useRef(0),
     hasMarket = useRef(false),
-    listings = useRef(onListings);
+    listings = useRef(onListings),
+    inspect = useRef(onInspect),
+    opening = useRef(false);
   listings.current = onListings;
+  inspect.current = onInspect;
 
-  const fetchMarket = useCallback(async (quiet = false) => {
+  const fetchMarket = useCallback(async (quiet = false, force = false) => {
     const seq = ++marketSeq.current;
     if (!quiet || !hasMarket.current) setStatus("loading");
     try {
-      const m = await read<Market>("/api/sources/bazaraki");
+      const m = await read<Market>(
+        "/api/sources/bazaraki" + (force ? "?force=true" : ""),
+      );
       if (seq !== marketSeq.current) return;
       hasMarket.current = true;
       setMarket(m);
@@ -80,7 +86,7 @@ export function useAgentSearch(
       else if (quiet && hasMarket.current) setStatus("ready");
       else {
         setError((e as Error).message);
-        setStatus("error");
+        setStatus(statusOf(e) === 503 ? "blocked" : "error");
       }
     }
   }, []);
@@ -91,6 +97,9 @@ export function useAgentSearch(
       if (sessionStorage.getItem(JOB_KEY) === j.id)
         sessionStorage.removeItem(JOB_KEY);
       await listings.current().catch(() => {});
+      if (opening.current && j.listing_ids?.[0])
+        inspect.current?.(j.listing_ids[0]);
+      opening.current = false;
       if (sawRunning.current) {
         const missed = j.errors.length
           ? ` ${j.errors.length} could not be read.`
@@ -116,7 +125,8 @@ export function useAgentSearch(
 
   const poll = useCallback(
     async (id: string, gen: number) => {
-      const current = () => tracking.current === id && generation.current === gen;
+      const current = () =>
+        tracking.current === id && generation.current === gen;
       if (!current()) return;
       try {
         const j = await read<Job>("/api/jobs/" + id);
@@ -149,6 +159,7 @@ export function useAgentSearch(
       tracking.current = id;
       refreshed.current = 0;
       sawRunning.current = fresh;
+      opening.current = fresh && !!url;
       sessionStorage.setItem(JOB_KEY, id);
       setJobUrl(url);
       setNotice("");
@@ -189,24 +200,7 @@ export function useAgentSearch(
     setNotice("");
     setStarting(true);
     try {
-      const r = await read<{
-        job: string | null;
-        queued: number;
-        remaining: number;
-      }>("/api/sources/bazaraki/sync", "POST", { limit: SEARCH_LIMIT });
-      if (!r.job) {
-        setNotice("Nothing new under your brief. Your file is up to date.");
-        if (hasMarket.current) fetchMarket(true);
-        return;
-      }
-      remaining.current = r.remaining;
-      track(r.job, "", true);
-    } catch (e) {
-      if (statusOf(e) === 409) {
-        if (!(await discover()))
-          setNotice("Another import is running. Search again when it ends.");
-      } else if (statusOf(e) === 404) setStatus("unavailable");
-      else setNotice((e as Error).message);
+      await fetchMarket(false, true);
     } finally {
       setStarting(false);
     }
@@ -262,7 +256,9 @@ export function JobProgress({ job, label }: { job: Job; label?: string }) {
         {job.phase ? ` · ${job.phase}` : ""}
       </span>
       <div className={"market-bar" + (total ? "" : " indeterminate")}>
-        <i style={total ? { width: `${Math.max(4, share * 100)}%` } : undefined} />
+        <i
+          style={total ? { width: `${Math.max(4, share * 100)}%` } : undefined}
+        />
       </div>
     </div>
   );
@@ -283,8 +279,12 @@ export default function MarketPanel({
   const newOffers = (market?.offers || []).filter(
       (o) => !o.listing_id && !o.excluded_area,
     ),
-    exact = newOffers.filter((o) => o.coords && o.coord_kind === "source").length,
-    centred = newOffers.filter((o) => o.coords && o.coord_kind !== "source").length;
+    exact = newOffers.filter(
+      (o) => o.coords && o.coord_kind === "source",
+    ).length,
+    centred = newOffers.filter(
+      (o) => o.coords && o.coord_kind !== "source",
+    ).length;
   const terms = `under ${money(settings.ceiling)} with ${settings.min_bedrooms}+ bedrooms`;
   return (
     <section
@@ -296,12 +296,11 @@ export default function MarketPanel({
       {status === "ready" && market ? (
         <>
           <p className="market-lead">
-            <b>{count(fresh)}</b> new {fresh === 1 ? "offer" : "offers"}{" "}
-            {terms}
+            <b>{count(fresh)}</b> new {fresh === 1 ? "offer" : "offers"} {terms}
           </p>
           <small className="market-meta">
-            On the map: {count(exact)} exact, {count(centred)} at area centres
-            · {count(market.scanned)} of {count(market.listed ?? market.scanned)}{" "}
+            On the map: {count(exact)} exact, {count(centred)} at area centres ·{" "}
+            {count(market.scanned)} of {count(market.listed ?? market.scanned)}{" "}
             scanned
           </small>
         </>
@@ -312,9 +311,13 @@ export default function MarketPanel({
             Restart the API to let your agent read Bazaraki.
           </small>
         </p>
-      ) : status === "error" ? (
+      ) : status === "error" || status === "blocked" ? (
         <div className="market-lead">
-          <p>Bazaraki could not be read.</p>
+          <p>
+            {status === "blocked"
+              ? "Bazaraki blocked or limited this request."
+              : "Bazaraki could not be read."}
+          </p>
           <small className="market-meta">{agent.error}</small>
           <button
             className="text-button market-retry"
@@ -340,11 +343,13 @@ export default function MarketPanel({
       ) : (
         <button
           className="primary market-search"
-          disabled={agent.starting || status === "unavailable"}
+          disabled={
+            agent.starting || status === "loading" || status === "unavailable"
+          }
           onClick={() => agent.search()}
         >
           <Search size={16} />
-          {agent.starting ? "Starting the search…" : "Search Bazaraki"}
+          {agent.starting ? "Reading the map…" : "Refresh Bazaraki map"}
         </button>
       )}
       {agent.starting && (
@@ -353,6 +358,19 @@ export default function MarketPanel({
         </div>
       )}
       {notice && !running && <p className="market-notice">{notice}</p>}
+      <p className="market-meta">
+        Browse prices and locations here. A gallery is downloaded only when you
+        choose an apartment to analyze.
+      </p>
+      <a
+        className="market-link"
+        href={searchUrl(settings.ceiling).replace(".com/", ".com/map/")}
+        target="_blank"
+        rel="noopener"
+      >
+        Open the map on Bazaraki
+        <ArrowUpRight size={13} />
+      </a>
       <a
         className="market-link"
         href={market?.search || searchUrl(settings.ceiling)}

@@ -168,11 +168,13 @@ class Brain:
         return outputs, signals
 
     @staticmethod
-    def fit(x, listings, ratings, comparisons):
+    def fit(x, listings, ratings, comparisons, normalization_ids=None):
         if not len(x): return np.array([]), {}
         ids = {l["id"]: i for i, l in enumerate(listings)}
-        center = x.mean(axis=0)
-        scale = np.maximum(x.std(axis=0), 0.002)
+        population = x if normalization_ids is None else x[[ids[i] for i in normalization_ids if i in ids]]
+        if not len(population): raise ValueError("Training apartments required for normalization")
+        center = population.mean(axis=0)
+        scale = np.maximum(population.std(axis=0), 0.002)
         normalized = (x-center)/scale
         rows, targets = [], []
         for id, rating in ratings.items():
@@ -203,7 +205,7 @@ class Brain:
                 "next": "Rate at least five apartments, including one you like and one you dislike." if not trained else "Your fly is learning your preferences. Add ratings to evaluate its choices on new apartments."}
         return probability, info
 
-    def predict(self, listings, settings, ratings, comparisons):
+    def predict(self, listings, settings, ratings, comparisons, normalization_ids=None):
         x, signals = self.features(listings, settings)
         photos = [l for l in listings if l.get("vision")]
         valid_idx = [i for i, l in enumerate(listings) if l.get("vision")]
@@ -211,7 +213,12 @@ class Brain:
         train_ratings = {k:v for k,v in ratings.items() if any(l["id"] == k for l in photos)}
         valid_ids = {l["id"] for l in photos}
         train_pairs = [p for p in comparisons if p["a"] in valid_ids and p["b"] in valid_ids]
-        p, info = self.fit(x[valid_idx], photos, train_ratings, train_pairs)
+        population = [i for i in normalization_ids if i in valid_ids] if normalization_ids is not None else None
+        if population == []:
+            p, info = np.full(len(photos),.5), {"ratings":0,"comparisons":0,"ready":False,"has_both_classes":False,
+                "next":"Add training apartments outside the reserved evaluation groups."}
+        else:
+            p, info = self.fit(x[valid_idx], photos, train_ratings, train_pairs, normalization_ids=population)
         if not info:
             info = {"ratings":0,"comparisons":0,"ready":False,"has_both_classes":False,"next":"Add apartments with photos."}
         probabilities = dict(zip([l["id"] for l in photos], p))

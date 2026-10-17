@@ -247,7 +247,14 @@ export default function ApartmentCard({
           )}
         </div>
         {onRate && !l.filter_reasons.length && l.vision && (
-          <RatingButtons listing={l} busy={busy} onRate={onRate} />
+          <>
+            <RatingButtons listing={l} busy={busy} onRate={onRate} />
+            {l.evaluation_only && (
+              <p className="learning-note">
+                Reserved · choices saved for evaluation only
+              </p>
+            )}
+          </>
         )}
         {onSelect && (
           <button

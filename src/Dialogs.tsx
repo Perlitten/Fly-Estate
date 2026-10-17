@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type FormEvent,
@@ -14,34 +15,127 @@ import {
   Check,
   LoaderCircle,
   Download,
+  MapPin,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { api } from "./api";
 import type { Data, Settings, Job } from "./types";
+
+function areaNames(data: Data) {
+  return Array.from(
+    new Set([
+      ...Object.keys(data.areas),
+      ...data.listings
+        .filter((listing) => (listing.city || "").toLowerCase() === "limassol")
+        .map((listing) => listing.area),
+      ...data.settings.excluded,
+    ]),
+  )
+    .filter((name) => name.trim() && name !== "Area unspecified")
+    .sort((a, b) => a.localeCompare(b, "en"));
+}
+
+function ExcludedAreas({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value: string[];
+  onChange: (areas: string[]) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const visible = options.filter((area) =>
+    area.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  return (
+    <fieldset className="excluded-areas">
+      <legend>Areas to avoid</legend>
+      <div className="area-selection" aria-label="Selected excluded areas">
+        {value.length ? (
+          value.map((area) => (
+            <button
+              key={area}
+              type="button"
+              className="area-chip"
+              aria-label={`Include ${area} again`}
+              onClick={() => onChange(value.filter((item) => item !== area))}
+            >
+              {area} <X size={13} />
+            </button>
+          ))
+        ) : (
+          <span>No areas excluded</span>
+        )}
+      </div>
+      <details className="area-picker">
+        <summary>
+          Choose areas <ChevronDown size={16} />
+        </summary>
+        <label className="area-search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="Find an area to exclude"
+            placeholder="Find an area…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <div className="area-options">
+          {visible.map((area) => (
+            <label key={area} className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={value.includes(area)}
+                disabled={!value.includes(area) && value.length >= 30}
+                onChange={(event) =>
+                  onChange(
+                    event.target.checked
+                      ? [...value, area]
+                      : value.filter((item) => item !== area),
+                  )
+                }
+              />
+              {area}
+            </label>
+          ))}
+          {!visible.length && <p>No matching areas.</p>}
+        </div>
+      </details>
+    </fieldset>
+  );
+}
 
 export function Modal({
   title,
   children,
   onClose,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     ref.current?.showModal();
   }, []);
   return (
     <dialog
       ref={ref}
-      className="modal"
+      className={`modal ${className}`}
+      aria-labelledby={titleId}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="modal-header">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button aria-label="Close dialog" onClick={onClose}>
           <X size={21} />
         </button>
@@ -60,22 +154,38 @@ export function SettingsDialog({
   onClose: () => void;
 }) {
   const [s, setS] = useState(data.settings),
-    [excluded, setExcluded] = useState(s.excluded.join(", ")),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const change = (key: keyof Settings, value: unknown) =>
+    [busy, setBusy] = useState(false),
+    [customRadius, setCustomRadius] = useState(false);
+  const areas = areaNames(data);
+  // Source names can share a centre. Group them so the selected label stays
+  // stable when the same coordinates are stored under two different names.
+  const areaCentres = new Map<string, { name: string; labels: string[] }>();
+  for (const [name, area] of Object.entries(data.areas)) {
+    const key = area.coords.join(",");
+    const centre = areaCentres.get(key);
+    if (centre) centre.labels.push(name);
+    else areaCentres.set(key, { name, labels: [name] });
+  }
+  const areaOptions = Array.from(areaCentres.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "en"),
+  );
+  const preferredArea =
+    Object.entries(data.areas).find(([, area]) =>
+      area.coords.every(
+        (coordinate, index) => Math.abs(coordinate - s.ideal[index]) < 0.000001,
+      ),
+    )?.[0] || "";
+  const radii = Array.from(new Set([1, 3, 5, 10, 20, 30, s.radius])).sort(
+    (a, b) => a - b,
+  );
+  const change = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     setS((x) => ({ ...x, [key]: value }));
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      await onSave({
-        ...s,
-        excluded: excluded
-          .split(",")
-          .map((x) => x.trim())
-          .filter(Boolean),
-      });
+      await onSave(s);
       onClose();
     } catch (e) {
       setError((e as Error).message);
@@ -84,96 +194,182 @@ export function SettingsDialog({
     }
   };
   return (
-    <Modal title="Client brief" onClose={onClose}>
+    <Modal title="Client brief" className="brief-modal" onClose={onClose}>
       <form onSubmit={submit} className="settings-form">
-        <p className="muted">
-          Budget shapes the response. Hard limits exclude listings before
-          computation.
-        </p>
-        <div className="form-grid">
-          <label>
-            Target budget, €
-            <input
-              required
-              type="number"
-              min="100"
-              max="20000"
-              value={s.budget}
-              onChange={(e) => change("budget", +e.target.value)}
-            />
-          </label>
-          <label>
-            Hard limit, €
-            <input
-              required
-              type="number"
-              min={s.budget}
-              max="100000"
-              value={s.ceiling}
-              onChange={(e) => change("ceiling", +e.target.value)}
-            />
-          </label>
-          <label>
-            Minimum bedrooms
-            <select
-              value={s.min_bedrooms}
-              onChange={(e) => change("min_bedrooms", +e.target.value)}
-            >
-              {[0, 1, 2, 3, 4, 5].map((x) => (
-                <option key={x} value={x}>
-                  {x === 0 ? "Studio" : x}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Preferred area radius, km
-            <input
-              type="number"
-              min="0.1"
-              max="30"
-              step="0.1"
-              value={s.radius}
-              onChange={(e) => change("radius", +e.target.value)}
-            />
-          </label>
-        </div>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={s.covered_parking}
-            onChange={(e) => change("covered_parking", e.target.checked)}
-          />
-          <span>
-            <b>Covered parking required</b>
-            <small>Uncovered and unspecified parking are excluded too</small>
-          </span>
-        </label>
-        <label>
-          Excluded areas, separated by commas
-          <input
-            value={excluded}
-            onChange={(e) => setExcluded(e.target.value)}
-            placeholder="For example: Ypsonas"
-          />
-        </label>
-        <p className="muted">
-          You can drag your preferred point on the map. These settings are saved
-          on this computer only.
-        </p>
-        {error && (
-          <p className="inline-error" role="alert">
-            {error}
+        <div className="brief-body">
+          <p className="muted">
+            Where should your agent look, and what must an apartment have?
           </p>
-        )}
-        <button className="primary" disabled={busy}>
-          <Check size={17} />
-          Save brief
-        </button>
-        <a className="backup-link" href="/api/export" download>
-          <Download size={16} />
-          Download my listings and ratings
-        </a>
+          <fieldset className="brief-section">
+            <legend>
+              <MapPin size={16} /> Location
+            </legend>
+            <div className="form-grid">
+              <label>
+                City
+                <select
+                  defaultValue="Limassol"
+                  aria-describedby="city-coverage"
+                >
+                  <option value="Limassol">Limassol</option>
+                </select>
+              </label>
+              <label>
+                Preferred area
+                <select
+                  value={preferredArea}
+                  onChange={(event) => {
+                    const area = data.areas[event.target.value];
+                    change(
+                      "ideal",
+                      area ? [...area.coords] : [...data.settings.ideal],
+                    );
+                  }}
+                >
+                  <option value="">Custom point on map</option>
+                  {areaOptions.map((area) => (
+                    <option key={area.name} value={area.name}>
+                      {area.labels.join(" / ")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <p className="field-note" id="city-coverage">
+              Search currently covers Limassol district. Pick an area centre or
+              keep your custom point on the map.
+            </p>
+            <label>
+              Preferred radius
+              <select
+                value={customRadius ? "custom" : s.radius}
+                onChange={(event) => {
+                  setCustomRadius(event.target.value === "custom");
+                  if (event.target.value !== "custom")
+                    change("radius", +event.target.value);
+                }}
+              >
+                {radii.map((radius) => (
+                  <option key={radius} value={radius}>
+                    Within {radius} km
+                  </option>
+                ))}
+                <option value="custom">Custom distance…</option>
+              </select>
+            </label>
+            {customRadius && (
+              <label>
+                Distance, km
+                <input
+                  required
+                  type="number"
+                  min="0.1"
+                  max="30"
+                  step="0.1"
+                  value={s.radius}
+                  onChange={(event) => change("radius", +event.target.value)}
+                />
+              </label>
+            )}
+            <ExcludedAreas
+              options={areas}
+              value={s.excluded}
+              onChange={(areas) => change("excluded", areas)}
+            />
+          </fieldset>
+          <fieldset className="brief-section">
+            <legend>Budget & essentials</legend>
+            <div className="form-grid">
+              <label>
+                Target budget, €
+                <input
+                  required
+                  type="number"
+                  min="100"
+                  max="20000"
+                  value={s.budget}
+                  onChange={(e) => change("budget", +e.target.value)}
+                />
+              </label>
+              <label>
+                Hard limit, €
+                <input
+                  required
+                  type="number"
+                  min={s.budget}
+                  max="100000"
+                  value={s.ceiling}
+                  onChange={(e) => change("ceiling", +e.target.value)}
+                />
+              </label>
+              <label>
+                Minimum bedrooms
+                <select
+                  value={s.min_bedrooms}
+                  onChange={(e) => change("min_bedrooms", +e.target.value)}
+                >
+                  {Array.from(new Set([0, 1, 2, 3, 4, 5, s.min_bedrooms]))
+                    .sort((a, b) => a - b)
+                    .map((x) => (
+                      <option key={x} value={x}>
+                        {x === 0 ? "Studio or more" : `${x}+ bedrooms`}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            </div>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={s.covered_parking}
+                onChange={(e) => change("covered_parking", e.target.checked)}
+              />
+              <span>
+                <b>Covered parking required</b>
+                <small>
+                  Uncovered and unspecified parking are excluded too
+                </small>
+              </span>
+            </label>
+          </fieldset>
+          <p className="muted">
+            Only “Save brief” applies your changes. Your brief is saved on this
+            computer.
+          </p>
+          {error && (
+            <p className="inline-error" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+        <div className="brief-actions">
+          <button className="primary" disabled={busy}>
+            <Check size={17} />
+            Save brief
+          </button>
+          <a className="backup-link" href="/api/export" download>
+            <Download size={16} />
+            Download my listings and ratings
+          </a>
+          <a className="backup-link" href="/api/session/export" download>
+            <Download size={16} />
+            Download full session · photos and brain memory
+          </a>
+          <details className="learning-method">
+            <summary>Restore a full session on another computer</summary>
+            <p>
+              Use the matching model code, stop Fly Estate, place the ZIP in the
+              project folder, then run{" "}
+              <code>
+                .venv/bin/python -m server.session restore
+                fly-estate-session.zip
+              </code>
+              . Start the project again. The archive restores photos, choices,
+              exact checkpoints and recorded results; the previous local session
+              is kept in .cache/session-restores.
+            </p>
+          </details>
+        </div>
       </form>
     </Modal>
   );
@@ -181,9 +377,11 @@ export function SettingsDialog({
 const bookmarklet =
   "javascript:(()=>{const scripts=[...document.querySelectorAll('script[type=\"application/ld+json\"]')].map(x=>{try{return JSON.parse(x.textContent)}catch{return null}}).filter(Boolean);const content=scripts.length?JSON.stringify(scripts):document.documentElement.outerHTML;const text=JSON.stringify({url:location.href,content});navigator.clipboard.writeText(text).then(()=>alert('Listing copied. Paste it into Fly Estate → JSON / HTML.')).catch(()=>prompt('Copy this listing:',text))})()";
 export function ImportDialog({
+  data,
   onDone,
   onClose,
 }: {
+  data: Data;
   onDone: () => Promise<void>;
   onClose: () => void;
 }) {
@@ -194,6 +392,7 @@ export function ImportDialog({
     [busy, setBusy] = useState(false),
     [job, setJob] = useState<Job>(),
     [files, setFiles] = useState<File[]>([]),
+    [otherArea, setOtherArea] = useState(false),
     [manual, setManual] = useState({
       title: "",
       price: 1800,
@@ -466,16 +665,59 @@ export function ImportDialog({
                 </label>
               </>
             )}
-            <label>
-              Area
-              <input
-                required
-                value={manual.area}
-                onChange={(e) =>
-                  setManual((x) => ({ ...x, area: e.target.value }))
-                }
-              />
-            </label>
+            <div className="form-grid">
+              <label>
+                City
+                <select
+                  value={manual.city}
+                  onChange={(event) =>
+                    setManual((x) => ({ ...x, city: event.target.value }))
+                  }
+                >
+                  <option value="Limassol">Limassol</option>
+                </select>
+              </label>
+              <label>
+                Area
+                <select
+                  required
+                  value={otherArea ? "__other" : manual.area}
+                  onChange={(event) => {
+                    setOtherArea(event.target.value === "__other");
+                    setManual((x) => ({
+                      ...x,
+                      area:
+                        event.target.value === "__other"
+                          ? ""
+                          : event.target.value,
+                    }));
+                  }}
+                >
+                  <option value="" disabled>
+                    Select an area
+                  </option>
+                  {areaNames(data).map((area) => (
+                    <option key={area} value={area}>
+                      {area}
+                    </option>
+                  ))}
+                  <option value="__other">Other area…</option>
+                </select>
+              </label>
+            </div>
+            {otherArea && (
+              <label>
+                Area name
+                <input
+                  required
+                  value={manual.area}
+                  onChange={(event) =>
+                    setManual((x) => ({ ...x, area: event.target.value }))
+                  }
+                  placeholder="Area as shown in the listing"
+                />
+              </label>
+            )}
             <label>
               Source URL (optional)
               <input

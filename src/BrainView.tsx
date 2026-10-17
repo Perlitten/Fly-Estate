@@ -34,6 +34,14 @@ import { api, count, money } from "./api";
 import { token } from "./tokens";
 import Fly from "./Fly";
 import SpikingPanel from "./SpikingPanel";
+import ListingSource from "./ListingSource";
+import { AssistantInspection } from "./TeacherPanel";
+import {
+  MemoryDetails,
+  type LearningState,
+  type MemoryEdge,
+  type MemoryRun,
+} from "./Learning";
 import { Decrypt } from "./effects";
 import { RatingButtons, decisions } from "./ApartmentCard";
 import "./brain.css";
@@ -394,6 +402,46 @@ function Cloud({
     </>
   );
 }
+function ChangedConnections({
+  positions,
+  edges,
+}: {
+  positions: Float32Array;
+  edges: MemoryEdge[];
+}) {
+  const geometry = useMemo(() => {
+    const points = new Float32Array(edges.length * 6);
+    const colors = new Float32Array(edges.length * 6);
+    edges.forEach((edge, i) => {
+      points.set(positions.subarray(edge.pre * 3, edge.pre * 3 + 3), i * 6);
+      points.set(
+        positions.subarray(edge.post * 3, edge.post * 3 + 3),
+        i * 6 + 3,
+      );
+      const color = new THREE.Color(
+        Math.abs(edge.after_mv) < Math.abs(edge.before_mv)
+          ? "#f7bf75"
+          : "#82aaff",
+      );
+      colors.set([color.r, color.g, color.b, color.r, color.g, color.b], i * 6);
+    });
+    const result = new THREE.BufferGeometry();
+    result.setAttribute("position", new THREE.BufferAttribute(points, 3));
+    result.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    return result;
+  }, [positions, edges]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <lineSegments geometry={geometry} renderOrder={5}>
+      <lineBasicMaterial
+        vertexColors
+        transparent
+        opacity={0.95}
+        depthTest={false}
+      />
+    </lineSegments>
+  );
+}
 export default function BrainView({
   data,
   selected,
@@ -401,6 +449,10 @@ export default function BrainView({
   onBrowse,
   onRate,
   busy,
+  memory,
+  memoryRevision,
+  onLearning,
+  onReload,
 }: {
   data: Data;
   selected: Listing | undefined;
@@ -408,6 +460,10 @@ export default function BrainView({
   onBrowse: () => void;
   onRate: (id: string, v: number | null) => void;
   busy: boolean;
+  memory?: LearningState;
+  memoryRevision?: number;
+  onLearning: () => void;
+  onReload: () => Promise<void>;
 }) {
   const brainStageRef = useRef<HTMLElement>(null);
   const [geometry, setGeometry] = useState<Geometry>(),
@@ -431,7 +487,14 @@ export default function BrainView({
     [replay, setReplay] = useState<ReplayFrames>(),
     [replayRevision, setReplayRevision] = useState(0),
     [following, setFollowing] = useState<{ id: string; job: string | null }>();
+  const [memoryReplay, setMemoryReplay] = useState<ReplayFrames>();
+  const [memoryConnections, setMemoryConnections] = useState<{
+    edges: MemoryEdge[];
+    changed_connections: number;
+    revision: number;
+  }>();
   const playlist = useRef<string | null>(null);
+  const memoryRequest = useRef(0);
   const settingsKey = JSON.stringify(data.settings);
   const {
     gallery,
@@ -446,11 +509,12 @@ export default function BrainView({
       : source === "spikes"
         ? 0
         : -1;
+  const chosenReplay = memoryReplay || replay;
   const displayedReplay =
-    replay &&
-    replay.info.listing_id === selected?.id &&
-    replay.info.position === photoIndex
-      ? replay
+    chosenReplay &&
+    chosenReplay.info.listing_id === selected?.id &&
+    chosenReplay.info.position === photoIndex
+      ? chosenReplay
       : undefined;
   const displayFrames = source === "spikes" ? displayedReplay?.frames : frames;
   const selectionSequence = useRef(0);
@@ -609,6 +673,9 @@ export default function BrainView({
   useEffect(() => {
     playlist.current = null;
     setFollowing(undefined);
+    setMemoryReplay(undefined);
+    setMemoryConnections(undefined);
+    memoryRequest.current += 1;
   }, [selected?.id, settingsKey]);
   useEffect(() => {
     if (!follow || !gallery?.job) return;
@@ -640,7 +707,7 @@ export default function BrainView({
       : undefined;
   const liveBins = live?.bins;
   useEffect(() => {
-    if (source !== "spikes" || !geometry || !selected) return;
+    if (source !== "spikes" || !geometry || !selected || memoryReplay) return;
     pause();
     setError("");
     setReplay((current) =>
@@ -698,9 +765,22 @@ export default function BrainView({
     replayPath,
     liveBins,
     replayRevision,
+    memoryReplay,
   ]);
 
+  useEffect(() => {
+    if (!memoryReplay) return;
+    const bins = memoryReplay.info.bins;
+    head.current.u = reducedMotion ? 1 : 0;
+    head.current.playing = !reducedMotion;
+    stageRef.current = reducedMotion ? bins - 1 : -1;
+    setStage(stageRef.current);
+    setPlaying(!reducedMotion);
+    if (slider.current) slider.current.value = reducedMotion ? "1000" : "0";
+  }, [memoryReplay, reducedMotion]);
+
   const choosePhoto = (index: number, spiking = source === "spikes") => {
+    setMemoryReplay(undefined);
     playlist.current = null;
     setFollowing(undefined);
     setSource(spiking ? "spikes" : "rate");
@@ -709,6 +789,7 @@ export default function BrainView({
   };
   const visualize = (replayOnly: boolean) => {
     if (!selected) return;
+    setMemoryReplay(undefined);
     if (window.matchMedia("(max-width: 850px)").matches)
       brainStageRef.current?.scrollIntoView({ block: "start" });
     setSource("spikes");
@@ -717,6 +798,54 @@ export default function BrainView({
     setFollowing(replayOnly ? undefined : { id: selected.id, job: null });
     setReplayRevision((x) => x + 1);
   };
+  const showMemoryConnections = async (run: MemoryRun) => {
+    const request = ++memoryRequest.current;
+    const result = await api<{
+      edges: MemoryEdge[];
+      changed_connections: number;
+    }>(`/api/learning/connections/${run.revision}`);
+    if (request !== memoryRequest.current) return;
+    setMemoryConnections({ ...result, revision: run.revision });
+  };
+  const playMemory = async (run: MemoryRun, phase: "before" | "after") => {
+    if (!geometry || !selected)
+      throw Error("Wait for the brain geometry to load.");
+    const request = ++memoryRequest.current;
+    const result = await api<SpikingReplay>(
+      `/api/learning/replay/${run.revision}/${phase}`,
+    );
+    if (request !== memoryRequest.current) return;
+    playlist.current = null;
+    setFollowing(undefined);
+    setPhotoSelection({ id: selected.id, index: result.position });
+    setSource("spikes");
+    setMemoryReplay(decodeReplay(result, geometry.n));
+    if (window.matchMedia("(max-width: 850px)").matches)
+      brainStageRef.current?.scrollIntoView({ block: "start" });
+  };
+  useEffect(() => {
+    if (!memoryRevision || !selected) return;
+    const controller = new AbortController();
+    const request = ++memoryRequest.current;
+    fetch(`/api/learning/connections/${memoryRevision}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw Error("Could not open recorded connections.");
+        return response.json() as Promise<{
+          edges: MemoryEdge[];
+          changed_connections: number;
+        }>;
+      })
+      .then((result) => {
+        if (!controller.signal.aborted && request === memoryRequest.current)
+          setMemoryConnections({ ...result, revision: memoryRevision });
+      })
+      .catch((exception: Error) => {
+        if (!controller.signal.aborted) setError(exception.message);
+      });
+    return () => controller.abort();
+  }, [memoryRevision, selected?.id]);
   const inspect = async (i: number) => {
     const seq = ++selectionSequence.current;
     try {
@@ -771,21 +900,61 @@ export default function BrainView({
               Working on your file<span className="mint">.</span>
             </h2>
           </div>
-          <span className="simulation-badge">
-            <span className="live-dot" />
-            {source === "spikes"
-              ? live
-                ? `Live spikes · Photo ${photoIndex + 1}`
-                : displayedReplay
-                  ? displayedReplay.info.bins * displayedReplay.info.bin_ms <
-                    displayedReplay.info.duration_ms
-                    ? "Partial recording"
-                    : "Recorded spikes"
-                  : follow
-                    ? "Analyzing photos"
-                    : "Spiking analysis"
-              : "Rate response"}
-          </span>
+          <div className="stage-actions">
+            <div
+              className="response-source"
+              role="group"
+              aria-label="Brain response source"
+            >
+              <button
+                className={source === "rate" ? "active" : ""}
+                aria-pressed={source === "rate"}
+                onClick={() => {
+                  playlist.current = null;
+                  setFollowing(undefined);
+                  setSource("rate");
+                  setMemoryReplay(undefined);
+                }}
+              >
+                Rate overview
+              </button>
+              <button
+                className={source === "spikes" ? "active" : ""}
+                aria-pressed={source === "spikes"}
+                onClick={() => choosePhoto(Math.max(0, photoIndex), true)}
+              >
+                Spiking analysis
+              </button>
+            </div>
+            <span className="simulation-badge">
+              <span className="live-dot" />
+              {source === "spikes"
+                ? memoryReplay
+                  ? memoryReplay.info.memory_phase === "before"
+                    ? "Before learning"
+                    : "After learning"
+                  : live
+                    ? `Live spikes · Photo ${photoIndex + 1}`
+                    : displayedReplay
+                      ? displayedReplay.info.bins *
+                          displayedReplay.info.bin_ms <
+                        displayedReplay.info.duration_ms
+                        ? "Partial recording"
+                        : "Recorded spikes"
+                      : follow
+                        ? "Analyzing photos"
+                        : "Spiking analysis"
+                : "Rate response"}
+            </span>
+            {source === "spikes" && (
+              <small className="response-detail">
+                {displayedReplay
+                  ? count(displayedReplay.info.simulated_neurons)
+                  : "8,991"}{" "}
+                simulated neurons · other anatomy dimmed
+              </small>
+            )}
+          </div>
         </div>
         <div className="brain-canvas" aria-label="Interactive 3D fly brain">
           <SceneBoundary>
@@ -817,6 +986,12 @@ export default function BrainView({
                   onTick={onTick}
                   onNeuron={inspect}
                 />
+                {memoryConnections && (
+                  <ChangedConnections
+                    positions={geometry.positions}
+                    edges={memoryConnections.edges}
+                  />
+                )}
                 <OrbitControls
                   enablePan={false}
                   minDistance={2}
@@ -885,38 +1060,19 @@ export default function BrainView({
             Shell
           </button>
         </div>
-        <div
-          className="response-source"
-          role="group"
-          aria-label="Brain response source"
-        >
-          <button
-            className={source === "rate" ? "active" : ""}
-            aria-pressed={source === "rate"}
-            onClick={() => {
-              playlist.current = null;
-              setFollowing(undefined);
-              setSource("rate");
-            }}
-          >
-            Rate overview
-          </button>
-          <button
-            className={source === "spikes" ? "active" : ""}
-            aria-pressed={source === "spikes"}
-            onClick={() => choosePhoto(Math.max(0, photoIndex), true)}
-          >
-            Spiking analysis
-          </button>
-          {source === "spikes" && (
-            <small>
-              {displayedReplay
-                ? count(displayedReplay.info.simulated_neurons)
-                : "8,991"}{" "}
-              simulated neurons · other anatomy dimmed
-            </small>
-          )}
-        </div>
+        {memoryConnections && (
+          <div className="memory-overlay" role="status">
+            <span>
+              Revision {memoryConnections.revision} ·{" "}
+              {memoryConnections.edges.length} of{" "}
+              {count(memoryConnections.changed_connections)} changes · amber:
+              weaker · blue: restored
+            </span>
+            <button onClick={() => setMemoryConnections(undefined)}>
+              Hide connections
+            </button>
+          </div>
+        )}
         <div className="timeline">
           <button
             disabled={!displayFrames || !!live}
@@ -1039,7 +1195,9 @@ export default function BrainView({
             <ChevronLeft size={17} />
           </button>
           <span aria-live="polite">
-            {selectedIndex >= 0 ? selectedIndex + 1 : 0} / {eligible.length}
+            {selectedIndex < 0 && l
+              ? "Excluded by brief"
+              : `${selectedIndex + 1} / ${eligible.length}`}
           </span>
           <button
             aria-label="Next apartment"
@@ -1063,6 +1221,11 @@ export default function BrainView({
             <option value="" disabled>
               Select an apartment
             </option>
+            {l && selectedIndex < 0 && (
+              <option value={l.id}>
+                {money(l.price)} · {l.area} · excluded by brief
+              </option>
+            )}
             {eligible.map((x) => (
               <option key={x.id} value={x.id}>
                 {money(x.price)} · {x.area} · {x.bedrooms} bed
@@ -1155,10 +1318,20 @@ export default function BrainView({
                 onAnalysisError={() => setFollowing(undefined)}
               />
             ) : null}
+            <ListingSource
+              key={`source-${l.id}`}
+              listing={l}
+              onReload={onReload}
+            />
             <div className={`fly-reaction ${l.prediction.decision}`}>
               <Fly />
               <div>
-                <span className="eyebrow">AGENT’S VIEW · RATE MODEL</span>
+                <span className="eyebrow">
+                  AGENT’S VIEW ·{" "}
+                  {l.prediction.source === "spiking-memory"
+                    ? "LEARNED SPIKES"
+                    : "RATE MODEL"}
+                </span>
                 <strong>
                   <Decrypt
                     text={
@@ -1171,20 +1344,31 @@ export default function BrainView({
                 <small>
                   {data.training.ready && !l.filter_reasons.length
                     ? Math.round(l.prediction.probability * 100) +
-                      "% · estimated similarity to your choices"
+                      "% · estimated similarity to saved feedback"
                     : "Rate a few listings to brief your agent"}
                 </small>
               </div>
             </div>
+            <AssistantInspection listing={l} />
             {!l.filter_reasons.length && l.vision && (
               <div className="inspection-feedback">
                 <p className="feedback-heading">Your view</p>
                 <RatingButtons listing={l} onRate={onRate} busy={busy} />
                 <p className="feedback-help">
-                  Your choice briefs the agent. Select again to clear it.
+                  {l.evaluation_only
+                    ? "Reserved for evaluation. Your choice is saved without changing memory or the readout."
+                    : "Would visit reinforces every photo. Select again to clear your choice."}
                 </p>
               </div>
             )}
+            <MemoryDetails
+              key={l.id}
+              memory={memory}
+              listingId={l.id}
+              onConnections={showMemoryConnections}
+              onReplay={playMemory}
+              onReport={onLearning}
+            />
             <details className="sensory-details">
               <summary>How the apartment becomes a stimulus</summary>
               <div className="signal-heading">

@@ -10,6 +10,7 @@ export type Settings = {
   mode: "pure" | "cyborg";
 };
 export type Prediction = {
+  source?: "rate" | "spiking-memory";
   decision: Decision;
   probability: number;
   distance: number | null;
@@ -33,7 +34,26 @@ export type Listing = {
   parking: string;
   balcony: boolean;
   balcony_size: number | null;
-  balcony_covered: boolean;
+  balcony_covered: boolean | null;
+  size_kind?: "internal" | "total" | "unknown";
+  field_sources?: Record<
+    string,
+    { url: string | null; field: string; method: string }
+  >;
+  evaluation_only?: boolean;
+  apartment_group?: number;
+  stimulus_context?: Record<
+    string,
+    { value: number | null; source: string; km?: number; area_kind?: string }
+  >;
+  freshness?: {
+    checked_at: string | null;
+    age_days: number | null;
+    stale: boolean;
+    available: boolean | null;
+    gallery_version: string | null;
+    sources: number;
+  };
   furnished: boolean;
   coords: [number, number] | null;
   coord_kind: string;
@@ -59,6 +79,17 @@ export type Listing = {
   prediction: Prediction;
   filter_reasons: string[];
   rating: number | null;
+  teacher_review?: {
+    stale?: boolean;
+    actor: "agent";
+    value: number;
+    confidence: string;
+    reasons: string[];
+    unknowns: string[];
+    inspected_photo_sha256: string[];
+    photo_notes: string[];
+    price_per_m2: number | null;
+  } | null;
   description: string;
   import_warnings: string[];
 };
@@ -95,6 +126,7 @@ export type Job = {
   total: number;
   done: number;
   imported: number;
+  listing_ids?: string[];
   errors: string[];
   warnings: string[];
   error?: string;
@@ -161,6 +193,7 @@ export type Gallery = {
   };
 };
 export type SpikingReplay = {
+  memory_phase?: "before" | "after";
   available: true;
   listing_id: string;
   position: number;

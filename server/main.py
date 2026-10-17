@@ -7,15 +7,19 @@ import uuid
 import logging
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, FileResponse
+from starlette.background import BackgroundTask
 from pydantic import BaseModel, Field, model_validator
 from .storage import Store, ROOT, DEFAULT_SETTINGS, filter_reasons, now
 from .brain import Brain, distance_km
 from .vision import Vision, MODEL_ID, REVISION
-from . import bazaraki, importers
+from . import bazaraki, importers, learning, evaluation, prospective, catalogue as catalogue_data
 from .jobs import Queue
 from .checkpoints import CheckpointStore
 from .engine import subgraph
+from .engine.stimuli import context_signals
+from . import readout
+from .geography import highway_position
 from .gallery import PhotoHashes, gallery, job_params, portfolio
 from .replay import project as project_replay
 
@@ -28,6 +32,7 @@ model_lock=threading.RLock()
 vision_lock=threading.Lock()
 jobs={}
 engine_queue=Queue()
+learning.initialise(engine_queue)
 engine_checkpoints=CheckpointStore(engine_queue)
 photo_hashes=PhotoHashes()
 geometry=None
@@ -63,14 +68,37 @@ class Settings(BaseModel):
 @app.get("/api/state")
 def state():
     data=store.get()
+    train_ratings, train_pairs, held = prospective.training(data,store,photo_hashes)
+    group_of=readout.groups(data["listings"],lambda p:photo_hashes(p) if photo_hashes.path(p).exists() else p)
     with model_lock:
         eligible=[l for l in data["listings"] if not filter_reasons(l,data["settings"])]
-        predictions,training=brain.predict(eligible,data["settings"],data["ratings"],data["comparisons"])
+        predictions,training=brain.predict(eligible,data["settings"],train_ratings,train_pairs,
+                                          normalization_ids=[l["id"] for l in eligible if l["id"] not in held and l.get("vision")])
     for l in data["listings"]:
         l["prediction"]=predictions.get(l["id"],{"decision":"waiting","probability":0.5,"price_aversion":0,"trace":{},
                 "distance":round(distance_km(data["settings"]["ideal"],l["coords"]),1) if l.get("coords") else None})
         l["filter_reasons"]=filter_reasons(l,data["settings"])
-        l["rating"]=data["ratings"].get(l["id"])
+        origin=data.get("feedback_provenance",{}).get(f"rating:{l['id']}",{})
+        l["rating"]=data["ratings"].get(l["id"]) if origin.get("actor") != "agent" else None
+        l["teacher_review"]=origin if origin.get("actor") == "agent" else None
+        if l["teacher_review"]:
+            l["teacher_review"]={**origin,"stale":
+                origin.get("inspected_photo_sha256") != [photo_hashes(p) for p in l.get("photos",[])]
+                or origin.get("listing_snapshot") != teacher_listing_snapshot(l)
+                or origin.get("location") != highway_position(l) or l.get("available") is False}
+        l["highway_position"]=highway_position(l)
+        l["evaluation_only"] = l["id"] in held
+        l["freshness"] = catalogue_data.freshness(l)
+        l["apartment_group"] = group_of[l["id"]]
+        l["stimulus_context"] = context_signals(l,data["settings"])
+        l["prediction"]["source"]="rate"
+    if int(engine_queue.state("memory_revision") or 0):
+        learned=portfolio_readout()
+        for l in data["listings"]:
+            if l["id"] in learned["scores"]:
+                p=learned["scores"][l["id"]]
+                l["prediction"].update(probability=p,decision="approach" if p>.58 else "avoid" if p<.42 else "maybe",
+                                        source="spiking-memory")
     return {**data,"brain":brain.summary,"training":training,"areas":json.loads((ROOT/"data/areas.json").read_text(encoding="utf-8"))}
 
 @app.put("/api/settings")
@@ -89,13 +117,64 @@ def rating(payload:Rating):
     if not l: raise HTTPException(404,"Apartment not found.")
     if payload.value is not None and (filter_reasons(l,data["settings"]) or not l.get("vision")):
         raise HTTPException(422,"You can rate apartments with photos that pass your filters.")
-    store.rating(payload.id,payload.value)
-    return {"ok":True}
+    context=learning.snapshot([l],data["settings"],[l["id"]] if payload.value==1 else [],photo_hashes,engine_queue)
+    try: event=store.rating(payload.id,payload.value,context=context)
+    except ValueError as error: raise HTTPException(409,str(error))
+    return {"ok":True,"memory_event":event,"evaluation_only":event is None}
 
 class Comparison(BaseModel):
     a:str
     b:str
     choice:Literal[-1,0,1]
+
+class TeacherReview(BaseModel):
+    id:str
+    value:Literal[-1,0,1]
+    criteria_id:str=Field(min_length=1,max_length=100)
+    confidence:Literal["high","medium","low"]
+    reasons:list[str]=Field(min_length=1,max_length=12)
+    unknowns:list[str]=Field(max_length=12)
+    inspected_photo_sha256:list[str]=Field(min_length=1,max_length=100)
+    photo_notes:list[str]=Field(min_length=1,max_length=100)
+    location:dict
+    listing_snapshot:dict
+    price_per_m2:float|None=None
+
+class TeacherBatch(BaseModel):
+    reviews:list[TeacherReview]=Field(min_length=1,max_length=100)
+
+def teacher_listing_snapshot(listing):
+    return {k:listing.get(k) for k in ("price","size","bedrooms","coords","coord_kind","parking",
+                                      "balcony","balcony_size","balcony_covered")}
+
+@app.post("/api/teacher/reviews")
+def teacher_reviews(payload:TeacherBatch):
+    data=store.get()
+    listings={l["id"]:l for l in data["listings"]}
+    contexts=[]
+    if len({r.id for r in payload.reviews}) != len(payload.reviews):
+        raise HTTPException(422,"Review each apartment once per batch.")
+    for review in payload.reviews:
+        l=listings.get(review.id)
+        if not l or not l.get("vision"):
+            raise HTTPException(422,"Assistant reviews require photos.")
+        if review.value==1 and filter_reasons(l,data["settings"]):
+            raise HTTPException(422,"A shortlist recommendation must pass the brief.")
+        actual=[photo_hashes(p) for p in l["photos"]]
+        if review.listing_snapshot != teacher_listing_snapshot(l) or review.location != highway_position(l):
+            raise HTTPException(409,"The listing or location evidence changed since the assistant inspection.")
+        if review.inspected_photo_sha256 != actual or len(review.photo_notes) != len(actual):
+            raise HTTPException(409,"Inspect and describe every current photo before recording an assistant review.")
+        if review.value==1:
+            position=highway_position(l)
+            if position["status"] != "source_pin" or position["north_of_highway"] or position["near_highway"]:
+                raise HTTPException(422,"A shortlist recommendation requires an individual source pin south of the motorway and at least 300 m from it.")
+        context=learning.snapshot([l],data["settings"],[l["id"]] if review.value==1 else [],photo_hashes,engine_queue)
+        context["teacher_review"]={"actor":"agent",**review.model_dump()}
+        contexts.append(context)
+    try: events=store.teacher_reviews([r.model_dump() for r in payload.reviews],contexts)
+    except ValueError as error: raise HTTPException(409,str(error))
+    return {"ok":True,"reviews":events,"label_source":"agent","human_choices_created":0}
 
 @app.post("/api/compare")
 def compare(payload:Comparison):
@@ -103,8 +182,106 @@ def compare(payload:Comparison):
     valid={l["id"] for l in data["listings"] if not filter_reasons(l,data["settings"]) and l.get("vision")}
     if payload.a==payload.b or payload.a not in valid or payload.b not in valid:
         raise HTTPException(422,"Two different apartments with photos that pass your filters are required.")
-    store.compare(payload.a,payload.b,payload.choice)
+    members=[l for l in data["listings"] if l["id"] in (payload.a,payload.b)]
+    winner=[payload.a] if payload.choice==1 else [payload.b] if payload.choice==-1 else []
+    context=learning.snapshot(members,data["settings"],winner,photo_hashes,engine_queue)
+    try: event=store.compare(payload.a,payload.b,payload.choice,context=context)
+    except ValueError as error: raise HTTPException(409,str(error))
+    return {"ok":True,"memory_event":event,"evaluation_only":event is None}
+
+@app.get("/api/learning")
+def learning_status():
+    return {**learning.status(store,engine_queue),"evaluation":evaluation.latest(engine_queue),
+            "prospective":prospective.latest(store),
+            "analysis_stamp":engine_queue.activity_stamp(),
+            "evaluation_progress":json.loads(engine_queue.state("evaluation_progress") or "null")}
+
+@app.post("/api/learning/sync")
+def sync_learning():
+    """Use the actual saved choices, including choices predating the journal."""
+    data=store.get()
+    listings={l["id"]:l for l in eligible_listings(data)}
+    journal=[]
+    for id,value in data["ratings"].items():
+        if id in listings:
+            context=learning.snapshot([listings[id]],data["settings"],[id] if value==1 else [],photo_hashes,engine_queue)
+            origin=data.get("feedback_provenance",{}).get(f"rating:{id}",{})
+            if origin.get("actor")=="agent": context["teacher_review"]=origin
+            journal.append((f"rating:{id}","rating",value,context))
+    for pair in data["comparisons"]:
+        if pair["a"] in listings and pair["b"] in listings:
+            members=[listings[pair["a"]],listings[pair["b"]]]
+            winners=[pair["a"]] if pair["choice"]==1 else [pair["b"]] if pair["choice"]==-1 else []
+            context=learning.snapshot(members,data["settings"],winners,photo_hashes,engine_queue)
+            journal.append((f"pair:{pair['a']}:{pair['b']}","comparison",pair["choice"],context))
+    # Bootstrap is one publication: the worker never sees a partial history,
+    # and copying existing feedback preserves its original timestamps.
+    with store.lock, store.connect() as db:
+        for key,kind,value,context in journal:
+            if not prospective.feedback_is_held(db,context): learning.record(db,key,kind,value,context)
+    return learning_status()
+
+@app.post("/api/learning/retry")
+def retry_learning():
+    engine_queue.set_state("memory_last_attempt",engine_queue.state("memory_revision") or "0")
     return {"ok":True}
+
+@app.post("/api/learning/evaluate")
+def evaluate_learning():
+    try:
+        key=evaluation.enqueue(engine_queue,store,photo_hashes)
+        engine_queue.set_state("selected_evaluation",key)
+    except (ValueError,OSError) as error:
+        raise HTTPException(422,str(error))
+    return {"id":key}
+
+class Reservation(BaseModel):
+    candidate_ids:list[str]|None=Field(default=None,max_length=100)
+
+@app.post("/api/learning/reserve")
+def reserve_cohort(payload:Reservation|None=None):
+    try: return prospective.reserve(store,engine_queue,photo_hashes,
+                                   candidate_ids=payload.candidate_ids if payload else None)
+    except (ValueError,OSError) as error: raise HTTPException(422,str(error))
+
+@app.post("/api/learning/evaluate-prospective")
+def evaluate_cohort():
+    try:
+        key=evaluation.enqueue_prospective(engine_queue,store)
+        engine_queue.set_state("selected_evaluation",key)
+        return {"id":key}
+    except (ValueError,OSError) as error: raise HTTPException(422,str(error))
+
+@app.get("/api/learning/report")
+def evaluation_report():
+    report=evaluation.latest(engine_queue)
+    if not report or not report.get("result"): raise HTTPException(404,"No completed evaluation report yet.")
+    return JSONResponse(report,headers={"Content-Disposition":"attachment; filename=fly-estate-evaluation.json"})
+
+@app.get("/api/learning/replay/{revision}/{phase}")
+def learning_replay(revision:int,phase:Literal["before","after"]):
+    with engine_queue.connect() as db:
+        row=db.execute("SELECT result FROM learning_runs WHERE revision=? AND status='done'",(revision,)).fetchone()
+    if not row: raise HTTPException(404,"Memory recording not found.")
+    result=json.loads(row["result"])
+    recorded=result["recordings"].get(phase)
+    if not recorded: raise HTTPException(409,"No recorded probe for this choice.")
+    checkpoint=result["before_checkpoint"] if phase=="before" else result["checkpoint"]
+    with engine_queue.connect() as db:
+        cp=db.execute("SELECT fingerprint FROM checkpoints WHERE hash=?",(checkpoint,)).fetchone()
+    return {**replay_display(recorded["trace"]),"listing_id":result["listing_id"],"position":recorded["position"],
+            "checkpoint":checkpoint,"fingerprint":cp["fingerprint"],"live":False,"memory_phase":phase}
+
+@app.get("/api/learning/connections/{revision}")
+def learning_connections(revision:int):
+    with engine_queue.connect() as db:
+        row=db.execute("SELECT result FROM learning_runs WHERE revision=? AND status='done'",(revision,)).fetchone()
+    if not row: raise HTTPException(404,"Memory changes not found.")
+    result=json.loads(row["result"])
+    indices={str(id):i for i,id in enumerate(brain.nodes["ids"])}
+    return {"revision":revision,"changed_connections":result["changed_connections"],"checkpoint":result["checkpoint"],
+            "edges":[{**e,"pre":indices[e["pre_id"]],"post":indices[e["post_id"]]} for e in result["edges"]
+                     if e["pre_id"] in indices and e["post_id"] in indices]}
 
 class Import(BaseModel):
     url:str=""
@@ -155,7 +332,8 @@ def import_job(id,payload):
                 if not item.get("url") and payload.url: item["url"]=payload.url
                 l=importers.normalize(item)
                 job["phase"]="Downloading photos"
-                warnings=importers.photos(l,payload.uploads if len(items)==1 else [],existing.get(l["id"]))
+                previous=existing.get(l["id"]) or next((p for p in existing.values() if catalogue_data.same_apartment(p,l)),None)
+                warnings=importers.photos(l,payload.uploads if len(items)==1 else [],previous)
                 if warnings: job["warnings"].append(l["title"]+f': available {len(l["photos"])} of {max(len(l["photo_urls"]),len(l["photos"]))} photos.')
                 job["phase"]="Photos → encoder → neural signals"
                 if l["photos"]:
@@ -168,15 +346,19 @@ def import_job(id,payload):
                 if not l["photos"]: job["warnings"].append(l["title"]+": photos could not be downloaded; rating is disabled.")
                 store.listing(l)
                 existing[l["id"]]=l
+                job["listing_ids"].append(l["id"])
                 if item.get("id"): restored_ids[item["id"]]=l["id"]
                 job["imported"]+=1
             except Exception as e:
                 logging.exception("Listing import failed")
+                if isinstance(e,importers.SourceRemoved): store.source_removed(item.get("_bazaraki") or item.get("url") or payload.url)
                 job["errors"].append(str(e))
             job["done"]+=1
         if not job["imported"]: raise ValueError("; ".join(job["errors"]) or "Import did not complete.")
         if backup:
             for old_id,value in backup.get("ratings",{}).items():
+                if backup.get("feedback_provenance",{}).get(f"rating:{old_id}",{}).get("actor")=="agent":
+                    continue
                 if old_id in restored_ids and type(value) is int and value in (-1,0,1): store.rating(restored_ids[old_id],value)
             for pair in backup.get("comparisons",[]):
                 if pair.get("a") in restored_ids and pair.get("b") in restored_ids and pair["a"]!=pair["b"] and type(pair.get("choice")) is int and pair["choice"] in (-1,0,1):
@@ -186,6 +368,7 @@ def import_job(id,payload):
         job.update(status="done",phase="Done")
     except Exception as e:
         logging.exception("Import failed")
+        if isinstance(e,importers.SourceRemoved) and payload.url: store.source_removed(payload.url)
         job.update(status="error",phase="Error",error=str(e))
 
 @app.post("/api/import")
@@ -193,21 +376,23 @@ def start_import(payload:Import):
     if len([j for j in jobs.values() if j["status"]=="running"])>=1:
         raise HTTPException(409,"Wait for the current import to finish.")
     id=uuid.uuid4().hex
-    jobs[id]={"id":id,"status":"running","phase":"Reading listing","total":0,"done":0,"imported":0,"errors":[],"warnings":[],
+    jobs[id]={"id":id,"status":"running","phase":"Reading listing","total":0,"done":0,"imported":0,"errors":[],"warnings":[],"listing_ids":[],
               "source":"import","started_at":now()}
     threading.Thread(target=import_job,args=(id,payload),daemon=True).start()
     return {"job":id}
 
 @app.get("/api/sources/bazaraki")
-def bazaraki_market(pages:int=Query(bazaraki.PAGES,ge=1,le=10)):
+def bazaraki_market(pages:int=Query(bazaraki.PAGES,ge=1,le=10),force:bool=False):
     """Offers on Bazaraki under the brief's hard limit, for the map and the brief (D1)."""
     settings=store.get()["settings"]
-    try: market=bazaraki.market(settings["ceiling"],settings["min_bedrooms"],pages)
-    except (ValueError,OSError) as e: raise HTTPException(502,f"Bazaraki could not be read: {e}")
+    try: market=bazaraki.market(settings["ceiling"],settings["min_bedrooms"],pages,force=force)
+    except importers.SourceBlocked as e: raise HTTPException(503,f"Source blocked or rate limited: {e}")
+    except Exception as e: raise HTTPException(502,f"Bazaraki could not be read: {e}")
     listings=store.get()["listings"]
-    known={l["url"].rstrip("/"):l["id"] for l in listings if l.get("url")}
+    known={catalogue_data.identity(s.get("url")):l["id"] for l in listings
+           for s in ([l]+l.get("sources",[])) if s.get("url")}
     excluded={x.casefold() for x in settings["excluded"]}
-    offers=[{**o,"listing_id":known.get(o["url"].rstrip("/")),
+    offers=[{**o,"listing_id":known.get(catalogue_data.identity(o["url"])),
              "excluded_area":any(x in o["area"].casefold() for x in excluded)} for o in market["offers"]]
     return {**market,"offers":offers,"imported":sum(1 for o in offers if o["listing_id"]),
             "new":sum(1 for o in offers if not o["listing_id"] and not o["excluded_area"])}
@@ -215,6 +400,23 @@ def bazaraki_market(pages:int=Query(bazaraki.PAGES,ge=1,le=10)):
 class Sync(BaseModel):
     limit:int=Field(40,ge=1,le=100)
     pages:int=Field(bazaraki.PAGES,ge=1,le=10)
+
+@app.post("/api/catalogue/refresh/{listing_id}")
+def refresh_listing(listing_id:str):
+    listing=next((l for l in store.get()["listings"] if l["id"]==listing_id),None)
+    if not listing or not listing.get("url"): raise HTTPException(422,"A source URL is needed to refresh this apartment.")
+    return start_import(Import(url=listing["url"]))
+
+@app.get("/api/catalogue/status")
+def catalogue_status():
+    listings=store.get()["listings"]
+    return {"listings":len(listings),"stale":sum(catalogue_data.freshness(l)["stale"] for l in listings),
+            "unavailable":sum(l.get("available") is False for l in listings),
+            "failed_photos":sum(p.get("status")=="unavailable" for l in listings for p in l.get("photo_downloads",[])),
+            "source":bazaraki.connector_status()}
+
+@app.get("/api/sources/status")
+def source_status(): return {"bazaraki":bazaraki.connector_status()}
 
 @app.post("/api/sources/bazaraki/sync")
 def bazaraki_sync(payload:Sync):
@@ -239,9 +441,26 @@ def job(id:str):
 @app.get("/api/export")
 def export():
     data=store.get(archived=True)
+    data["ratings"]={i:v for i,v in data["ratings"].items()
+                     if data.get("feedback_provenance",{}).get(f"rating:{i}",{}).get("actor")!="agent"}
+    data["transfer_note"]="This lightweight file restores human choices only. Use the full session ZIP for assistant reviews and exact learned memory."
     # Recompute machine-local photo paths and encoder tensors after restoring.
     data["listings"]=[{k:v for k,v in l.items() if k not in ("photos","vision","import_warnings","photo_downloads")} for l in data["listings"]]
     return JSONResponse({"version":1,"exported_at":now(),**data},headers={"Content-Disposition":"attachment; filename=fly-estate-backup.json"})
+
+@app.get("/api/session/export")
+def session_export():
+    from .session import export_session
+    if any(j["status"]=="running" for j in jobs.values()):
+        raise HTTPException(409,"Wait for the current import to finish before exporting a session.")
+    directory=ROOT/".cache/session-exports"
+    path=directory/(uuid.uuid4().hex+".zip")
+    try: export_session(store,engine_queue,path)
+    except Exception as error:
+        path.unlink(missing_ok=True)
+        raise HTTPException(500,f"Session export failed: {error}")
+    return FileResponse(path,media_type="application/zip",filename="fly-estate-session.zip",
+                        background=BackgroundTask(path.unlink,missing_ok=True))
 
 @app.get("/api/catalogue")
 def catalogue():
@@ -305,16 +524,18 @@ readout_cache={}
 
 def portfolio_readout():
     data=store.get()
+    train_ratings,train_pairs,held=prospective.training(data,store,photo_hashes)
     listings=eligible_listings(data)
     key=json.dumps([engine_queue.state("current_fingerprint"),job_params(data["settings"]),engine_queue.activity_stamp(),
-                    data["ratings"],data["comparisons"],[(l["id"],l.get("updated_at")) for l in listings]],sort_keys=True,default=str)
+                    train_ratings,train_pairs,sorted(held),[(l["id"],l.get("updated_at")) for l in listings]],sort_keys=True,default=str)
     if key not in readout_cache:
         fallback=None
         if PROXY_STUDY.exists():
             study=json.loads(PROXY_STUDY.read_text(encoding="utf-8"))
             fallback={"selected":study["selected"],"reason":study["reason"],"label":study["label"],
                       "results":study.get("results"),"study":PROXY_STUDY.relative_to(ROOT).as_posix()}
-        result=portfolio(engine_queue,listings,data["settings"],data["ratings"],data["comparisons"],photo_hashes,fallback)
+        result=portfolio(engine_queue,listings,data["settings"],train_ratings,train_pairs,photo_hashes,fallback,
+                         normalization_ids=[l["id"] for l in listings if l["id"] not in held])
         readout_cache.clear()
         readout_cache[key]=result
     return readout_cache[key]

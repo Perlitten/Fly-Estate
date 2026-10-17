@@ -16,6 +16,14 @@ ALLOWED_SOURCES = {"www.rentspotcy.com", "rentspotcy.com", "foxrealty.eu", "www.
                    "www.bazaraki.com", "bazaraki.com", "index.cy"}
 PHOTO_HOSTS = ALLOWED_SOURCES | {"kzqfyrabaeobdtmemyzl.supabase.co", "cdn.bazaraki.com", "cdn1.bazaraki.com", "cdn2.bazaraki.com"}
 
+class SourceBlocked(ValueError):
+    """A source explicitly refused or throttled the request."""
+    pass
+
+class SourceRemoved(ValueError):
+    """Only an explicit 404/410 establishes that this source URL is gone."""
+    pass
+
 def public_url(url, hosts):
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.hostname not in hosts or parsed.username or parsed.password or parsed.port not in (None,443):
@@ -34,7 +42,9 @@ def fetch(url, hosts, limit):
                     url = public_url(urljoin(url,r.headers["location"]),hosts)
                     continue
                 if r.status_code in (403,429):
-                    raise ValueError("The site rejected direct import. Use the bookmark button on an open listing or enter it manually.")
+                    raise SourceBlocked("The site rejected direct import. Use the bookmark button on an open listing or enter it manually.")
+                if r.status_code in (404,410):
+                    raise SourceRemoved(f"Source returned HTTP {r.status_code}.")
                 r.raise_for_status()
                 data = bytearray()
                 for chunk in r.iter_bytes():
@@ -62,6 +72,10 @@ def from_schema(x):
     if size is None:
         stated_area=re.search(r"\b(?:total(?:\s+covered)?|internal|covered)\s+area\s*(?::|of|is)?\s*(\d+(?:\.\d+)?)\s*(?:m²|m2|sqm)\b",desc,re.I)
         if stated_area: size=float(stated_area.group(1))
+    labelled = re.findall(r"\b(internal|total(?:\s+covered)?)\s+area\s*(?::|of|is)?\s*(\d+(?:\.\d+)?)\s*(?:m²|m2|sqm)\b",desc,re.I)
+    kinds = {"internal" if label.lower()=="internal" else "total" for label,value in labelled
+             if size is not None and abs(float(value)-float(size)) < .01}
+    size_kind = next(iter(kinds)) if len(kinds)==1 else "unknown"
     images = x.get("image",[])
     if isinstance(images,str): images=[images]
     images=[i.get("url") if isinstance(i,dict) else i for i in images]
@@ -69,6 +83,7 @@ def from_schema(x):
     coords = [float(geo["latitude"]),float(geo["longitude"])] if geo.get("latitude") is not None and geo.get("longitude") is not None else None
     return {"url":x.get("url",x.get("@id","")),"title":title,"price":price,
             "bedrooms":about.get("numberOfBedrooms"),"size":size,
+            "size_kind":size_kind,
             "area":address.get("streetAddress", ""),"city":address.get("addressLocality","Limassol"),
             "parking":amenities.get("parking","unknown"),"balcony":balcony is True,"balcony_size":balcony_size,
             "balcony_covered":True if re.search(r"\bcovered\s+(?:veranda|balcony|terrace|loggia)|крыт\w*\s+(?:балкон|лоджи)",desc,re.I) else None,
@@ -120,7 +135,7 @@ def parse(payload):
         return found.group(1) if found else None
     price = match(r"€\s*([\d\s.,]+)")
     bedrooms = match(r"(?:Bedrooms|СПАЛЬНИ)\s*[:\n]?\s*(\d+)") or match(r"(\d+)\s*[- ]?bedroom")
-    size = match(r"(\d+(?:\.\d+)?)\s*(?:m²|m2|sqm|м²)")
+    size = match(r"(?:Property area|Floor area|Internal area|Total(?: covered)? area|Covered area)\s*[:\n]?\s*(\d+(?:\.\d+)?)\s*(?:m²|m2|sqm|м²)")
     if not price or not bedrooms or not size:
         raise ValueError("Price, bedrooms and floor area were not found. Use the bookmark button, JSON or the manual form.")
     return [{"title":(soup.find('h1').get_text(strip=True) if soup.find('h1') else text.splitlines()[0])[:160],
@@ -172,7 +187,9 @@ def normalize(item):
         if not (0<balcony_size<500): raise ValueError("Check the stated balcony area.")
     return {"id":id,"url":url,"title":title,"price":price,"bedrooms":bedrooms,"size":size,
             "area":area,"city":str(item.get("city") or "Limassol"),"parking":parking,
-            "balcony":bool(item.get("balcony",False) or balcony_size),"balcony_size":balcony_size,"balcony_covered":item.get("balcony_covered") is True,"furnished":bool(item.get("furnished",False)),
+            "balcony":bool(item.get("balcony",False) or balcony_size),"balcony_size":balcony_size,"balcony_covered":item.get("balcony_covered") if type(item.get("balcony_covered")) is bool else None,"furnished":bool(item.get("furnished",False)),
+            "size_kind":item.get("size_kind") if item.get("size_kind") in ("internal","total") else "unknown",
+            "field_sources":{k:{"url":url or None,"field":k,"method":"source field" if url else "manual entry"} for k in ("size","balcony","balcony_size","balcony_covered")},
             "coords":coords,"coord_kind":coord_kind if coords else "unknown",
             "published_at":item.get("published_at"),"captured_at":now(),"updated_at":now(),
             "available":item.get("available",True),"source":urlparse(url).hostname or "Manual entry",
@@ -190,18 +207,23 @@ def save_photo(data,name):
         # The stored bytes identify the image, independent of its source URL.
         dest=ROOT / "data/photos" / (hashlib.sha256(encoded).hexdigest()+".jpg")
         dest.parent.mkdir(parents=True,exist_ok=True)
-        if not dest.exists(): dest.write_bytes(encoded)
+        if not dest.exists():
+            from .checkpoints import write_atomic
+            write_atomic(dest,encoded)
     return "/data/photos/"+dest.name
 
 def photos(listing,uploads=None,previous=None):
     warnings=[]
     outcomes=[]
     old={entry.get("url"):entry for entry in (previous or {}).get("photo_downloads",[]) if entry.get("url")}
+    if previous and len(previous.get("photo_urls",[])) == len(previous.get("photos",[])):
+        for url,path in zip(previous.get("photo_urls",[]),previous.get("photos",[])):
+            old.setdefault(url,{"path":path})
     for url in listing["photo_urls"]:
         name=hashlib.sha256(url.encode()).hexdigest()[:24]
         try:
             dest=ROOT / "data/photos" / (name+".jpg")
-            path="/data/photos/"+dest.name if dest.exists() else save_photo(fetch(url,PHOTO_HOSTS,12*1024*1024),name)
+            path=save_photo(fetch(url,PHOTO_HOSTS,12*1024*1024),name)
             listing["photos"].append(path)
             outcomes.append({"url":url,"status":"available","path":path,"captured_at":now()})
         except Exception as e:
