@@ -18,12 +18,15 @@ import {
   MousePointer2,
   Navigation,
   MapPin,
+  Pause,
+  Play,
   Plus,
 } from "lucide-react";
 import type { Job, Listing, MarketOffer, Settings } from "./types";
 import { money } from "./api";
 import { token } from "./tokens";
 import { JobProgress, type AgentSearch } from "./Market";
+import MapAgent, { type Stop } from "./MapAgent";
 
 // Preferred point: a teardrop pin anchored at its tip. Colours come from CSS (.ideal-pin).
 const originIcon = L.divIcon({
@@ -32,12 +35,6 @@ const originIcon = L.divIcon({
   iconSize: [28, 36],
   iconAnchor: [14, 35],
   popupAnchor: [0, -32],
-});
-const flyIcon = L.divIcon({
-  className: "map-fly",
-  html: '<img src="/fly.svg" width="28" height="28" alt="Your agent"/>',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
 });
 function Controller({
   choose,
@@ -93,7 +90,7 @@ const offerLine = (o: MarketOffer) =>
 /**
  * Bazaraki offers not yet in the file. Offers placed at an area centre share
  * one point, so they are grouped by coordinates and shown with a count.
- * Memoised: the fly animation re-renders the map every 50 ms.
+ * Memoised: the map re-renders whenever the agent lands on a listing.
  */
 const MarketLayer = memo(function MarketLayer({
   offers,
@@ -251,7 +248,8 @@ export default function CityMap({
 }) {
   const [choose, setChoose] = useState(false),
     [fitTick, setFitTick] = useState(0),
-    [flyPoint, setFlyPoint] = useState<[number, number]>(settings.ideal),
+    [visit, setVisit] = useState<string>(),
+    [rounds, setRounds] = useState(true),
     [tileErrors, setTileErrors] = useState(0),
     [showMarket, setShowMarket] = useState(true),
     [popupOpen, setPopupOpen] = useState(false);
@@ -273,32 +271,44 @@ export default function CityMap({
       groups.set(k, [...(groups.get(k) || []), l]);
     }
   });
-  useEffect(() => {
-    const target = selected?.coords;
-    let step = 0;
-    const max =
-      selected?.prediction.decision === "approach"
-        ? 1
-        : selected?.prediction.decision === "avoid"
-          ? 0.14
-          : 0.48;
-    setFlyPoint(settings.ideal);
-    if (!target) return;
-    const timer = setInterval(() => {
-      step = Math.min(step + 0.025, max);
-      setFlyPoint([
-        settings.ideal[0] + (target[0] - settings.ideal[0]) * step,
-        settings.ideal[1] + (target[1] - settings.ideal[1]) * step,
-      ]);
-      if (step >= max) clearInterval(timer);
-    }, 50);
-    return () => clearInterval(timer);
-  }, [
-    selected?.id,
-    selected?.prediction.decision,
-    settings.ideal[0],
-    settings.ideal[1],
-  ]);
+  // Where the agent may go on its rounds: every price marker that passes the brief.
+  const stops: Stop[] = [];
+  groups.forEach((g, k) => {
+    const open = g.filter((l) => !l.filter_reasons.length);
+    if (!open.length) return;
+    const best = open.reduce((a, l) =>
+      l.prediction.probability > a.prediction.probability ? l : a,
+    );
+    const d = best.prediction.decision;
+    const decision = d === "approach" || d === "avoid" ? d : "learning";
+    stops.push({
+      key: k,
+      id: best.id,
+      coords: best.coords!,
+      decision,
+      area: best.area,
+      // Rounds favour what the agent likes; rejected listings still get the occasional look.
+      weight: decision === "approach" ? 3 : decision === "avoid" ? 0.6 : 1.4,
+    });
+  });
+  // The listing the client opened is always a destination, even if the brief filters it out.
+  const focusKey = selected?.coords?.join(","),
+    focus: Stop | undefined =
+      stops.find((s) => s.key === focusKey && s.id === selected!.id) ||
+      (selected?.coords
+        ? {
+            key: focusKey!,
+            id: selected.id,
+            coords: selected.coords,
+            decision:
+              selected.prediction.decision === "approach" ||
+              selected.prediction.decision === "avoid"
+                ? selected.prediction.decision
+                : "learning",
+            area: selected.area,
+            weight: 0,
+          }
+        : undefined);
   return (
     <div
       className={`city-map ${choose ? "choosing" : ""} ${popupOpen ? "popup-open" : ""}`}
@@ -354,7 +364,7 @@ export default function CityMap({
             ? "excluded"
             : chosen.prediction.decision;
           const icon = L.divIcon({
-            className: `price-marker ${decision} ${g.some((l) => l.id === selected?.id) ? "active" : ""}`,
+            className: `price-marker ${decision} ${g.some((l) => l.id === selected?.id) ? "active" : ""} ${visit === k ? "visited" : ""}`,
             html: `<span>€${Math.round(chosen.price).toLocaleString("en-US")}${g.length > 1 ? `<b>+${g.length - 1}</b>` : ""}</span>`,
             iconSize: [90, 34],
             iconAnchor: [45, 17],
@@ -399,7 +409,14 @@ export default function CityMap({
             }}
           />
         )}
-        <Marker position={flyPoint} icon={flyIcon} interactive={false} />
+        <MapAgent
+          stops={stops}
+          home={settings.ideal}
+          focus={focus}
+          paused={!rounds}
+          onVisit={setVisit}
+          onOpen={onSelect}
+        />
         <Marker
           position={settings.ideal}
           icon={originIcon}
@@ -434,6 +451,15 @@ export default function CityMap({
           aria-label="Change preferred point"
         >
           <MousePointer2 size={19} />
+        </button>
+        <button
+          className={rounds ? "active" : ""}
+          onClick={() => setRounds(!rounds)}
+          aria-pressed={rounds}
+          title={rounds ? "Pause your agent’s rounds" : "Resume your agent’s rounds"}
+          aria-label="Agent’s rounds"
+        >
+          {rounds ? <Pause size={19} /> : <Play size={19} />}
         </button>
         {pending.length > 0 && (
           <button

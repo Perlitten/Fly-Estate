@@ -157,3 +157,57 @@
     animation: none !important;
   }
 }
+
+/*
+ * Агент на карте (MapAgent.tsx). Второе исключение, согласованное владельцем: на карте муха
+ * делает обход портфеля — короткий перелёт по дуге, посадка на ценник, неподвижность.
+ * Крылья бьются только в полёте; сидя она ведёт себя как знак в шапке. Под reduced motion
+ * просто сидит на открытом объявлении.
+ */
+.map-agent {
+  color: var(--ink);
+  cursor: pointer;
+}
+.map-agent-body {
+  display: block;
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--forest) 40%, transparent));
+  transition: filter var(--dur-move) var(--ease-standard);
+}
+.map-agent.flying .map-agent-body {
+  filter: drop-shadow(0 7px 4px color-mix(in srgb, var(--forest) 22%, transparent));
+}
+.map-agent.flying .fly-live .wing {
+  animation: fly-beat-l var(--dur-wingbeat) linear infinite alternate;
+}
+.map-agent.flying .fly-live .wing-r {
+  animation-name: fly-beat-r;
+}
+.map-agent-note {
+  position: absolute;
+  left: 37px;
+  top: 7px;
+  white-space: nowrap;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-float);
+  animation: dart-in var(--dur-move) var(--ease-dart);
+}
+.price-marker span {
+  transition: box-shadow var(--dur-move) var(--ease-standard);
+}
+.price-marker.visited span {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--leaf);
+}
+.map-agent-note.left {
+  left: auto;
+  right: 4px;
+  top: auto;
+  bottom: 36px;
+}
