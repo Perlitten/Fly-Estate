@@ -8,7 +8,7 @@ A fly, working as a professional residential agent. It is serious about the job:
 
 - **Is:** calm, precise, courteous, dry, quietly competent.
 - **Is not:** a mascot, a meme, a tech demo, a disruptor, "smarter than your realtor".
-- **The fly** appears as a small mark (the logo and the map marker). One exception, approved by the owner: the header mark (`src/FlyLive.tsx`) is alive at 30–36 px — now and then it grooms its front legs or gives a short buzz, then sits still for several seconds. Nowhere else: no large animated flies, no wing-beating elsewhere, no flying across the screen.
+- **The fly** appears as a small mark (the logo and the map marker). Two exceptions, approved by the owner: the header mark (`src/FlyLive.tsx`) is alive at 30–36 px — now and then it grooms its front legs or gives a short buzz, then sits still for several seconds; and the agent on the area map (`src/MapAgent.tsx`, 34 px) makes rounds of the portfolio — a short arc from one price marker to the next, lands on the ones it likes, hovers by the ones it rejects, flies straight to a listing the client opens, and can be paused. Wings beat only in flight. Nowhere else: no large animated flies, no wing-beating elsewhere, no flying across other screens.
 
 ## Voice
 
@@ -72,6 +72,7 @@ The fly's own movement: a short, exact dart, then stillness.
 - Entering content: `dart-in` — opacity 0 → 1 and a 6 px (`--dart-distance`) rise. Lists stagger by 30 ms, capped at 210 ms.
 - Press: `scale(.98)` for `--dur-instant`.
 - Infinite animations: the live dot (`on-duty`, 2.4 s) and, only while a model job is actually running, the inspection pass over photo thumbnails (`--dur-scan`) and the progress sheen (`--dur-sheen`). They stop with the job. No looping decorations, parallax, or scroll-jacking.
+- The map agent flies 620–2100 ms per leg (distance-based, ease-in-out), sits 2–3.4 s, hovers 0.65 s by a rejected listing and stays 7 s on the one the client opened. Under reduced motion it sits on the open listing.
 - The header mark acts in episodes, not a loop: grooming (`--dur-groom 2600ms`) or a buzz (18 × `--dur-wingbeat 46ms`), started by the component after 3.5–8.5 s of stillness, or by hovering the brand link. Under reduced motion it stays still.
 - `prefers-reduced-motion: reduce` zeroes every duration and distance in `tokens.css`; the live dot stops.
 - All rules live in [`src/motion.css`](../src/motion.css).
