@@ -47,7 +47,7 @@ steps:
     target: fly-estate/${CI_PIPELINE_NUMBER}
     path_style: true
     region: us-east-1
-    access: private
+    acl: private
   when:
   - status:
     - success
