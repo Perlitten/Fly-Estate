@@ -41,6 +41,10 @@ class MemoryChoices(unittest.TestCase):
         self.listing = {"id": "a", "title": "Test apartment", "photos": [photo],
                         "price": 1800, "size": 120, "coords": [34.71, 33.05],
                         "balcony": True, "balcony_size": 30, "balcony_covered": True,
+                        # Store.listing() expects a normalized listing (importers.normalize
+                        # always stamps these); catalogue.enrich() reads them unconditionally.
+                        "captured_at": "2026-01-01T00:00:00+00:00",
+                        "updated_at": "2026-01-01T00:00:00+00:00",
                         "vision": {"per_photo": [{"retina": [.9] * 192, "attributes": {}}]}}
         self.store.listing(self.listing)
         self.queue = Queue(self.root / "engine.sqlite")
@@ -220,13 +224,28 @@ class MemoryChoices(unittest.TestCase):
         self.assertTrue(held)
         for event in frozen["events"]:
             self.assertFalse(held & {l["id"] for l in event["payload"]["listings"]})
-        with patch("server.evaluation.Brain", SmallBrain), patch.object(self.worker.memory, "train", wraps=self.worker.memory.train) as train:
+        def embed(paths):
+            # Deterministic stand-in for the CLIP encoder (torch/transformers are
+            # not part of the engine-test dependencies); one distinct unit vector per photo.
+            vectors = []
+            for path in paths:
+                vector = np.zeros(512, dtype=np.float32)
+                vector[sum(str(path).encode()) % 512] = 1
+                vectors.append(vector)
+            return vectors
+        # The KC->MBON rewired control re-reads the connectome from disk; give it a
+        # synthetic circuit with the same layout instead of the prepared FlyWire
+        # subgraph, sparse enough in KC->MBON for degree-preserving swaps to exist.
+        with patch("server.evaluation.Brain", SmallBrain), patch("server.learning.Vision") as encoder, \
+                patch("server.engine.subgraph.load", return_value=make_data(classes=22, kc_mbon=3)), \
+                patch.object(self.worker.memory, "train", wraps=self.worker.memory.train) as train:
+            encoder.return_value.embed.side_effect = embed
             evaluation.run_once(self.worker)
+        report = evaluation.latest(self.queue)
+        self.assertEqual(report["status"], "done", report["error"])
         self.assertEqual(train.call_args.args[0], frozen["events"])
         self.assertEqual(fingerprint, self.engine.fingerprint())
         self.assertEqual(checkpoint, self.queue.state("current_checkpoint"))
-        report = evaluation.latest(self.queue)
-        self.assertEqual(report["status"], "done", report["error"])
         self.assertEqual(report["result"]["photo_coverage"], 1.0)
 
 
