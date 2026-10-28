@@ -4,7 +4,12 @@ import numpy as np
 from server.engine import subgraph
 
 
-def make_data(seed: int = 0, classes: int = 11) -> dict:
+def make_data(seed: int = 0, classes: int = 11, kc_mbon: int | None = None) -> dict:
+    """`kc_mbon` limits each KC to that many MBON targets (default: all of them).
+
+    The default all-to-all KC->MBON block admits no degree-preserving rewiring;
+    a sparser block gives the shuffled-connectome control valid swaps.
+    """
     rng = np.random.default_rng(seed)
     sizes = {"orn": classes * 8, "alln": 0, "alpn": classes * 3, "kc": 120, "apl": 0, "mbon": 6, "pam": 8, "ppl1": 0}
     group = np.concatenate([np.full(n, k, dtype=np.int8) for k, n in enumerate(sizes.values())])
@@ -23,7 +28,8 @@ def make_data(seed: int = 0, classes: int = 11) -> dict:
     for k in idx["kc"]:
         for p in rng.choice(idx["alpn"], 6, replace=False):
             connect(p, k, 8.0)
-        for m in idx["mbon"]:
+        targets = idx["mbon"] if kc_mbon is None else rng.choice(idx["mbon"], kc_mbon, replace=False)
+        for m in targets:
             connect(k, m, 0.5)
     for m in idx["mbon"]:
         connect(m, idx["kc"][0], -0.5)  # a non-plastic synapse that must never change
